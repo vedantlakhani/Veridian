@@ -12,12 +12,14 @@
 
 **Requirements covered:** FOUND-01 through FOUND-22
 
-**Plans:**
-1. Expo project scaffold — `create-expo-app`, TypeScript strict, Expo Router v4, install all dependencies, create full directory structure per Playbook Section 6
-2. Supabase schema — 13 migration SQL files, all tables with RLS policies, seed `emission_factors` with DEFRA 2025 data
-3. Auth flow — email/password + Google + Apple Sign-In, session persistence, auth screens (Login, Signup, Forgot Password)
-4. Design system — `lib/theme.ts` tokens, all 11 base components (VCard, VButton, VBadge, VInput, VProgressBar, VProgressRing, VMetricCard, VChip, VBottomSheet, VEmptyState, VSkeleton)
-5. Navigation shell — bottom tab navigator, TypeScript domain interfaces, basic screen scaffolds
+**Plans:** 5 plans
+
+Plans:
+- [ ] 01-01-PLAN.md — Expo project scaffold, TypeScript strict, all dependencies, directory structure, Supabase singleton, Zustand auth store, root layout
+- [ ] 01-02-PLAN.md — Supabase schema: 13 migration files, RLS policies with (select auth.uid()), DEFRA 2025 emission_factors seed data
+- [ ] 01-03-PLAN.md — Auth flow: email/password + Google + Apple Sign-In, auth screens (login, signup, forgot-password), session persistence
+- [ ] 01-04-PLAN.md — Design system: lib/theme.ts tokens + all 11 V* components (VCard, VButton, VBadge, VInput, VProgressBar, VProgressRing, VMetricCard, VChip, VBottomSheet, VEmptyState, VSkeleton)
+- [ ] 01-05-PLAN.md — TypeScript domain interfaces (all 13 tables), Jest infrastructure, all Wave 0 test stubs
 
 **Success Criteria:**
 - `npx expo start` runs without errors
@@ -127,4 +129,4 @@
 
 ---
 *Roadmap created: 2026-03-15*
-*Last updated: 2026-03-15 after initial creation*
+*Last updated: 2026-03-15 after Phase 1 planning complete*
