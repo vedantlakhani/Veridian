@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: unknown
-last_updated: "2026-03-16T03:56:18.152Z"
+last_updated: "2026-03-16T03:58:20.326Z"
 progress:
   total_phases: 5
   completed_phases: 0
   total_plans: 5
-  completed_plans: 3
+  completed_plans: 4
 ---
 
 # Veridian — Project State
@@ -24,14 +24,14 @@ See: .planning/PROJECT.md (updated 2026-03-15)
 
 **Phase 1: Foundation**
 - Status: In Progress
-- Current Plan: 4 of 5
+- Current Plan: 5 of 5
 - Goal: Deployable Expo project with Supabase backend, full auth flow, and complete design system
 
 ## Progress
 
 | Phase | Status | Plans | Progress |
 |-------|--------|-------|----------|
-| 1     | ◑      | 5     | 60%      |
+| 1     | ◑      | 5     | 80%      |
 | 2     | ○      | 5     | 0%       |
 | 3     | ○      | 4     | 0%       |
 | 4     | ○      | 4     | 0%       |
@@ -42,6 +42,7 @@ See: .planning/PROJECT.md (updated 2026-03-15)
 - **01-01**: Expo project scaffold with TypeScript strict, Expo Router v4, Supabase client, tab navigator structure
 - **01-02**: Supabase PostgreSQL schema — 13 migration files, (select auth.uid()) RLS, DEFRA 2025 emission_factors seed (73 rows)
 - **01-03**: Email/password + Google + Apple Sign-In with Zustand authStore, inline error display, iOS-gated Apple button, production auth screens
+- **01-04**: 11 V* UI components with Reanimated 3 animations, react-native-svg progress ring, pan-gesture bottom sheet, JetBrainsMono metric cards, and barrel export
 
 ## Decisions
 
@@ -56,6 +57,9 @@ See: .planning/PROJECT.md (updated 2026-03-15)
 - [Phase 01]: Apple Sign-In uses dynamic import(expo-apple-authentication) to avoid static native link on Android
 - [Phase 01]: Apple user name persisted to profiles table immediately post-signInWithIdToken — Apple only provides on first sign-in
 - [Phase 01]: Raw hex design tokens used in auth screens (not lib/theme.ts) since Plan 04 design system runs in parallel
+- [Phase 01-04]: ReactNode imported from 'react' not 'react-native' — react-native does not export ReactNode type
+- [Phase 01-04]: VProgressRing uses useAnimatedProps (not useAnimatedStyle) for SVG stroke-dashoffset prop
+- [Phase 01-04]: runOnJS imported at file top level in VBottomSheet worklet callbacks
 
 ## Performance Metrics
 
@@ -64,11 +68,12 @@ See: .planning/PROJECT.md (updated 2026-03-15)
 | 01    | 01   | ~10min   | 3     | 15    |
 | 01    | 02   | 4min     | 2     | 15    |
 | 01    | 03   | 3min     | 2     | 4     |
+| 01    | 04   | ~10min   | 2     | 13    |
 
 ## Next Action
 
-Execute Plan 01-04: Design system and theme tokens (lib/theme.ts, Veridian color palette)
+Execute Plan 01-05: TypeScript domain interfaces (types/ directory)
 
 ---
 *Last session: 2026-03-16*
-*Stopped at: Completed 01-03-PLAN.md*
+*Stopped at: Completed 01-04-PLAN.md*

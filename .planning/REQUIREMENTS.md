@@ -14,18 +14,18 @@
 - [x] **FOUND-05**: Supabase Auth configured with Google OAuth provider
 - [x] **FOUND-06**: Supabase Auth configured with Apple Sign-In provider
 - [x] **FOUND-07**: Auth session persists across app restarts via Supabase session storage
-- [ ] **FOUND-08**: `lib/theme.ts` exports all color tokens, typography scale, spacing (4px grid), and shadow definitions
-- [ ] **FOUND-09**: `components/ui/VCard` — surface container with elevation variants
-- [ ] **FOUND-10**: `components/ui/VButton` — primary, secondary, ghost, destructive variants
-- [ ] **FOUND-11**: `components/ui/VBadge` — colored label with category variants
-- [ ] **FOUND-12**: `components/ui/VInput` — text input with label, error state, and icon slot
-- [ ] **FOUND-13**: `components/ui/VProgressBar` — animated horizontal progress with Reanimated 3
-- [ ] **FOUND-14**: `components/ui/VProgressRing` — animated circular progress with Reanimated 3
-- [ ] **FOUND-15**: `components/ui/VMetricCard` — carbon number display with JetBrains Mono
-- [ ] **FOUND-16**: `components/ui/VChip` — selectable filter/tag chip
-- [ ] **FOUND-17**: `components/ui/VBottomSheet` — Reanimated 3 gesture-driven bottom sheet
-- [ ] **FOUND-18**: `components/ui/VEmptyState` — illustration + CTA for empty list states
-- [ ] **FOUND-19**: `components/ui/VSkeleton` — Reanimated 3 shimmer loading placeholder
+- [x] **FOUND-08**: `lib/theme.ts` exports all color tokens, typography scale, spacing (4px grid), and shadow definitions
+- [x] **FOUND-09**: `components/ui/VCard` — surface container with elevation variants
+- [x] **FOUND-10**: `components/ui/VButton` — primary, secondary, ghost, destructive variants
+- [x] **FOUND-11**: `components/ui/VBadge` — colored label with category variants
+- [x] **FOUND-12**: `components/ui/VInput` — text input with label, error state, and icon slot
+- [x] **FOUND-13**: `components/ui/VProgressBar` — animated horizontal progress with Reanimated 3
+- [x] **FOUND-14**: `components/ui/VProgressRing` — animated circular progress with Reanimated 3
+- [x] **FOUND-15**: `components/ui/VMetricCard` — carbon number display with JetBrains Mono
+- [x] **FOUND-16**: `components/ui/VChip` — selectable filter/tag chip
+- [x] **FOUND-17**: `components/ui/VBottomSheet` — Reanimated 3 gesture-driven bottom sheet
+- [x] **FOUND-18**: `components/ui/VEmptyState` — illustration + CTA for empty list states
+- [x] **FOUND-19**: `components/ui/VSkeleton` — Reanimated 3 shimmer loading placeholder
 - [ ] **FOUND-20**: TypeScript interfaces in `types/` for all domain models (User, EmissionEntry, EmissionFactor, Challenge, etc.)
 - [ ] **FOUND-21**: Bottom tab navigator with Home, Log, Insights, Profile tabs
 - [x] **FOUND-22**: `emission_factors` table seeded with DEFRA 2025 GHG Conversion Factors
@@ -114,18 +114,18 @@
 | FOUND-05 | Phase 1 | Complete |
 | FOUND-06 | Phase 1 | Complete |
 | FOUND-07 | Phase 1 | Complete |
-| FOUND-08 | Phase 1 | Pending |
-| FOUND-09 | Phase 1 | Pending |
-| FOUND-10 | Phase 1 | Pending |
-| FOUND-11 | Phase 1 | Pending |
-| FOUND-12 | Phase 1 | Pending |
-| FOUND-13 | Phase 1 | Pending |
-| FOUND-14 | Phase 1 | Pending |
-| FOUND-15 | Phase 1 | Pending |
-| FOUND-16 | Phase 1 | Pending |
-| FOUND-17 | Phase 1 | Pending |
-| FOUND-18 | Phase 1 | Pending |
-| FOUND-19 | Phase 1 | Pending |
+| FOUND-08 | Phase 1 | Complete |
+| FOUND-09 | Phase 1 | Complete |
+| FOUND-10 | Phase 1 | Complete |
+| FOUND-11 | Phase 1 | Complete |
+| FOUND-12 | Phase 1 | Complete |
+| FOUND-13 | Phase 1 | Complete |
+| FOUND-14 | Phase 1 | Complete |
+| FOUND-15 | Phase 1 | Complete |
+| FOUND-16 | Phase 1 | Complete |
+| FOUND-17 | Phase 1 | Complete |
+| FOUND-18 | Phase 1 | Complete |
+| FOUND-19 | Phase 1 | Complete |
 | FOUND-20 | Phase 1 | Pending |
 | FOUND-21 | Phase 1 | Pending |
 | FOUND-22 | Phase 1 | Pending |
