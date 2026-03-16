@@ -36,12 +36,14 @@ Plans:
 
 **Requirements covered:** TRACK-01 through TRACK-12
 
-**Plans:**
-1. Emission logging UI — Log screen with category selector, food/transport/energy sub-forms, quantity inputs
-2. Emission calculation engine — Supabase `emission_factors` query, `lib/emissions.ts` calculation utilities, entry creation
-3. Home dashboard — Today's total, progress ring toward daily target, recent entries list
-4. History & charts — Weekly/monthly views, bar chart (React Native SVG), trend comparison
-5. Entry management — Edit/delete entry flows, Supabase Realtime sync
+**Plans:** 1/5 plans executed
+
+Plans:
+- [ ] 02-01-PLAN.md — Wave 0 test stubs (emissions, chart, history hook), emissionStore, Log screen with CategorySelector + FoodForm + TransportForm + EnergyForm inside VBottomSheet
+- [ ] 02-02-PLAN.md — lib/emissions.ts calculation engine (calcEmission, date utils, summary upsert), hooks/useEmissionEntries.ts CRUD hooks, Realtime publication migration
+- [ ] 02-03-PLAN.md — hooks/useSummaries.ts (daily/weekly/monthly), Home dashboard with VProgressRing + VMetricCard + weekly breakdown + recent entries
+- [ ] 02-04-PLAN.md — components/charts/EmissionBarChart.tsx (react-native-svg), Insights tab with history list + date filters + monthly trend
+- [ ] 02-05-PLAN.md — Edit modal (app/entry/[id].tsx), swipe-to-delete in history, hooks/useEmissionRealtime.ts, Realtime mounted in root layout
 
 **Success Criteria:**
 - Can log a meal and see CO₂e value immediately
@@ -120,7 +122,7 @@ Plans:
 | Phase | Status | Plans | Key Deliverable |
 |-------|--------|-------|-----------------|
 | 1 | 5/5 | Complete    | 2026-03-16 |
-| 2 | ○ | 5 | Full emission tracking with charts |
+| 2 | 1/5 | In Progress|  |
 | 3 | ○ | 4 | AI insights on home screen |
 | 4 | ○ | 4 | Social challenges + achievements |
 | 5 | ○ | 5 | App Store submission ready |
@@ -129,4 +131,4 @@ Plans:
 
 ---
 *Roadmap created: 2026-03-15*
-*Last updated: 2026-03-16 after 01-02 (Supabase schema) complete*
+*Last updated: 2026-03-16 — Phase 2 plans created*
