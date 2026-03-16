@@ -101,6 +101,7 @@ jest.mock('react-native-svg', () => {
     Path: View,
     G: View,
     Text: View,
+    Line: View,
     Defs: View,
     LinearGradient: View,
     Stop: View,
