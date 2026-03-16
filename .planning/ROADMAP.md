@@ -119,7 +119,7 @@ Plans:
 
 | Phase | Status | Plans | Key Deliverable |
 |-------|--------|-------|-----------------|
-| 1 | 5/5 | Complete   | 2026-03-16 |
+| 1 | 5/5 | Complete    | 2026-03-16 |
 | 2 | ○ | 5 | Full emission tracking with charts |
 | 3 | ○ | 4 | AI insights on home screen |
 | 4 | ○ | 4 | Social challenges + achievements |
