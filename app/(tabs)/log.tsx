@@ -5,13 +5,14 @@ import { CategorySelector } from '@/components/log/CategorySelector';
 import { FoodForm } from '@/components/log/FoodForm';
 import { TransportForm } from '@/components/log/TransportForm';
 import { EnergyForm } from '@/components/log/EnergyForm';
+import { useCreateEntry } from '@/hooks/useEmissionEntries';
+import { useAuthStore } from '@/stores/authStore';
 import type { EmissionCategory, EmissionFactor } from '@/types/emission';
 import { colors, spacing, typography } from '@/lib/theme';
 
-// NOTE: onSubmit handlers call useCreateEntry mutation — wired in Plan 02
-// For now, onSubmit receives (factor, quantity) and is a no-op placeholder
-
 export default function LogScreen() {
+  const { user } = useAuthStore();
+  const createEntry = useCreateEntry();
   const [selectedCategory, setSelectedCategory] = useState<EmissionCategory | null>(null);
   const [sheetOpen, setSheetOpen] = useState(false);
 
@@ -24,9 +25,12 @@ export default function LogScreen() {
     setSheetOpen(false);
   };
 
-  // Placeholder — will be replaced with useCreateEntry().mutate in Plan 02
-  const handleSubmit = (_factor: EmissionFactor, _quantity: number) => {
-    setSheetOpen(false);
+  const handleSubmit = (factor: EmissionFactor, quantity: number) => {
+    if (!user?.id) return;
+    createEntry.mutate(
+      { userId: user.id, factor, quantity },
+      { onSuccess: () => setSheetOpen(false) }
+    );
   };
 
   const sheetTitle =
@@ -44,13 +48,13 @@ export default function LogScreen() {
 
       <VBottomSheet isOpen={sheetOpen} onClose={handleClose} title={sheetTitle}>
         {selectedCategory === 'food' && (
-          <FoodForm onSubmit={handleSubmit} />
+          <FoodForm onSubmit={handleSubmit} isSubmitting={createEntry.isPending} />
         )}
         {selectedCategory === 'transport' && (
-          <TransportForm onSubmit={handleSubmit} />
+          <TransportForm onSubmit={handleSubmit} isSubmitting={createEntry.isPending} />
         )}
         {selectedCategory === 'energy' && (
-          <EnergyForm onSubmit={handleSubmit} />
+          <EnergyForm onSubmit={handleSubmit} isSubmitting={createEntry.isPending} />
         )}
       </VBottomSheet>
     </View>
