@@ -10,10 +10,10 @@
 - [x] **FOUND-01**: Expo project scaffolded with TypeScript strict mode, Expo Router v4, and correct directory structure per Playbook Section 6
 - [x] **FOUND-02**: Supabase PostgreSQL schema with all 13 tables created via migrations
 - [x] **FOUND-03**: Row-Level Security (RLS) policies applied to every table using `auth.uid()`
-- [ ] **FOUND-04**: Supabase Auth configured with email/password provider
-- [ ] **FOUND-05**: Supabase Auth configured with Google OAuth provider
-- [ ] **FOUND-06**: Supabase Auth configured with Apple Sign-In provider
-- [ ] **FOUND-07**: Auth session persists across app restarts via Supabase session storage
+- [x] **FOUND-04**: Supabase Auth configured with email/password provider
+- [x] **FOUND-05**: Supabase Auth configured with Google OAuth provider
+- [x] **FOUND-06**: Supabase Auth configured with Apple Sign-In provider
+- [x] **FOUND-07**: Auth session persists across app restarts via Supabase session storage
 - [ ] **FOUND-08**: `lib/theme.ts` exports all color tokens, typography scale, spacing (4px grid), and shadow definitions
 - [ ] **FOUND-09**: `components/ui/VCard` — surface container with elevation variants
 - [ ] **FOUND-10**: `components/ui/VButton` — primary, secondary, ghost, destructive variants
@@ -110,10 +110,10 @@
 | FOUND-01 | Phase 1 | Complete |
 | FOUND-02 | Phase 1 | Pending |
 | FOUND-03 | Phase 1 | Pending |
-| FOUND-04 | Phase 1 | Pending |
-| FOUND-05 | Phase 1 | Pending |
-| FOUND-06 | Phase 1 | Pending |
-| FOUND-07 | Phase 1 | Pending |
+| FOUND-04 | Phase 1 | Complete |
+| FOUND-05 | Phase 1 | Complete |
+| FOUND-06 | Phase 1 | Complete |
+| FOUND-07 | Phase 1 | Complete |
 | FOUND-08 | Phase 1 | Pending |
 | FOUND-09 | Phase 1 | Pending |
 | FOUND-10 | Phase 1 | Pending |
