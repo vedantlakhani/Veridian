@@ -6,18 +6,21 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 import { useEffect } from 'react';
+import type { StyleProp, ViewStyle } from 'react-native';
 import { colors, radii } from '@/lib/theme';
 
 interface VSkeletonProps {
   width: number | `${number}%`;
   height: number;
   borderRadius?: number;
+  style?: StyleProp<ViewStyle>;
 }
 
 export function VSkeleton({
   width,
   height,
   borderRadius = radii.sm,
+  style,
 }: VSkeletonProps) {
   const opacity = useSharedValue(1);
 
@@ -46,6 +49,7 @@ export function VSkeleton({
           backgroundColor: colors.border,
         },
         animatedStyle,
+        style,
       ]}
     />
   );
