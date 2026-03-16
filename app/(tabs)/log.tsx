@@ -1,16 +1,74 @@
-import { View, Text, StyleSheet } from 'react-native';
+import { useState } from 'react';
+import { View, Text, ScrollView, StyleSheet } from 'react-native';
+import { VBottomSheet } from '@/components/ui';
+import { CategorySelector } from '@/components/log/CategorySelector';
+import { FoodForm } from '@/components/log/FoodForm';
+import { TransportForm } from '@/components/log/TransportForm';
+import { EnergyForm } from '@/components/log/EnergyForm';
+import type { EmissionCategory, EmissionFactor } from '@/types/emission';
+import { colors, spacing, typography } from '@/lib/theme';
+
+// NOTE: onSubmit handlers call useCreateEntry mutation — wired in Plan 02
+// For now, onSubmit receives (factor, quantity) and is a no-op placeholder
 
 export default function LogScreen() {
+  const [selectedCategory, setSelectedCategory] = useState<EmissionCategory | null>(null);
+  const [sheetOpen, setSheetOpen] = useState(false);
+
+  const handleCategorySelect = (cat: EmissionCategory) => {
+    setSelectedCategory(cat);
+    setSheetOpen(true);
+  };
+
+  const handleClose = () => {
+    setSheetOpen(false);
+  };
+
+  // Placeholder — will be replaced with useCreateEntry().mutate in Plan 02
+  const handleSubmit = (_factor: EmissionFactor, _quantity: number) => {
+    setSheetOpen(false);
+  };
+
+  const sheetTitle =
+    selectedCategory === 'food' ? 'Log Food' :
+    selectedCategory === 'transport' ? 'Log Transport' :
+    selectedCategory === 'energy' ? 'Log Energy' : '';
+
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Log</Text>
-      <Text style={styles.subtitle}>Emission logging — Phase 2</Text>
+      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+        <Text style={styles.heading}>Log Emission</Text>
+        <Text style={styles.subheading}>Select a category to begin</Text>
+        <CategorySelector selected={selectedCategory} onSelect={handleCategorySelect} />
+      </ScrollView>
+
+      <VBottomSheet isOpen={sheetOpen} onClose={handleClose} title={sheetTitle}>
+        {selectedCategory === 'food' && (
+          <FoodForm onSubmit={handleSubmit} />
+        )}
+        {selectedCategory === 'transport' && (
+          <TransportForm onSubmit={handleSubmit} />
+        )}
+        {selectedCategory === 'energy' && (
+          <EnergyForm onSubmit={handleSubmit} />
+        )}
+      </VBottomSheet>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: '#F8FAF9' },
-  title: { fontSize: 28, fontWeight: '700', color: '#111827' },
-  subtitle: { fontSize: 15, color: '#6B7280', marginTop: 8 },
+  container: { flex: 1, backgroundColor: colors.background },
+  content: { padding: spacing.lg, paddingBottom: spacing.xxl },
+  heading: {
+    fontSize: typography.sizes.xxl,
+    fontWeight: '700',
+    color: colors.textPrimary,
+    marginBottom: spacing.xs,
+  },
+  subheading: {
+    fontSize: typography.sizes.md,
+    color: colors.textSecondary,
+    marginBottom: spacing.lg,
+  },
 });
