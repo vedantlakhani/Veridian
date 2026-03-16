@@ -36,7 +36,7 @@ Plans:
 
 **Requirements covered:** TRACK-01 through TRACK-12
 
-**Plans:** 3/5 plans executed
+**Plans:** 4/5 plans executed
 
 Plans:
 - [ ] 02-01-PLAN.md — Wave 0 test stubs (emissions, chart, history hook), emissionStore, Log screen with CategorySelector + FoodForm + TransportForm + EnergyForm inside VBottomSheet
@@ -122,7 +122,7 @@ Plans:
 | Phase | Status | Plans | Key Deliverable |
 |-------|--------|-------|-----------------|
 | 1 | 5/5 | Complete    | 2026-03-16 |
-| 2 | 3/5 | In Progress|  |
+| 2 | 4/5 | In Progress|  |
 | 3 | ○ | 4 | AI insights on home screen |
 | 4 | ○ | 4 | Social challenges + achievements |
 | 5 | ○ | 5 | App Store submission ready |

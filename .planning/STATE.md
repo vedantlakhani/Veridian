@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: unknown
-last_updated: "2026-03-16T16:02:17.612Z"
+last_updated: "2026-03-16T16:03:44.099Z"
 progress:
   total_phases: 5
   completed_phases: 1
   total_plans: 10
-  completed_plans: 8
+  completed_plans: 9
 ---
 
 # Veridian — Project State
@@ -24,7 +24,7 @@ See: .planning/PROJECT.md (updated 2026-03-15)
 
 **Phase 2: Core Tracking**
 - Status: In Progress
-- Current Plan: 3 of 5
+- Current Plan: 4 of 5
 - Goal: Emission logging, calculation engine, history view, summary bar chart, and weekly challenge
 
 ## Progress
@@ -47,6 +47,7 @@ See: .planning/PROJECT.md (updated 2026-03-15)
 - **02-01**: Zustand emissionStore, Wave 0 test stubs (emissions/EmissionBarChart/useEmissionEntries), CategorySelector + FoodForm/TransportForm/EnergyForm sub-forms inside VBottomSheet, useEmissionFactors hook with staleTime: Infinity
 - **02-02**: DEFRA 2025 emission calculation engine (calcEmission, getLocalDateString, getISOWeekStart, computeDailyCategoryTotals, upsertDailySummary, upsertWeeklySummary), TanStack Query CRUD hooks (useEmissionEntries, useCreateEntry, useUpdateEntry, useDeleteEntry), Realtime migration, log.tsx wired to real mutation
 - **02-03**: TanStack Query hooks (useDailySummary, useWeeklySummary, useMonthlyTotals) and full Home dashboard with VProgressRing, VMetricCard, weekly category breakdown, recent entries list, VSkeleton loading states, VEmptyState
+- **02-04**: EmissionBarChart react-native-svg bar chart (Rect/G/Line/SvgText, overflow="visible" Android fix), Insights screen with date filter chips (today/week/month), weekly breakdown chart, monthly trend comparison, and date-filtered history list
 
 ## Decisions
 
@@ -74,6 +75,7 @@ See: .planning/PROJECT.md (updated 2026-03-15)
 - [Phase 02]: Split lib/emissions.ts: pure functions on top, async Supabase helpers below for testability without mocking at import time
 - [Phase 02]: upsertDailySummary recomputes from all entries (not delta) to prevent summary drift on edit/delete
 - [Phase 02]: VEmptyState uses body prop not subtitle — plan template was wrong; auto-fixed to match actual component API
+- [Phase 02-04]: overflow='visible' on Svg spread as any — SvgProps type doesn't expose overflow but react-native-svg supports it at runtime for Android clip fix
 
 ## Performance Metrics
 
@@ -87,11 +89,12 @@ See: .planning/PROJECT.md (updated 2026-03-15)
 | 02    | 01   | 3min     | 2     | 11    |
 | 02    | 02   | 6min     | 2     | 5     |
 | 02    | 03   | 4min     | 2     | 2     |
+| 02    | 04   | 5min     | 2     | 4     |
 
 ## Next Action
 
-Phase 2 Plan 03 complete. Execute Phase 2 Plan 04: History Screen + EmissionBarChart
+Phase 2 Plan 04 complete. Execute Phase 2 Plan 05: Entry Management (edit/delete)
 
 ---
 *Last session: 2026-03-16*
-*Stopped at: Completed 02-03-PLAN.md*
+*Stopped at: Completed 02-04-PLAN.md*

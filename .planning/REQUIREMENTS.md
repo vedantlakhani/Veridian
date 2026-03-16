@@ -38,9 +38,9 @@
 - [x] **TRACK-04**: Emission calculation uses `emission_factors` table values (never hardcoded)
 - [x] **TRACK-05**: User can view today's total carbon footprint on the Home screen
 - [x] **TRACK-06**: User can view weekly carbon breakdown by category (food/transport/energy)
-- [ ] **TRACK-07**: User can view monthly carbon totals with trend comparison
-- [ ] **TRACK-08**: User can view emission history list with date filtering
-- [ ] **TRACK-09**: Bar chart showing daily/weekly emission breakdown (React Native SVG or Victory Native)
+- [x] **TRACK-07**: User can view monthly carbon totals with trend comparison
+- [x] **TRACK-08**: User can view emission history list with date filtering
+- [x] **TRACK-09**: Bar chart showing daily/weekly emission breakdown (React Native SVG or Victory Native)
 - [ ] **TRACK-10**: User can edit a logged emission entry
 - [ ] **TRACK-11**: User can delete a logged emission entry
 - [ ] **TRACK-12**: Emission entries sync via Supabase Realtime across devices
@@ -135,9 +135,9 @@
 | TRACK-04 | Phase 2 | Complete |
 | TRACK-05 | Phase 2 | Complete |
 | TRACK-06 | Phase 2 | Complete |
-| TRACK-07 | Phase 2 | Pending |
-| TRACK-08 | Phase 2 | Pending |
-| TRACK-09 | Phase 2 | Pending |
+| TRACK-07 | Phase 2 | Complete |
+| TRACK-08 | Phase 2 | Complete |
+| TRACK-09 | Phase 2 | Complete |
 | TRACK-10 | Phase 2 | Pending |
 | TRACK-11 | Phase 2 | Pending |
 | TRACK-12 | Phase 2 | Pending |
