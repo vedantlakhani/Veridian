@@ -32,12 +32,12 @@
 
 ### Core Tracking
 
-- [ ] **TRACK-01**: User can log a food emission entry by selecting category, item, and quantity
-- [ ] **TRACK-02**: User can log a transport emission entry (car, public transit, flight, cycling) with distance
-- [ ] **TRACK-03**: User can log a home energy emission entry (electricity kWh, gas m³, heating)
-- [ ] **TRACK-04**: Emission calculation uses `emission_factors` table values (never hardcoded)
-- [ ] **TRACK-05**: User can view today's total carbon footprint on the Home screen
-- [ ] **TRACK-06**: User can view weekly carbon breakdown by category (food/transport/energy)
+- [x] **TRACK-01**: User can log a food emission entry by selecting category, item, and quantity
+- [x] **TRACK-02**: User can log a transport emission entry (car, public transit, flight, cycling) with distance
+- [x] **TRACK-03**: User can log a home energy emission entry (electricity kWh, gas m³, heating)
+- [x] **TRACK-04**: Emission calculation uses `emission_factors` table values (never hardcoded)
+- [x] **TRACK-05**: User can view today's total carbon footprint on the Home screen
+- [x] **TRACK-06**: User can view weekly carbon breakdown by category (food/transport/energy)
 - [ ] **TRACK-07**: User can view monthly carbon totals with trend comparison
 - [ ] **TRACK-08**: User can view emission history list with date filtering
 - [ ] **TRACK-09**: Bar chart showing daily/weekly emission breakdown (React Native SVG or Victory Native)
@@ -129,12 +129,12 @@
 | FOUND-20 | Phase 1 | Complete |
 | FOUND-21 | Phase 1 | Complete |
 | FOUND-22 | Phase 1 | Pending |
-| TRACK-01 | Phase 2 | Pending |
-| TRACK-02 | Phase 2 | Pending |
-| TRACK-03 | Phase 2 | Pending |
-| TRACK-04 | Phase 2 | Pending |
-| TRACK-05 | Phase 2 | Pending |
-| TRACK-06 | Phase 2 | Pending |
+| TRACK-01 | Phase 2 | Complete |
+| TRACK-02 | Phase 2 | Complete |
+| TRACK-03 | Phase 2 | Complete |
+| TRACK-04 | Phase 2 | Complete |
+| TRACK-05 | Phase 2 | Complete |
+| TRACK-06 | Phase 2 | Complete |
 | TRACK-07 | Phase 2 | Pending |
 | TRACK-08 | Phase 2 | Pending |
 | TRACK-09 | Phase 2 | Pending |
