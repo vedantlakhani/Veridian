@@ -7,7 +7,7 @@
 
 ### Foundation
 
-- [ ] **FOUND-01**: Expo project scaffolded with TypeScript strict mode, Expo Router v4, and correct directory structure per Playbook Section 6
+- [x] **FOUND-01**: Expo project scaffolded with TypeScript strict mode, Expo Router v4, and correct directory structure per Playbook Section 6
 - [x] **FOUND-02**: Supabase PostgreSQL schema with all 13 tables created via migrations
 - [x] **FOUND-03**: Row-Level Security (RLS) policies applied to every table using `auth.uid()`
 - [ ] **FOUND-04**: Supabase Auth configured with email/password provider
@@ -107,7 +107,7 @@
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| FOUND-01 | Phase 1 | Pending |
+| FOUND-01 | Phase 1 | Complete |
 | FOUND-02 | Phase 1 | Pending |
 | FOUND-03 | Phase 1 | Pending |
 | FOUND-04 | Phase 1 | Pending |

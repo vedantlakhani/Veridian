@@ -1,3 +1,16 @@
+---
+gsd_state_version: 1.0
+milestone: v1.0
+milestone_name: milestone
+status: unknown
+last_updated: "2026-03-16T03:51:21.982Z"
+progress:
+  total_phases: 5
+  completed_phases: 0
+  total_plans: 5
+  completed_plans: 2
+---
+
 # Veridian — Project State
 
 ## Project Reference
@@ -36,6 +49,8 @@ See: .planning/PROJECT.md (updated 2026-03-15)
 - audit_log INSERT restricted to service role only (triggers write to it)
 - challenges.invite_code: upper(substr(md5(random()::text), 1, 8)) for 8-char uppercase code
 - notification_preferences.user_id is UNIQUE (one row per user)
+- [Phase 01-foundation]: Used Expo SDK 54 (RN 0.81) with reanimated@~3.16.7 pinned explicitly; create-expo-app@latest creates SDK 54 in 2026
+- [Phase 01-foundation]: Added Platform.OS web guard in supabase.ts localStorage — expo-sqlite polyfill is native-only; guard required for expo export --platform all web SSR to pass
 
 ## Performance Metrics
 
