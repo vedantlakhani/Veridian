@@ -15,8 +15,8 @@
 **Plans:** 5 plans
 
 Plans:
-- [ ] 01-01-PLAN.md — Expo project scaffold, TypeScript strict, all dependencies, directory structure, Supabase singleton, Zustand auth store, root layout
-- [ ] 01-02-PLAN.md — Supabase schema: 13 migration files, RLS policies with (select auth.uid()), DEFRA 2025 emission_factors seed data
+- [x] 01-01-PLAN.md — Expo project scaffold, TypeScript strict, all dependencies, directory structure, Supabase singleton, Zustand auth store, root layout
+- [x] 01-02-PLAN.md — Supabase schema: 13 migration files, RLS policies with (select auth.uid()), DEFRA 2025 emission_factors seed data
 - [ ] 01-03-PLAN.md — Auth flow: email/password + Google + Apple Sign-In, auth screens (login, signup, forgot-password), session persistence
 - [ ] 01-04-PLAN.md — Design system: lib/theme.ts tokens + all 11 V* components (VCard, VButton, VBadge, VInput, VProgressBar, VProgressRing, VMetricCard, VChip, VBottomSheet, VEmptyState, VSkeleton)
 - [ ] 01-05-PLAN.md — TypeScript domain interfaces (all 13 tables), Jest infrastructure, all Wave 0 test stubs
@@ -119,7 +119,7 @@ Plans:
 
 | Phase | Status | Plans | Key Deliverable |
 |-------|--------|-------|-----------------|
-| 1 | ○ | 5 | Runnable app + full design system |
+| 1 | ◑ | 5 (2/5 done) | Runnable app + full design system |
 | 2 | ○ | 5 | Full emission tracking with charts |
 | 3 | ○ | 4 | AI insights on home screen |
 | 4 | ○ | 4 | Social challenges + achievements |
@@ -129,4 +129,4 @@ Plans:
 
 ---
 *Roadmap created: 2026-03-15*
-*Last updated: 2026-03-15 after Phase 1 planning complete*
+*Last updated: 2026-03-16 after 01-02 (Supabase schema) complete*

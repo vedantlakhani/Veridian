@@ -8,8 +8,8 @@
 ### Foundation
 
 - [ ] **FOUND-01**: Expo project scaffolded with TypeScript strict mode, Expo Router v4, and correct directory structure per Playbook Section 6
-- [ ] **FOUND-02**: Supabase PostgreSQL schema with all 13 tables created via migrations
-- [ ] **FOUND-03**: Row-Level Security (RLS) policies applied to every table using `auth.uid()`
+- [x] **FOUND-02**: Supabase PostgreSQL schema with all 13 tables created via migrations
+- [x] **FOUND-03**: Row-Level Security (RLS) policies applied to every table using `auth.uid()`
 - [ ] **FOUND-04**: Supabase Auth configured with email/password provider
 - [ ] **FOUND-05**: Supabase Auth configured with Google OAuth provider
 - [ ] **FOUND-06**: Supabase Auth configured with Apple Sign-In provider
@@ -28,7 +28,7 @@
 - [ ] **FOUND-19**: `components/ui/VSkeleton` — Reanimated 3 shimmer loading placeholder
 - [ ] **FOUND-20**: TypeScript interfaces in `types/` for all domain models (User, EmissionEntry, EmissionFactor, Challenge, etc.)
 - [ ] **FOUND-21**: Bottom tab navigator with Home, Log, Insights, Profile tabs
-- [ ] **FOUND-22**: `emission_factors` table seeded with DEFRA 2025 GHG Conversion Factors
+- [x] **FOUND-22**: `emission_factors` table seeded with DEFRA 2025 GHG Conversion Factors
 
 ### Core Tracking
 
