@@ -8,7 +8,7 @@ progress:
   total_phases: 5
   completed_phases: 0
   total_plans: 5
-  completed_plans: 4
+  completed_plans: 5
 ---
 
 # Veridian — Project State
@@ -31,7 +31,7 @@ See: .planning/PROJECT.md (updated 2026-03-15)
 
 | Phase | Status | Plans | Progress |
 |-------|--------|-------|----------|
-| 1     | ◑      | 5     | 80%      |
+| 1     | ●      | 5     | 100%     |
 | 2     | ○      | 5     | 0%       |
 | 3     | ○      | 4     | 0%       |
 | 4     | ○      | 4     | 0%       |
@@ -43,6 +43,7 @@ See: .planning/PROJECT.md (updated 2026-03-15)
 - **01-02**: Supabase PostgreSQL schema — 13 migration files, (select auth.uid()) RLS, DEFRA 2025 emission_factors seed (73 rows)
 - **01-03**: Email/password + Google + Apple Sign-In with Zustand authStore, inline error display, iOS-gated Apple button, production auth screens
 - **01-04**: 11 V* UI components with Reanimated 3 animations, react-native-svg progress ring, pan-gesture bottom sheet, JetBrainsMono metric cards, and barrel export
+- **01-05**: TypeScript domain interfaces for all 13 Supabase tables, jest-expo@54 test infrastructure, 17 Wave 0 test stubs (44 tests passing)
 
 ## Decisions
 
@@ -60,6 +61,9 @@ See: .planning/PROJECT.md (updated 2026-03-15)
 - [Phase 01-04]: ReactNode imported from 'react' not 'react-native' — react-native does not export ReactNode type
 - [Phase 01-04]: VProgressRing uses useAnimatedProps (not useAnimatedStyle) for SVG stroke-dashoffset prop
 - [Phase 01-04]: runOnJS imported at file top level in VBottomSheet worklet callbacks
+- [Phase 01-05]: Used manual reanimated mock (not /mock entrypoint) — reanimated 3.16+ /mock loads worklet source requiring __reanimatedLoggerConfig global
+- [Phase 01-05]: jest-expo@54 pinned to match expo@54 SDK — @55 installs by default and is incompatible with expo@54 winter module structure
+- [Phase 01-05]: Expo winter lazy globals pre-triggered in jest.setup.js to prevent teardown ReferenceError (installGlobal lazy property accessed after Jest module registry closes)
 
 ## Performance Metrics
 
@@ -69,11 +73,12 @@ See: .planning/PROJECT.md (updated 2026-03-15)
 | 01    | 02   | 4min     | 2     | 15    |
 | 01    | 03   | 3min     | 2     | 4     |
 | 01    | 04   | ~10min   | 2     | 13    |
+| 01    | 05   | 9min     | 2     | 25    |
 
 ## Next Action
 
-Execute Plan 01-05: TypeScript domain interfaces (types/ directory)
+Phase 1 complete. Execute Phase 2: Core Features
 
 ---
 *Last session: 2026-03-16*
-*Stopped at: Completed 01-04-PLAN.md*
+*Stopped at: Completed 01-05-PLAN.md*

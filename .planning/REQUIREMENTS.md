@@ -26,8 +26,8 @@
 - [x] **FOUND-17**: `components/ui/VBottomSheet` — Reanimated 3 gesture-driven bottom sheet
 - [x] **FOUND-18**: `components/ui/VEmptyState` — illustration + CTA for empty list states
 - [x] **FOUND-19**: `components/ui/VSkeleton` — Reanimated 3 shimmer loading placeholder
-- [ ] **FOUND-20**: TypeScript interfaces in `types/` for all domain models (User, EmissionEntry, EmissionFactor, Challenge, etc.)
-- [ ] **FOUND-21**: Bottom tab navigator with Home, Log, Insights, Profile tabs
+- [x] **FOUND-20**: TypeScript interfaces in `types/` for all domain models (User, EmissionEntry, EmissionFactor, Challenge, etc.)
+- [x] **FOUND-21**: Bottom tab navigator with Home, Log, Insights, Profile tabs
 - [x] **FOUND-22**: `emission_factors` table seeded with DEFRA 2025 GHG Conversion Factors
 
 ### Core Tracking
@@ -126,8 +126,8 @@
 | FOUND-17 | Phase 1 | Complete |
 | FOUND-18 | Phase 1 | Complete |
 | FOUND-19 | Phase 1 | Complete |
-| FOUND-20 | Phase 1 | Pending |
-| FOUND-21 | Phase 1 | Pending |
+| FOUND-20 | Phase 1 | Complete |
+| FOUND-21 | Phase 1 | Complete |
 | FOUND-22 | Phase 1 | Pending |
 | TRACK-01 | Phase 2 | Pending |
 | TRACK-02 | Phase 2 | Pending |
