@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: unknown
-last_updated: "2026-03-16T15:52:58.158Z"
+last_updated: "2026-03-16T15:55:30.813Z"
 progress:
   total_phases: 5
   completed_phases: 1
   total_plans: 10
-  completed_plans: 6
+  completed_plans: 7
 ---
 
 # Veridian — Project State
@@ -24,7 +24,7 @@ See: .planning/PROJECT.md (updated 2026-03-15)
 
 **Phase 2: Core Tracking**
 - Status: In Progress
-- Current Plan: 1 of 5
+- Current Plan: 2 of 5
 - Goal: Emission logging, calculation engine, history view, summary bar chart, and weekly challenge
 
 ## Progress
@@ -32,7 +32,7 @@ See: .planning/PROJECT.md (updated 2026-03-15)
 | Phase | Status | Plans | Progress |
 |-------|--------|-------|----------|
 | 1     | ●      | 5     | 100%     |
-| 2     | ◐      | 5     | 20%      |
+| 2     | ◐      | 5     | 40%      |
 | 3     | ○      | 4     | 0%       |
 | 4     | ○      | 4     | 0%       |
 | 5     | ○      | 5     | 0%       |
@@ -45,6 +45,7 @@ See: .planning/PROJECT.md (updated 2026-03-15)
 - **01-04**: 11 V* UI components with Reanimated 3 animations, react-native-svg progress ring, pan-gesture bottom sheet, JetBrainsMono metric cards, and barrel export
 - **01-05**: TypeScript domain interfaces for all 13 Supabase tables, jest-expo@54 test infrastructure, 17 Wave 0 test stubs (44 tests passing)
 - **02-01**: Zustand emissionStore, Wave 0 test stubs (emissions/EmissionBarChart/useEmissionEntries), CategorySelector + FoodForm/TransportForm/EnergyForm sub-forms inside VBottomSheet, useEmissionFactors hook with staleTime: Infinity
+- **02-02**: DEFRA 2025 emission calculation engine (calcEmission, getLocalDateString, getISOWeekStart, computeDailyCategoryTotals, upsertDailySummary, upsertWeeklySummary), TanStack Query CRUD hooks (useEmissionEntries, useCreateEntry, useUpdateEntry, useDeleteEntry), Realtime migration, log.tsx wired to real mutation
 
 ## Decisions
 
@@ -69,6 +70,8 @@ See: .planning/PROJECT.md (updated 2026-03-15)
 - [Phase 02-01]: quantity kept as string in emissionStore for TextInput binding — parseFloat only at submit time
 - [Phase 02-01]: staleTime: Infinity for emission_factors in useEmissionFactors — DEFRA seed data is immutable; avoids redundant Supabase fetches
 - [Phase 02-01]: Wave 0 test stub pattern: beforeAll async import with try/catch; individual tests guard with if (!fn) return — compile without source module
+- [Phase 02]: Split lib/emissions.ts: pure functions on top, async Supabase helpers below for testability without mocking at import time
+- [Phase 02]: upsertDailySummary recomputes from all entries (not delta) to prevent summary drift on edit/delete
 
 ## Performance Metrics
 
@@ -80,11 +83,12 @@ See: .planning/PROJECT.md (updated 2026-03-15)
 | 01    | 04   | ~10min   | 2     | 13    |
 | 01    | 05   | 9min     | 2     | 25    |
 | 02    | 01   | 3min     | 2     | 11    |
+| 02    | 02   | 6min     | 2     | 5     |
 
 ## Next Action
 
-Phase 2 Plan 01 complete. Execute Phase 2 Plan 02: Emission Calculation Engine
+Phase 2 Plan 02 complete. Execute Phase 2 Plan 03: Dashboard + Summary Hooks
 
 ---
 *Last session: 2026-03-16*
-*Stopped at: Completed 02-01-PLAN.md*
+*Stopped at: Completed 02-02-PLAN.md*
