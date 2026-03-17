@@ -44,10 +44,11 @@ export function EmissionBarChart({
     <View style={styles.container}>
       {title ? <Text style={styles.title}>{title}</Text> : null}
       {/* overflow="visible" prevents Android SVG text clipping outside viewBox (Pitfall 6) */}
+      {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
       <Svg
         width={width}
         height={chartHeight}
-        overflow="visible"
+        {...({ overflow: 'visible' } as any)}
       >
         {/* Baseline */}
         <Line

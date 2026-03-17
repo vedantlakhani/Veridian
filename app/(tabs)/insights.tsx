@@ -1,13 +1,16 @@
 import { useState } from 'react';
-import { ScrollView, View, Text, StyleSheet, useWindowDimensions } from 'react-native';
+import { ScrollView, View, Text, StyleSheet, useWindowDimensions, TouchableOpacity, Pressable } from 'react-native';
+import Animated, { useSharedValue, useAnimatedStyle, withSpring, runOnJS } from 'react-native-reanimated';
+import { Gesture, GestureDetector } from 'react-native-gesture-handler';
+import { router } from 'expo-router';
 import { useAuthStore } from '@/stores/authStore';
-import { useEmissionEntries } from '@/hooks/useEmissionEntries';
+import { useEmissionEntries, useDeleteEntry } from '@/hooks/useEmissionEntries';
 import { useWeeklySummary, useMonthlyTotals } from '@/hooks/useSummaries';
 import { getLocalDateString, getISOWeekStart } from '@/lib/emissions';
 import { EmissionBarChart } from '@/components/charts/EmissionBarChart';
 import { VChip, VCard, VBadge, VSkeleton, VEmptyState } from '@/components/ui';
 import { colors, spacing, typography } from '@/lib/theme';
-import type { EmissionCategory } from '@/types/emission';
+import type { EmissionCategory, EmissionEntryWithFactor } from '@/types/emission';
 
 type DateFilter = 'today' | 'week' | 'month';
 
@@ -21,6 +24,85 @@ function getDateRange(filter: DateFilter): { dateFrom: string; dateTo: string } 
   const now = new Date();
   const monthStart = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-01`;
   return { dateFrom: monthStart, dateTo: today };
+}
+
+// ─── EntryRow component with swipe-to-delete and tap-to-edit ────────────────
+function EntryRow({ entry, userId }: { entry: EmissionEntryWithFactor; userId: string }) {
+  const deleteEntry = useDeleteEntry();
+  const translateX = useSharedValue(0);
+  const REVEAL_THRESHOLD = -60;
+  const DELETE_BUTTON_WIDTH = 80;
+
+  const panGesture = Gesture.Pan()
+    .activeOffsetX([-10, 10]) // only horizontal swipes
+    .onUpdate((e) => {
+      // Only allow left swipe (negative), cap at -DELETE_BUTTON_WIDTH
+      translateX.value = Math.max(-DELETE_BUTTON_WIDTH, Math.min(0, e.translationX));
+    })
+    .onEnd((e) => {
+      if (e.translationX < REVEAL_THRESHOLD) {
+        // Snap to reveal delete button
+        translateX.value = withSpring(-DELETE_BUTTON_WIDTH);
+      } else {
+        // Snap back
+        translateX.value = withSpring(0);
+      }
+    });
+
+  const rowStyle = useAnimatedStyle(() => ({
+    transform: [{ translateX: translateX.value }],
+  }));
+
+  const handleDelete = () => {
+    deleteEntry.mutate({ id: entry.id, userId, loggedAt: entry.logged_at });
+  };
+
+  const navigateToEdit = () => {
+    router.push(`/entry/${entry.id}`);
+  };
+
+  return (
+    <View style={styles.entryRowWrapper}>
+      {/* Delete button revealed behind the row */}
+      <View style={styles.deleteButton}>
+        <TouchableOpacity
+          style={styles.deleteButtonInner}
+          onPress={handleDelete}
+        >
+          <Text style={styles.deleteButtonText}>Delete</Text>
+        </TouchableOpacity>
+      </View>
+      <GestureDetector gesture={panGesture}>
+        <Animated.View style={rowStyle}>
+          <Pressable onPress={() => runOnJS(navigateToEdit)()}>
+            <VCard elevation="sm" style={styles.entryCard}>
+              <View style={styles.entryRow}>
+                <View style={styles.entryLeft}>
+                  <VBadge
+                    label={entry.emission_factors.category}
+                    variant={entry.emission_factors.category as EmissionCategory}
+                  />
+                  <View>
+                    <Text style={styles.entryItem} numberOfLines={1}>
+                      {entry.emission_factors.item}
+                    </Text>
+                    <Text style={styles.entryDate}>
+                      {new Date(entry.logged_at).toLocaleDateString('en-GB', {
+                        month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit',
+                      })}
+                    </Text>
+                  </View>
+                </View>
+                <Text style={styles.entryValue}>
+                  {entry.kg_co2e_total.toFixed(2)} kg
+                </Text>
+              </View>
+            </VCard>
+          </Pressable>
+        </Animated.View>
+      </GestureDetector>
+    </View>
+  );
 }
 
 export default function InsightsScreen() {
@@ -127,7 +209,7 @@ export default function InsightsScreen() {
         </VCard>
       )}
 
-      {/* History List — TRACK-08 */}
+      {/* History List — TRACK-08, TRACK-09, TRACK-10, TRACK-11 */}
       <Text style={styles.sectionTitle}>
         {filter === 'today' ? "Today's Entries" :
          filter === 'week' ? "This Week's Entries" :
@@ -146,29 +228,7 @@ export default function InsightsScreen() {
         />
       ) : (
         entries.map((entry) => (
-          <VCard key={entry.id} elevation="sm" style={styles.entryCard}>
-            <View style={styles.entryRow}>
-              <View style={styles.entryLeft}>
-                <VBadge
-                  label={entry.emission_factors.category}
-                  variant={entry.emission_factors.category as EmissionCategory}
-                />
-                <View>
-                  <Text style={styles.entryItem} numberOfLines={1}>
-                    {entry.emission_factors.item}
-                  </Text>
-                  <Text style={styles.entryDate}>
-                    {new Date(entry.logged_at).toLocaleDateString('en-GB', {
-                      month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit',
-                    })}
-                  </Text>
-                </View>
-              </View>
-              <Text style={styles.entryValue}>
-                {entry.kg_co2e_total.toFixed(2)} kg
-              </Text>
-            </View>
-          </VCard>
+          <EntryRow key={entry.id} entry={entry} userId={user!.id} />
         ))
       )}
     </ScrollView>
@@ -195,7 +255,33 @@ const styles = StyleSheet.create({
   trendBadge: { fontSize: typography.sizes.sm, fontWeight: '600', marginTop: 4 },
   monthlyBreakdown: { flexDirection: 'row', justifyContent: 'space-between', marginTop: spacing.sm },
   monthlyDetail: { fontSize: typography.sizes.xs, color: colors.textSecondary },
-  entryCard: { marginBottom: spacing.sm },
+  // Entry row styles
+  entryRowWrapper: { marginBottom: spacing.sm, position: 'relative' },
+  deleteButton: {
+    position: 'absolute',
+    right: 0,
+    top: 0,
+    bottom: 0,
+    width: 80,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderRadius: 12,
+    overflow: 'hidden',
+  },
+  deleteButtonInner: {
+    flex: 1,
+    width: '100%',
+    backgroundColor: colors.error,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderRadius: 12,
+  },
+  deleteButtonText: {
+    color: '#FFFFFF',
+    fontSize: typography.sizes.sm,
+    fontWeight: '700',
+  },
+  entryCard: {},
   entryRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   entryLeft: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, flex: 1 },
   entryItem: { fontSize: typography.sizes.sm, fontWeight: '500', color: colors.textPrimary },

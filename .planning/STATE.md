@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: unknown
-last_updated: "2026-03-16T16:03:44.099Z"
+last_updated: "2026-03-16T17:00:00.000Z"
 progress:
   total_phases: 5
-  completed_phases: 1
+  completed_phases: 2
   total_plans: 10
-  completed_plans: 9
+  completed_plans: 10
 ---
 
 # Veridian — Project State
@@ -23,8 +23,8 @@ See: .planning/PROJECT.md (updated 2026-03-15)
 ## Current Phase
 
 **Phase 2: Core Tracking**
-- Status: In Progress
-- Current Plan: 4 of 5
+- Status: Complete ●
+- Current Plan: 5 of 5
 - Goal: Emission logging, calculation engine, history view, summary bar chart, and weekly challenge
 
 ## Progress
@@ -32,7 +32,7 @@ See: .planning/PROJECT.md (updated 2026-03-15)
 | Phase | Status | Plans | Progress |
 |-------|--------|-------|----------|
 | 1     | ●      | 5     | 100%     |
-| 2     | ◐      | 5     | 60%      |
+| 2     | ●      | 5     | 100%     |
 | 3     | ○      | 4     | 0%       |
 | 4     | ○      | 4     | 0%       |
 | 5     | ○      | 5     | 0%       |
@@ -48,6 +48,7 @@ See: .planning/PROJECT.md (updated 2026-03-15)
 - **02-02**: DEFRA 2025 emission calculation engine (calcEmission, getLocalDateString, getISOWeekStart, computeDailyCategoryTotals, upsertDailySummary, upsertWeeklySummary), TanStack Query CRUD hooks (useEmissionEntries, useCreateEntry, useUpdateEntry, useDeleteEntry), Realtime migration, log.tsx wired to real mutation
 - **02-03**: TanStack Query hooks (useDailySummary, useWeeklySummary, useMonthlyTotals) and full Home dashboard with VProgressRing, VMetricCard, weekly category breakdown, recent entries list, VSkeleton loading states, VEmptyState
 - **02-04**: EmissionBarChart react-native-svg bar chart (Rect/G/Line/SvgText, overflow="visible" Android fix), Insights screen with date filter chips (today/week/month), weekly breakdown chart, monthly trend comparison, and date-filtered history list
+- **02-05**: Edit entry modal (app/entry/[id].tsx) pre-fills quantity with useUpdateEntry on save; swipe-to-delete in insights (Reanimated 3 Gesture.Pan, runOnJS); useEmissionRealtime hook (postgres_changes filtered by user_id) mounted in root layout
 
 ## Decisions
 
@@ -93,7 +94,7 @@ See: .planning/PROJECT.md (updated 2026-03-15)
 
 ## Next Action
 
-Phase 2 Plan 04 complete. Execute Phase 2 Plan 05: Entry Management (edit/delete)
+Phase 2 complete. Run human verification (6 tests in Expo Go), then proceed to Phase 3: AI Insights.
 
 ---
 *Last session: 2026-03-16*

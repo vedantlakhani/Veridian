@@ -6,11 +6,13 @@ import { useEffect } from 'react';
 import * as SplashScreen from 'expo-splash-screen';
 import { useAuthStore } from '@/stores/authStore';
 import { queryClient } from '@/lib/queryClient';
+import { useEmissionRealtime } from '@/hooks/useEmissionRealtime';
 
 SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
-  const { session, isLoading, initialize } = useAuthStore();
+  const { session, isLoading, initialize, user } = useAuthStore();
+  useEmissionRealtime(user?.id);
 
   useEffect(() => {
     initialize();
