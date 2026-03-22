@@ -17,8 +17,8 @@ export const colors = {
   divider: '#F3F4F6',
   // Category colors
   food: '#F97316',
-  transport: '#3B82F6',
-  energy: '#A855F7',
+  transport: '#0EA5E9',
+  energy: '#EAB308',
 } as const;
 
 export const spacing = {

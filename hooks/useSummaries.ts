@@ -63,57 +63,63 @@ export function useWeeklySummary(userId: string | undefined) {
  * month: "YYYY-MM" string, e.g. "2026-03"
  */
 export function useMonthlyTotals(userId: string | undefined, month?: string) {
-  // Default to current month if not provided
   const now = new Date();
   const targetMonth =
     month ??
     `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
 
-  // Previous month calculation
   const [year, monthNum] = targetMonth.split('-').map(Number);
-  const prevDate = new Date(year, monthNum - 2, 1); // month is 0-indexed
-  const prevMonth = `${prevDate.getFullYear()}-${String(prevDate.getMonth() + 1).padStart(2, '0')}`;
+  // Local start/end of the target month as UTC ISO strings
+  const monthStart = new Date(year, monthNum - 1, 1, 0, 0, 0, 0);
+  const monthEnd = new Date(year, monthNum, 0, 23, 59, 59, 999); // day 0 = last day of month
+
+  // Previous month bounds
+  const prevDate = new Date(year, monthNum - 2, 1);
+  const prevYear = prevDate.getFullYear();
+  const prevMonthNum = prevDate.getMonth() + 1;
+  const prevStart = new Date(prevYear, prevMonthNum - 1, 1, 0, 0, 0, 0);
+  const prevEnd = new Date(prevYear, prevMonthNum, 0, 23, 59, 59, 999);
 
   return useQuery({
     queryKey: ['monthly_totals', userId, targetMonth],
     queryFn: async (): Promise<MonthlyTotals> => {
-      // Query current month
+      // Query emission_entries directly — avoids daily_summaries pre-aggregation gaps
       const { data: currentRows, error: currentError } = await supabase
-        .from('daily_summaries')
-        .select('total_kg_co2e, food_kg, transport_kg, energy_kg')
+        .from('emission_entries')
+        .select('kg_co2e_total, logged_at, emission_factors(category)')
         .eq('user_id', userId!)
-        .gte('date', `${targetMonth}-01`)
-        .lte('date', `${targetMonth}-31`);
+        .gte('logged_at', monthStart.toISOString())
+        .lte('logged_at', monthEnd.toISOString());
       if (currentError) throw currentError;
 
-      // Query previous month for trend comparison
       const { data: prevRows, error: prevError } = await supabase
-        .from('daily_summaries')
-        .select('total_kg_co2e')
+        .from('emission_entries')
+        .select('kg_co2e_total')
         .eq('user_id', userId!)
-        .gte('date', `${prevMonth}-01`)
-        .lte('date', `${prevMonth}-31`);
+        .gte('logged_at', prevStart.toISOString())
+        .lte('logged_at', prevEnd.toISOString());
       if (prevError) throw prevError;
 
-      type SumRow = { total_kg_co2e: number; food_kg: number; transport_kg: number; energy_kg: number };
-      const sumRows = (rows: SumRow[] | null) =>
-        (rows ?? []).reduce(
-          (acc, row) => ({
-            total: acc.total + (row.total_kg_co2e ?? 0),
-            food: acc.food + (row.food_kg ?? 0),
-            transport: acc.transport + (row.transport_kg ?? 0),
-            energy: acc.energy + (row.energy_kg ?? 0),
-          }),
-          { total: 0, food: 0, transport: 0, energy: 0 }
-        );
+      type EFRow = { category: string };
+      type EntryRow = { kg_co2e_total: number; emission_factors: EFRow[] | EFRow | null };
+      const current = (currentRows as unknown as EntryRow[] ?? []).reduce(
+        (acc, row) => {
+          const cat = (Array.isArray(row.emission_factors) ? row.emission_factors[0]?.category : row.emission_factors?.category) ?? '';
+          return {
+            total: acc.total + row.kg_co2e_total,
+            food: acc.food + (cat === 'food' ? row.kg_co2e_total : 0),
+            transport: acc.transport + (cat === 'transport' ? row.kg_co2e_total : 0),
+            energy: acc.energy + (cat === 'energy' ? row.kg_co2e_total : 0),
+          };
+        },
+        { total: 0, food: 0, transport: 0, energy: 0 }
+      );
 
-      const current = sumRows(currentRows);
       const prevTotal = (prevRows ?? []).reduce(
-        (acc: number, r: { total_kg_co2e: number }) => acc + (r.total_kg_co2e ?? 0),
+        (acc: number, r: { kg_co2e_total: number }) => acc + r.kg_co2e_total,
         0
       );
 
-      // trendPercent: positive = worse than previous, negative = better
       const trendPercent =
         prevTotal > 0 ? ((current.total - prevTotal) / prevTotal) * 100 : null;
 

@@ -16,7 +16,7 @@ interface EmissionBarChartProps {
 }
 
 const LABEL_HEIGHT = 24; // px reserved at bottom for axis labels — Android clips if not padded
-const TOP_PADDING = 8;   // px above tallest bar
+const TOP_PADDING = 24;  // px above tallest bar — must fit value label text
 
 export function EmissionBarChart({
   data,
@@ -111,10 +111,9 @@ const styles = StyleSheet.create({
   title: {
     fontSize: typography.sizes.sm,
     fontWeight: '600',
-    color: colors.textPrimary,
+    color: colors.textSecondary,
     marginBottom: spacing.xs,
-    alignSelf: 'flex-start',
-    paddingHorizontal: spacing.sm,
+    textAlign: 'center',
   },
   empty: {
     fontSize: typography.sizes.sm,

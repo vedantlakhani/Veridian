@@ -166,7 +166,7 @@ export default function InsightsScreen() {
             data={barChartData}
             width={chartWidth - spacing.lg * 2} // account for VCard padding
             height={200}
-            title="kg CO\u2082e by category this week"
+            title={"This week · kg CO₂e"}
           />
         </VCard>
       )}
