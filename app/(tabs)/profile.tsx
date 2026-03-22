@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import {
   ScrollView,
   View,
@@ -14,8 +14,12 @@ import { useAuthStore } from '@/stores/authStore';
 import { useProfile, useUpdateProfile, uploadAvatar } from '@/hooks/useProfile';
 import { useEmissionEntries } from '@/hooks/useEmissionEntries';
 import { useMyChallenges, useCreateChallenge, useJoinChallenge } from '@/hooks/useChallenges';
-import { useQuery } from '@tanstack/react-query';
+import { useAchievements } from '@/hooks/useAchievements';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
+import AchievementBadge from '@/components/social/AchievementBadge';
+import AchievementToast from '@/components/social/AchievementToast';
+import type { Achievement } from '@/types/achievement';
 import {
   VCard,
   VButton,
@@ -96,6 +100,24 @@ export default function ProfileScreen() {
     }
     return streak;
   }, [streakData]);
+
+  // ── Achievements ──
+  const queryClient = useQueryClient();
+  const { data: achievementsData, isLoading: achLoading } = useAchievements(userId);
+  const [toastBadge, setToastBadge] = useState<Achievement | null>(null);
+
+  useEffect(() => {
+    const unsubscribe = queryClient.getQueryCache().subscribe((event) => {
+      if (event.type === 'updated' && event.query.queryKey[0] === 'newly_earned_achievements') {
+        const badges = event.query.state.data as Achievement[] | undefined;
+        if (badges && badges.length > 0) {
+          setToastBadge(badges[0]);
+          queryClient.setQueryData(['newly_earned_achievements'], []);
+        }
+      }
+    });
+    return () => unsubscribe();
+  }, [queryClient]);
 
   // ── My Challenges state ──
   const { data: participantRows = [], isLoading: challengesLoading } = useMyChallenges(userId);
@@ -321,7 +343,32 @@ export default function ProfileScreen() {
       {/* ── Achievements Section ── */}
       <VCard elevation="sm" style={styles.section}>
         <Text style={styles.sectionTitle}>Achievements</Text>
-        <Text style={styles.placeholderText}>Badges coming soon</Text>
+        {achLoading ? (
+          <VSkeleton width="100%" height={80} />
+        ) : (
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.badgeRow}
+          >
+            {(achievementsData?.achievements ?? []).map((a) => (
+              <AchievementBadge
+                key={a.id}
+                achievement={a}
+                earned={achievementsData?.earned.some((e) => e.achievement_id === a.id) ?? false}
+              />
+            ))}
+            {(achievementsData?.achievements ?? []).length === 0 && (
+              <Text style={styles.placeholderText}>No achievements yet</Text>
+            )}
+          </ScrollView>
+        )}
+        {toastBadge && (
+          <AchievementToast
+            achievementName={toastBadge.name}
+            onDismiss={() => setToastBadge(null)}
+          />
+        )}
       </VCard>
 
       {/* ── Edit Profile Bottom Sheet ── */}
@@ -554,6 +601,10 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
     textAlign: 'center',
     paddingVertical: spacing.md,
+  },
+  badgeRow: {
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.xs,
   },
   skeletonRow: {
     marginBottom: spacing.sm,

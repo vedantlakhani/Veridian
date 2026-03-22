@@ -7,6 +7,7 @@ import {
   upsertDailySummary,
   upsertWeeklySummary,
 } from '@/lib/emissions';
+import { checkAndUnlockAchievements } from '@/hooks/useAchievements';
 import type { EmissionEntryWithFactor, EmissionFactor } from '@/types/emission';
 
 // ─── Query Keys ────────────────────────────────────────────────────────────
@@ -101,10 +102,17 @@ export function useCreateEntry() {
 
       return data as EmissionEntryWithFactor;
     },
-    onSuccess: () => {
+    onSuccess: async (_data, variables) => {
       queryClient.invalidateQueries({ queryKey: ENTRY_KEYS.all });
       queryClient.invalidateQueries({ queryKey: ['daily_summary'] });
       queryClient.invalidateQueries({ queryKey: ['weekly_summary'] });
+      // Check and unlock achievements after any new entry
+      const newBadges = await checkAndUnlockAchievements(variables.userId);
+      if (newBadges.length > 0) {
+        queryClient.invalidateQueries({ queryKey: ['achievements'] });
+        // Store newly earned badges for toast consumption by profile screen
+        queryClient.setQueryData(['newly_earned_achievements'], newBadges);
+      }
     },
   });
 }
@@ -137,10 +145,17 @@ export function useUpdateEntry() {
 
       return data as EmissionEntryWithFactor;
     },
-    onSuccess: () => {
+    onSuccess: async (_data, variables) => {
       queryClient.invalidateQueries({ queryKey: ENTRY_KEYS.all });
       queryClient.invalidateQueries({ queryKey: ['daily_summary'] });
       queryClient.invalidateQueries({ queryKey: ['weekly_summary'] });
+      // Check and unlock achievements after any entry update
+      const newBadges = await checkAndUnlockAchievements(variables.userId);
+      if (newBadges.length > 0) {
+        queryClient.invalidateQueries({ queryKey: ['achievements'] });
+        // Store newly earned badges for toast consumption by profile screen
+        queryClient.setQueryData(['newly_earned_achievements'], newBadges);
+      }
     },
   });
 }
