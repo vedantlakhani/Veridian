@@ -60,11 +60,12 @@ Plans:
 
 **Requirements covered:** AI-01 through AI-07
 
-**Plans:**
-1. Edge Function: `analyze-emissions` — Supabase Edge Function (Deno), Claude Sonnet integration, emission context injection, structured output
-2. Edge Function: `generate-suggestions` — Claude Haiku integration, fast suggestion generation, personalization by emission profile
-3. AI Insight card — Home screen card component, daily refresh via pg_cron, loading state, error boundary
-4. Insight personalization — User emission history context, category-specific suggestions, quantified reduction actions
+**Plans:** 3 plans
+
+Plans:
+- [ ] 03-01-PLAN.md — Supabase Edge Functions: _shared/cors.ts, analyze-emissions (Sonnet 4.5), generate-suggestions (Haiku 4.5); JWT auth, admin client INSERT, CORS preflight
+- [ ] 03-02-PLAN.md — hooks/useAiInsight.ts: cache-first React Query hook (Supabase SELECT first, Edge Function only when stale), staleTime 23h, EmissionContext type
+- [ ] 03-03-PLAN.md — components/ui/VAiInsightCard.tsx + barrel export + Home screen integration; skeleton loading, graceful null on error
 
 **Success Criteria:**
 - AI insight appears on Home screen within 3 seconds of load
@@ -123,12 +124,12 @@ Plans:
 |-------|--------|-------|-----------------|
 | 1 | 5/5 | Complete    | 2026-03-16 |
 | 2 | 4/5 | In Progress|  |
-| 3 | ○ | 4 | AI insights on home screen |
+| 3 | ○ | 3 | AI insights on home screen |
 | 4 | ○ | 4 | Social challenges + achievements |
 | 5 | ○ | 5 | App Store submission ready |
 
-**Total plans:** 23
+**Total plans:** 22
 
 ---
 *Roadmap created: 2026-03-15*
-*Last updated: 2026-03-16 — Phase 2 plans created*
+*Last updated: 2026-03-22 — Phase 3 plans created*
