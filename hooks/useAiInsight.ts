@@ -68,11 +68,17 @@ export function useAiInsight(
       // Step 2: No fresh cache — guard against calling Claude with no data
       if (!context || context.weeklyTotalKg === 0) return null;
 
-      // Step 3: Call Edge Function — supabase.functions.invoke attaches the
-      // session's access token automatically via the anon key client
+      // Step 3: Call Edge Function — explicitly attach session token to avoid
+      // React Native auth header attachment issues
+      const { data: { session } } = await supabase.auth.getSession();
       const { data, error } = await supabase.functions.invoke<AiInsight>(
         'generate-suggestions',
-        { body: context },
+        {
+          body: context,
+          headers: session?.access_token
+            ? { Authorization: `Bearer ${session.access_token}` }
+            : {},
+        },
       );
 
       if (error) {
