@@ -18,7 +18,7 @@ import { useAiInsight } from '@/hooks/useAiInsight';
 import type { EmissionContext } from '@/hooks/useAiInsight';
 
 export default function HomeScreen() {
-  const { user } = useAuthStore();
+  const { user, session } = useAuthStore();
   const today = getLocalDateString();
   const { data: weekly, isLoading: weeklyLoading } = useWeeklySummary(user?.id);
   // Fetch all entries — filter today's in JS to avoid UTC midnight timezone mismatch
@@ -124,7 +124,7 @@ export default function HomeScreen() {
 
       {/* DEBUG — remove after diagnosis */}
       <Text style={{ fontSize: 11, color: 'red', marginBottom: 4 }}>
-        {`AI: loading=${insightLoading} insight=${!!insight} ctx=${!!emissionContext} err=${insightError?.message?.slice(0, 80) ?? 'none'}`}
+        {`AI: loading=${insightLoading} insight=${!!insight} err=${insightError?.message?.slice(0, 60) ?? 'none'} tok=${session?.access_token?.slice(0, 12) ?? 'NULL'}`}
       </Text>
 
       {/* AI Insight Card — loads independently, renders skeleton while fetching */}
