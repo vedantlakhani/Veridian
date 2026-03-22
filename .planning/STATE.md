@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: unknown
-last_updated: "2026-03-22T18:39:26.096Z"
+last_updated: "2026-03-22T18:46:20.781Z"
 progress:
   total_phases: 5
   completed_phases: 3
   total_plans: 17
-  completed_plans: 14
+  completed_plans: 15
 ---
 
 # Veridian — Project State
@@ -24,7 +24,7 @@ See: .planning/PROJECT.md (updated 2026-03-15)
 
 **Phase 4: Social & Challenges**
 - Status: In Progress ◑
-- Current Plan: 2 of 4
+- Current Plan: 3 of 4
 - Goal: Profile screen, challenges flow, leaderboard, achievements
 
 ## Progress
@@ -94,6 +94,8 @@ See: .planning/PROJECT.md (updated 2026-03-15)
 - [Phase 04-01]: Used expo-file-system/legacy import for EncodingType — v18 restructured exports; legacy subpath preserves readAsStringAsync + EncodingType
 - [Phase 04-01]: supabase migration repair used to mark Phase 1-3 as applied before Phase 4 db push — remote DB had schema but no migration history
 - [Phase 04-01]: Profile stats use 3 independent TanStack Query hooks (all-time entries sum, weekly_summaries min, daily_summaries streak) — avoids new aggregation columns
+- [Phase 04-02]: SheetMode state machine (none/select/create/join/created) avoids multiple boolean flags for VBottomSheet challenge flow
+- [Phase 04-02]: router.push cast as any for /challenge/[id] — route file deferred to plan 04-03
 
 ## Performance Metrics
 
@@ -112,11 +114,12 @@ See: .planning/PROJECT.md (updated 2026-03-15)
 | 03    | 02   | 2min     | 1     | 1     |
 | 03    | 03   | 4min     | 2     | 3     |
 | 04    | 01   | 7min     | 3     | 12    |
+| 04    | 02   | 5min     | 2     | 3     |
 
 ## Next Action
 
-Phase 4 in progress — 04-01 complete. Proceed to 04-02 (challenges flow: useChallenges, useLeaderboard, ChallengeCard, challenges screen).
+Phase 4 in progress — 04-02 complete. Proceed to 04-03 (leaderboard: useLeaderboard hook, leaderboard screen, challenge detail).
 
 ---
 *Last session: 2026-03-22*
-*Stopped at: Completed 04-01-PLAN.md*
+*Stopped at: Completed 04-02-PLAN.md*

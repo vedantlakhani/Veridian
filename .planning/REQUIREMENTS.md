@@ -58,8 +58,8 @@
 ### Social & Challenges
 
 - [x] **SOCL-01**: User has a profile with display name, avatar, and lifetime carbon stats
-- [ ] **SOCL-02**: User can create a challenge with name, duration, and target reduction percentage
-- [ ] **SOCL-03**: User can join an existing challenge via invite code
+- [x] **SOCL-02**: User can create a challenge with name, duration, and target reduction percentage
+- [x] **SOCL-03**: User can join an existing challenge via invite code
 - [ ] **SOCL-04**: Challenge leaderboard shows participants ranked by emission reduction
 - [ ] **SOCL-05**: User earns achievement badges for first log, 7-day streak, 10% reduction, etc.
 - [ ] **SOCL-06**: User can view friends' challenges (not individual emission data — privacy)
@@ -149,8 +149,8 @@
 | AI-06 | Phase 3 | Complete |
 | AI-07 | Phase 3 | Complete |
 | SOCL-01 | Phase 4 | Complete |
-| SOCL-02 | Phase 4 | Pending |
-| SOCL-03 | Phase 4 | Pending |
+| SOCL-02 | Phase 4 | Complete |
+| SOCL-03 | Phase 4 | Complete |
 | SOCL-04 | Phase 4 | Pending |
 | SOCL-05 | Phase 4 | Pending |
 | SOCL-06 | Phase 4 | Pending |
