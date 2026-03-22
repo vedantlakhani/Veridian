@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: unknown
-last_updated: "2026-03-22T20:27:41.353Z"
+last_updated: "2026-03-22T20:41:00.000Z"
 progress:
   total_phases: 5
   completed_phases: 4
   total_plans: 22
-  completed_plans: 20
+  completed_plans: 21
 ---
 
 # Veridian — Project State
@@ -35,7 +35,7 @@ See: .planning/PROJECT.md (updated 2026-03-15)
 | 2     | ●      | 5     | 100%     |
 | 3     | ●      | 4     | 100%     |
 | 4     | ●      | 4     | 100%     |
-| 5     | ○      | 5     | 0%       |
+| 5     | ◑      | 5     | 60%      |
 
 ## Completed Plans
 
@@ -108,6 +108,8 @@ See: .planning/PROJECT.md (updated 2026-03-15)
 - [Phase 05-01]: Excluded supabase/functions from tsconfig.json — Deno Edge Functions use npm: specifiers incompatible with standard tsc; pre-existing errors
 - [Phase 05-polish-launch]: Onboarding carousel: Reanimated 4.x Extrapolation.CLAMP, AsyncStorage '@veridian/onboarding_complete' key, Stack.Protected guard as first child of root Stack
 - [Phase 05-polish-launch]: useOfflineQueue: module-level dbPromise singleton for expo-sqlite v16; withTiming in useEffect not render body for Reanimated 3 correctness; hooks-before-early-return in VOfflineBanner
+- [Phase 05-03]: Streak notifications use separate daily_summaries query (not newBadges from checkAndUnlockAchievements) — ensures notification fires regardless of whether achievement badge was already earned
+- [Phase 05-03]: easConfig typed as { projectId?: string } | undefined for TypeScript strict mode (no any)
 
 ## Performance Metrics
 
@@ -132,11 +134,12 @@ See: .planning/PROJECT.md (updated 2026-03-15)
 | Phase 05 P01 | 5min | 2 tasks | 4 files |
 | Phase 05-polish-launch P02 | 12 | 2 tasks | 6 files |
 | Phase 05-polish-launch P04 | 140 | 2 tasks | 5 files |
+| 05 | 03 | 12min | 2 | 5 |
 
 ## Next Action
 
-Phase 4 complete. Proceed to Phase 5 — Notifications & Polish.
+Phase 5 in progress (3/5 plans complete). Next: 05-04 — App Store metadata and assets.
 
 ---
 *Last session: 2026-03-22*
-*Stopped at: Completed 04-04-PLAN.md*
+*Stopped at: Completed 05-03-PLAN.md*
