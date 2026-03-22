@@ -2,13 +2,13 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: unknown
-last_updated: "2026-03-22T20:41:00.000Z"
+status: complete
+last_updated: "2026-03-22T20:45:00.000Z"
 progress:
   total_phases: 5
-  completed_phases: 4
+  completed_phases: 5
   total_plans: 22
-  completed_plans: 21
+  completed_plans: 22
 ---
 
 # Veridian — Project State
@@ -22,10 +22,10 @@ See: .planning/PROJECT.md (updated 2026-03-15)
 
 ## Current Phase
 
-**Phase 4: Social & Challenges**
+**Phase 5: Polish & Launch**
 - Status: Complete ●
-- Current Plan: 4 of 4 (COMPLETE)
-- Goal: Profile screen, challenges flow, leaderboard, achievements
+- Current Plan: 5 of 5 (COMPLETE)
+- Goal: Onboarding, performance, notifications, assets, store submission
 
 ## Progress
 
@@ -35,7 +35,7 @@ See: .planning/PROJECT.md (updated 2026-03-15)
 | 2     | ●      | 5     | 100%     |
 | 3     | ●      | 4     | 100%     |
 | 4     | ●      | 4     | 100%     |
-| 5     | ◑      | 5     | 60%      |
+| 5     | ●      | 5     | 100%     |
 
 ## Completed Plans
 
@@ -56,6 +56,11 @@ See: .planning/PROJECT.md (updated 2026-03-15)
 - **04-02**: Challenge create/join flow with SheetMode state machine, useChallenges hooks (useMyChallenges/useCreateChallenge/useJoinChallenge), ChallengeCard component, invite code copy/share
 - **04-03**: useLeaderboard hook with _computeReductionPct and _sortLeaderboard, useChallengeRealtime Realtime subscription, LeaderboardRow component, challenge detail screen
 - **04-04**: Achievement badge system — useAchievements hook with all 4 criteria types, AchievementBadge SVG component (earned/locked states), AchievementToast Reanimated 3 slide-in, achievement detection wired into useEmissionEntries mutations, Profile screen badge row
+- **05-01**: Onboarding 4-screen carousel (Reanimated 4.x CLAMP, AsyncStorage key), useOfflineQueue (expo-sqlite WAL, NetInfo retry), VOfflineBanner with animated height
+- **05-02**: Performance polish — React.memo on VMetricCard/VEmptyState/LeaderboardRow, lazy-loaded VAiInsightCard + AchievementBadge, VSkeleton on all async screens, VProgressRing 60fps verified
+- **05-03**: Push notifications — useStreakNotifications (daily-summaries query, expo-notifications scheduling), useAchievementNotifications (queryCache subscription), NotificationSettingsCard in Profile
+- **05-04**: App icon 1024x1024, adaptive icon, splash screen, accessibility audit (accessibilityLabel + accessibilityHint on all interactive elements)
+- **05-05**: EAS Build config (development/preview/production profiles), bundle IDs corrected to com.vedantlakhani.veridian, docs/privacy-policy.html (GitHub Pages), docs/store-metadata.md (App Store + Play Store copy), TypeScript + Jest green gate passed
 
 ## Decisions
 
@@ -110,6 +115,9 @@ See: .planning/PROJECT.md (updated 2026-03-15)
 - [Phase 05-polish-launch]: useOfflineQueue: module-level dbPromise singleton for expo-sqlite v16; withTiming in useEffect not render body for Reanimated 3 correctness; hooks-before-early-return in VOfflineBanner
 - [Phase 05-03]: Streak notifications use separate daily_summaries query (not newBadges from checkAndUnlockAchievements) — ensures notification fires regardless of whether achievement badge was already earned
 - [Phase 05-03]: easConfig typed as { projectId?: string } | undefined for TypeScript strict mode (no any)
+- [Phase 05]: Bundle ID changed to com.vedantlakhani.veridian — com.veridian.app was placeholder
+- [Phase 05]: eas.json appVersionSource: remote required for autoIncrement to work correctly with EAS remote versioning
+- [Phase 05]: Privacy policy covers Anthropic Claude API as third-party processor — server-side Edge Function only
 
 ## Performance Metrics
 
@@ -135,11 +143,24 @@ See: .planning/PROJECT.md (updated 2026-03-15)
 | Phase 05-polish-launch P02 | 12 | 2 tasks | 6 files |
 | Phase 05-polish-launch P04 | 140 | 2 tasks | 5 files |
 | 05 | 03 | 12min | 2 | 5 |
+| 05 | 04 | 8min | 2 | 6 |
+| 05 | 05 | 8min | 2 | 4 |
+| Phase 05 P05 | 8min | 2 tasks | 4 files |
 
 ## Next Action
 
-Phase 5 in progress (3/5 plans complete). Next: 05-04 — App Store metadata and assets.
+All phases complete. Veridian v1.0.0 is submission-ready.
+- Run `eas build --profile production` after filling in Apple/Google credentials in eas.json
+- Host docs/privacy-policy.html on GitHub Pages at vedantlakhani.github.io/veridian-privacy/
+- Upload assets and metadata from docs/store-metadata.md to App Store Connect and Play Console
+
+## Key Decisions (Phase 05)
+
+- [Phase 05-05]: Bundle ID changed to com.vedantlakhani.veridian — com.veridian.app was a placeholder
+- [Phase 05-05]: eas.json appVersionSource: remote required for autoIncrement to work with EAS remote versioning
+- [Phase 05-05]: EAS submit section uses placeholder Apple credentials — developer fills in before running eas submit
+- [Phase 05-05]: Privacy policy covers Anthropic Claude API as third-party processor (server-side Edge Function only)
 
 ---
 *Last session: 2026-03-22*
-*Stopped at: Completed 05-03-PLAN.md*
+*Stopped at: Completed 05-05-PLAN.md — Phase 5 complete, all 22 plans done*

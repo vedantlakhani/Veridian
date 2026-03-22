@@ -105,7 +105,7 @@ Plans:
 
 **Requirements covered:** PLSH-01 through PLSH-08
 
-**Plans:** 4/5 plans executed
+**Plans:** 5/5 plans complete
 
 Plans:
 - [ ] 05-01-PLAN.md — Wave 0 test stubs (useOnboarding, useNotifications, useOfflineQueue) covering PLSH-01/02/03/08
@@ -131,7 +131,7 @@ Plans:
 | 2 | 4/5 | In Progress|  |
 | 3 | 3/3 | Complete    | 2026-03-22 |
 | 4 | 4/4 | Complete   | 2026-03-22 |
-| 5 | 4/5 | In Progress|  |
+| 5 | 5/5 | Complete   | 2026-03-22 |
 
 **Total plans:** 22
 
