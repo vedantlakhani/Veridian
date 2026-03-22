@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: unknown
-last_updated: "2026-03-22T20:17:08.979Z"
+last_updated: "2026-03-22T20:23:09.022Z"
 progress:
   total_phases: 5
   completed_phases: 4
   total_plans: 22
-  completed_plans: 18
+  completed_plans: 19
 ---
 
 # Veridian — Project State
@@ -106,6 +106,7 @@ See: .planning/PROJECT.md (updated 2026-03-15)
 - [Phase 04-03]: SOCL-06 privacy enforced at component level — LeaderboardRow.tsx contains no baseline_kg or current_kg references; reduction_pct is the only performance metric visible
 - [Phase 05-01]: Used ts-ignore on dynamic import lines in Wave 0 stubs — TS2307 expected for modules not yet created
 - [Phase 05-01]: Excluded supabase/functions from tsconfig.json — Deno Edge Functions use npm: specifiers incompatible with standard tsc; pre-existing errors
+- [Phase 05-polish-launch]: Onboarding carousel: Reanimated 4.x Extrapolation.CLAMP, AsyncStorage '@veridian/onboarding_complete' key, Stack.Protected guard as first child of root Stack
 
 ## Performance Metrics
 
@@ -128,6 +129,7 @@ See: .planning/PROJECT.md (updated 2026-03-15)
 | 04    | 03   | 5min     | 2     | 6     |
 | 04    | 04   | 4min     | 2     | 6     |
 | Phase 05 P01 | 5min | 2 tasks | 4 files |
+| Phase 05-polish-launch P02 | 12 | 2 tasks | 6 files |
 
 ## Next Action
 
