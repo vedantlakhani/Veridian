@@ -1,7 +1,8 @@
 import { ScrollView, View, Text, StyleSheet } from 'react-native';
-import { useDailySummary, useWeeklySummary } from '@/hooks/useSummaries';
+import { useWeeklySummary } from '@/hooks/useSummaries';
 import { useEmissionEntries } from '@/hooks/useEmissionEntries';
 import { useAuthStore } from '@/stores/authStore';
+import { getLocalDateString } from '@/lib/emissions';
 import {
   VProgressRing,
   VMetricCard,
@@ -15,12 +16,14 @@ import { colors, spacing, typography } from '@/lib/theme';
 
 export default function HomeScreen() {
   const { user } = useAuthStore();
-  const { data: daily, isLoading: dailyLoading } = useDailySummary(user?.id);
+  const today = getLocalDateString();
+  // Derive today's total directly from emission_entries — reactive to new entries immediately
+  const { data: todayEntries = [], isLoading: dailyLoading } = useEmissionEntries(user?.id, today, today);
   const { data: weekly, isLoading: weeklyLoading } = useWeeklySummary(user?.id);
-  // Fetch most recent entries for the "Recent" section
+  // Fetch most recent entries for the "Recent" section (no date filter)
   const { data: recentEntries = [], isLoading: entriesLoading } = useEmissionEntries(user?.id);
 
-  const todayTotal = daily?.total_kg_co2e ?? 0;
+  const todayTotal = todayEntries.reduce((sum, e) => sum + e.kg_co2e_total, 0);
   const progress = Math.min(todayTotal / DAILY_CARBON_BUDGET_KG, 1); // clamp to [0, 1]
 
   // Determine ring color: green below target, orange approaching budget, red at/over budget
