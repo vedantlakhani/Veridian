@@ -10,9 +10,25 @@ import { useEmissionRealtime } from '@/hooks/useEmissionRealtime';
 
 SplashScreen.preventAutoHideAsync();
 
-export default function RootLayout() {
-  const { session, isLoading, initialize, user } = useAuthStore();
+// Inner component — must live inside QueryClientProvider so useQueryClient() works
+function AppNavigator() {
+  const { session, user } = useAuthStore();
   useEmissionRealtime(user?.id);
+
+  return (
+    <Stack screenOptions={{ headerShown: false }}>
+      <Stack.Protected guard={!!session}>
+        <Stack.Screen name="(tabs)" />
+      </Stack.Protected>
+      <Stack.Protected guard={!session}>
+        <Stack.Screen name="(auth)" />
+      </Stack.Protected>
+    </Stack>
+  );
+}
+
+export default function RootLayout() {
+  const { isLoading, initialize } = useAuthStore();
 
   useEffect(() => {
     initialize();
@@ -30,14 +46,7 @@ export default function RootLayout() {
     <GestureHandlerRootView style={{ flex: 1 }}>
       <QueryClientProvider client={queryClient}>
         <StatusBar style="dark" />
-        <Stack screenOptions={{ headerShown: false }}>
-          <Stack.Protected guard={!!session}>
-            <Stack.Screen name="(tabs)" />
-          </Stack.Protected>
-          <Stack.Protected guard={!session}>
-            <Stack.Screen name="(auth)" />
-          </Stack.Protected>
-        </Stack>
+        <AppNavigator />
       </QueryClientProvider>
     </GestureHandlerRootView>
   );
