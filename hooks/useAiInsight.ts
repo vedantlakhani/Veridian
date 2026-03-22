@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
+import { useAuthStore } from '@/stores/authStore';
 import type { FunctionsHttpError } from '@supabase/supabase-js';
 
 // ─── Types ──────────────────────────────────────────────────────────────────
@@ -46,6 +47,8 @@ export function useAiInsight(
   userId: string | undefined,
   context: EmissionContext | null,
 ) {
+  const { session } = useAuthStore();
+
   return useQuery<AiInsight | null, Error>({
     queryKey: ['ai_insight', userId],
     queryFn: async (): Promise<AiInsight | null> => {
@@ -68,9 +71,7 @@ export function useAiInsight(
       // Step 2: No fresh cache — guard against calling Claude with no data
       if (!context || context.weeklyTotalKg === 0) return null;
 
-      // Step 3: Call Edge Function — explicitly attach session token to avoid
-      // React Native auth header attachment issues
-      const { data: { session } } = await supabase.auth.getSession();
+      // Step 3: Call Edge Function — use session from Zustand auth store (always fresh)
       const { data, error } = await supabase.functions.invoke<AiInsight>(
         'generate-suggestions',
         {
@@ -92,7 +93,7 @@ export function useAiInsight(
       return data;
     },
     enabled: !!userId && !!context,
-    staleTime: 1000 * 60 * 60 * 23, // 23h — avoids redundant Supabase reads within session
+    staleTime: 0, // 0 during debug — restore to 23h once working
     retry: 1,                         // one retry covers Edge Function cold-start 503
     retryDelay: 2000,                 // 2s delay gives cold-start time to recover
   });
