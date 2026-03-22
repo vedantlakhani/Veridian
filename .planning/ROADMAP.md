@@ -83,11 +83,13 @@ Plans:
 
 **Requirements covered:** SOCL-01 through SOCL-06
 
-**Plans:**
-1. User profiles — Profile screen, display name + avatar upload, lifetime stats, edit profile
-2. Challenges system — Create/join challenge flows, challenge data model, invite code generation
-3. Leaderboard — Challenge participants sorted by reduction %, real-time updates via Supabase Realtime
-4. Achievements — Badge system, milestone detection (first log, streaks, 10% reduction), achievement display
+**Plans:** 4 plans
+
+Plans:
+- [ ] 04-01-PLAN.md — DB migrations (Realtime, Storage bucket, profiles RLS), hooks/useProfile.ts (avatar upload), full Profile screen, all 5 Wave 0 test stubs
+- [ ] 04-02-PLAN.md — hooks/useChallenges.ts (create/join/list), ChallengeCard component, Profile screen challenge section with create/join VBottomSheet and invite code display
+- [ ] 04-03-PLAN.md — hooks/useLeaderboard.ts, hooks/useChallengeRealtime.ts, LeaderboardRow component, app/challenge/[id].tsx leaderboard screen
+- [ ] 04-04-PLAN.md — hooks/useAchievements.ts (all 4 criteria types), AchievementBadge SVG component, AchievementToast (Reanimated 3), mutation hook-in, Profile screen badge row
 
 **Success Criteria:**
 - Can create a challenge and share invite code
@@ -133,4 +135,4 @@ Plans:
 
 ---
 *Roadmap created: 2026-03-15*
-*Last updated: 2026-03-22 — Phase 3 Plan 02 complete (useAiInsight hook)*
+*Last updated: 2026-03-22 — Phase 4 plans created (social challenges + achievements)*
