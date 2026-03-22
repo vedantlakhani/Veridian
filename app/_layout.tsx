@@ -5,18 +5,24 @@ import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
 import * as SplashScreen from 'expo-splash-screen';
 import { useAuthStore } from '@/stores/authStore';
+import { useOnboardingStore } from '@/stores/useOnboardingStore';
 import { queryClient } from '@/lib/queryClient';
 import { useEmissionRealtime } from '@/hooks/useEmissionRealtime';
+// TODO: 05-03 — import useNotifications from '@/hooks/useNotifications'
 
 SplashScreen.preventAutoHideAsync();
 
 // Inner component — must live inside QueryClientProvider so useQueryClient() works
 function AppNavigator() {
   const { session, user } = useAuthStore();
+  const { onboardingComplete } = useOnboardingStore();
   useEmissionRealtime(user?.id);
 
   return (
     <Stack screenOptions={{ headerShown: false }}>
+      <Stack.Protected guard={!onboardingComplete}>
+        <Stack.Screen name="(onboarding)" />
+      </Stack.Protected>
       <Stack.Protected guard={!!session}>
         <Stack.Screen name="(tabs)" />
       </Stack.Protected>
@@ -29,18 +35,21 @@ function AppNavigator() {
 
 export default function RootLayout() {
   const { isLoading, initialize } = useAuthStore();
+  const { isChecked, initialize: initOnboarding } = useOnboardingStore();
 
   useEffect(() => {
+    // Fire both init calls in parallel — splash stays until both resolve
     initialize();
+    initOnboarding();
   }, []);
 
   useEffect(() => {
-    if (!isLoading) {
+    if (!isLoading && isChecked) {
       SplashScreen.hideAsync();
     }
-  }, [isLoading]);
+  }, [isLoading, isChecked]);
 
-  if (isLoading) return null;
+  if (isLoading || !isChecked) return null;
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
