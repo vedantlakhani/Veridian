@@ -9,3 +9,4 @@ export { VChip } from './VChip';
 export { VBottomSheet } from './VBottomSheet';
 export { VEmptyState } from './VEmptyState';
 export { VSkeleton } from './VSkeleton';
+export { VAiInsightCard } from './VAiInsightCard';

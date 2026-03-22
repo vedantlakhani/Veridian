@@ -10,9 +10,12 @@ import {
   VSkeleton,
   VEmptyState,
   VBadge,
+  VAiInsightCard,
 } from '@/components/ui';
 import { DAILY_CARBON_BUDGET_KG } from '@/types/emission';
 import { colors, spacing, typography } from '@/lib/theme';
+import { useAiInsight } from '@/hooks/useAiInsight';
+import type { EmissionContext } from '@/hooks/useAiInsight';
 
 export default function HomeScreen() {
   const { user } = useAuthStore();
@@ -33,6 +36,33 @@ export default function HomeScreen() {
     todayTotal <= 7 ? colors.primary :
     todayTotal <= 15 ? colors.warning :
     colors.error;
+
+  // Build emission context for the AI insight hook.
+  // Pass null until both weekly summary and entries are loaded — avoids a premature Claude call.
+  const emissionContext: EmissionContext | null =
+    weekly && recentEntries.length > 0
+      ? {
+          weeklyTotalKg: weekly.total_kg_co2e,
+          foodKg: weekly.breakdown?.food ?? 0,
+          transportKg: weekly.breakdown?.transport ?? 0,
+          energyKg: weekly.breakdown?.energy ?? 0,
+          // Top 3 items by kg_co2e_total from recent entries (last 7 days of data)
+          topItems: [...recentEntries]
+            .sort((a, b) => b.kg_co2e_total - a.kg_co2e_total)
+            .slice(0, 3)
+            .map(e => ({
+              item: e.emission_factors.item,
+              category: e.emission_factors.category,
+              totalKg: e.kg_co2e_total,
+            })),
+        }
+      : null;
+
+  const {
+    data: insight,
+    isLoading: insightLoading,
+    error: insightError,
+  } = useAiInsight(user?.id, emissionContext);
 
   return (
     <ScrollView
@@ -91,6 +121,13 @@ export default function HomeScreen() {
           />
         </View>
       )}
+
+      {/* AI Insight Card — loads independently, renders skeleton while fetching */}
+      <VAiInsightCard
+        insight={insight}
+        isLoading={insightLoading}
+        error={insightError}
+      />
 
       {/* Weekly Breakdown */}
       <Text style={styles.sectionTitle}>This Week</Text>
