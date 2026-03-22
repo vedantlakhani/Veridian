@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: unknown
-last_updated: "2026-03-22T04:41:39.516Z"
+last_updated: "2026-03-22T18:39:26.096Z"
 progress:
   total_phases: 5
   completed_phases: 3
-  total_plans: 13
-  completed_plans: 13
+  total_plans: 17
+  completed_plans: 14
 ---
 
 # Veridian — Project State
@@ -18,14 +18,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-15)
 
 **Core value:** Every user understands their true carbon impact and receives one actionable step to reduce it today.
-**Current focus:** Phase 3 — AI Engine
+**Current focus:** Phase 4 — Social & Challenges
 
 ## Current Phase
 
-**Phase 3: AI Engine**
-- Status: Complete ●
-- Current Plan: 4 of 4 (all plans complete)
-- Goal: Edge Functions calling Claude API, cache-first AI insight hook, Home screen AI card
+**Phase 4: Social & Challenges**
+- Status: In Progress ◑
+- Current Plan: 2 of 4
+- Goal: Profile screen, challenges flow, leaderboard, achievements
 
 ## Progress
 
@@ -33,8 +33,8 @@ See: .planning/PROJECT.md (updated 2026-03-15)
 |-------|--------|-------|----------|
 | 1     | ●      | 5     | 100%     |
 | 2     | ●      | 5     | 100%     |
-| 3     | ●      | 4     | 75%      |
-| 4     | ○      | 4     | 0%       |
+| 3     | ●      | 4     | 100%     |
+| 4     | ◑      | 4     | 25%      |
 | 5     | ○      | 5     | 0%       |
 
 ## Completed Plans
@@ -52,6 +52,7 @@ See: .planning/PROJECT.md (updated 2026-03-15)
 - **03-01**: Two Deno Edge Functions (analyze-emissions using Sonnet 4.5, generate-suggestions using Haiku 4.5) calling Claude API server-side; two-client auth pattern; shared CORS module
 - **03-02**: Cache-first useAiInsight TanStack Query hook — SELECT ai_insights with gt('expires_at', now) before Edge Function call; zero-emission guard; staleTime 23h; retry 1 with 2s delay
 - **03-03**: VAiInsightCard component with skeleton/null/content states; Home screen wired with emissionContext from weekly+entries, AI card inserted between Today Metric Card and This Week section
+- **04-01**: Supabase avatars Storage bucket, challenge_participants Realtime, profiles leaderboard RLS, useProfile/useUpdateProfile/uploadAvatar hooks, stats-first Profile screen, 5 Wave 0 test stubs
 
 ## Decisions
 
@@ -90,6 +91,9 @@ See: .planning/PROJECT.md (updated 2026-03-15)
 - [Phase 03]: VAiInsightCard returns null (not error UI) on error or missing insight — clean degradation, no screen disruption
 - [Phase 03]: emissionContext set to null until both weekly and recentEntries loaded — prevents premature Claude API call for partial data
 - [Phase 03]: AI insight card has independent loading state from main screen — insightLoading separate from isLoading/weeklyLoading
+- [Phase 04-01]: Used expo-file-system/legacy import for EncodingType — v18 restructured exports; legacy subpath preserves readAsStringAsync + EncodingType
+- [Phase 04-01]: supabase migration repair used to mark Phase 1-3 as applied before Phase 4 db push — remote DB had schema but no migration history
+- [Phase 04-01]: Profile stats use 3 independent TanStack Query hooks (all-time entries sum, weekly_summaries min, daily_summaries streak) — avoids new aggregation columns
 
 ## Performance Metrics
 
@@ -107,11 +111,12 @@ See: .planning/PROJECT.md (updated 2026-03-15)
 | 03    | 01   | 6min     | 3     | 3     |
 | 03    | 02   | 2min     | 1     | 1     |
 | 03    | 03   | 4min     | 2     | 3     |
+| 04    | 01   | 7min     | 3     | 12    |
 
 ## Next Action
 
-Phase 3 complete — all 3 plans (03-01, 03-02, 03-03) done. Proceed to Phase 4 notifications.
+Phase 4 in progress — 04-01 complete. Proceed to 04-02 (challenges flow: useChallenges, useLeaderboard, ChallengeCard, challenges screen).
 
 ---
 *Last session: 2026-03-22*
-*Stopped at: Completed 03-03-PLAN.md*
+*Stopped at: Completed 04-01-PLAN.md*
