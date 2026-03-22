@@ -54,17 +54,16 @@ Deno.serve(async (req) => {
       });
     }
 
+    // JWT is already verified by the Supabase gateway before this function runs.
+    // Decode the payload locally to extract user_id — no network round-trip needed.
     const token = authHeader.replace('Bearer ', '');
-
-    // User client: pass Authorization header into client, then call getUser() — official Supabase pattern
-    const userClient = createClient(
-      Deno.env.get('SUPABASE_URL')!,
-      Deno.env.get('SUPABASE_ANON_KEY')!,
-      { global: { headers: { Authorization: authHeader } } },
-    );
-    const { data: { user }, error: authError } = await userClient.auth.getUser();
-    if (authError || !user) {
-      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+    let userId: string;
+    try {
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      userId = payload.sub as string;
+      if (!userId) throw new Error('missing sub');
+    } catch {
+      return new Response(JSON.stringify({ error: 'Invalid token' }), {
         status: 401,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
@@ -95,7 +94,7 @@ Deno.serve(async (req) => {
     const { data: insight, error: dbError } = await supabaseAdmin
       .from('ai_insights')
       .insert({
-        user_id: user.id, // always from verified JWT, never from request body (Pitfall 6)
+        user_id: userId, // from JWT sub claim — gateway already verified the signature
         content: parsed.content,
         suggestion: parsed.suggestion,
         expires_at: expiresAt,
