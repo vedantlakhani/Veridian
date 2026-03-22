@@ -55,11 +55,13 @@ Deno.serve(async (req) => {
     }
 
     // JWT is already verified by the Supabase gateway before this function runs.
-    // Decode the payload locally to extract user_id — no network round-trip needed.
+    // Decode the payload locally — JWTs use base64url (not base64), so fix chars + padding first.
     const token = authHeader.replace('Bearer ', '');
     let userId: string;
     try {
-      const payload = JSON.parse(atob(token.split('.')[1]));
+      const b64 = token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/');
+      const padded = b64 + '='.repeat((4 - b64.length % 4) % 4);
+      const payload = JSON.parse(atob(padded));
       userId = payload.sub as string;
       if (!userId) throw new Error('missing sub');
     } catch {
