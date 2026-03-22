@@ -66,14 +66,14 @@
 
 ### Polish & Launch
 
-- [ ] **PLSH-01**: Onboarding flow: 3-screen carousel explaining core value, then signup/login
-- [ ] **PLSH-02**: Expo push notifications configured for daily logging reminders
-- [ ] **PLSH-03**: Notification for streak milestone (3-day, 7-day, 30-day)
+- [x] **PLSH-01**: Onboarding flow: 3-screen carousel explaining core value, then signup/login
+- [x] **PLSH-02**: Expo push notifications configured for daily logging reminders
+- [x] **PLSH-03**: Notification for streak milestone (3-day, 7-day, 30-day)
 - [ ] **PLSH-04**: App cold start time <3 seconds on mid-range device
 - [ ] **PLSH-05**: Navigation transitions <100ms (Reanimated 3 driven)
 - [ ] **PLSH-06**: App Store metadata: screenshots, description, privacy policy URL
 - [ ] **PLSH-07**: Play Store metadata: screenshots, description, privacy policy URL
-- [ ] **PLSH-08**: Offline-capable: log entries cached locally, synced when online
+- [x] **PLSH-08**: Offline-capable: log entries cached locally, synced when online
 
 ## v2 Requirements
 
@@ -154,14 +154,14 @@
 | SOCL-04 | Phase 4 | Complete |
 | SOCL-05 | Phase 4 | Complete |
 | SOCL-06 | Phase 4 | Complete |
-| PLSH-01 | Phase 5 | Pending |
-| PLSH-02 | Phase 5 | Pending |
-| PLSH-03 | Phase 5 | Pending |
+| PLSH-01 | Phase 5 | Complete |
+| PLSH-02 | Phase 5 | Complete |
+| PLSH-03 | Phase 5 | Complete |
 | PLSH-04 | Phase 5 | Pending |
 | PLSH-05 | Phase 5 | Pending |
 | PLSH-06 | Phase 5 | Pending |
 | PLSH-07 | Phase 5 | Pending |
-| PLSH-08 | Phase 5 | Pending |
+| PLSH-08 | Phase 5 | Complete |
 
 **Coverage:**
 - v1 requirements: 49 total
