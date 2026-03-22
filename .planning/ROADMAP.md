@@ -125,7 +125,7 @@ Plans:
 |-------|--------|-------|-----------------|
 | 1 | 5/5 | Complete    | 2026-03-16 |
 | 2 | 4/5 | In Progress|  |
-| 3 | 3/3 | Complete   | 2026-03-22 |
+| 3 | 3/3 | Complete    | 2026-03-22 |
 | 4 | ○ | 4 | Social challenges + achievements |
 | 5 | ○ | 5 | App Store submission ready |
 
