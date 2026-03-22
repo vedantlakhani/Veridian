@@ -127,12 +127,16 @@ import { supabase } from '@/lib/supabase';
  */
 export async function upsertDailySummary(userId: string, date: string): Promise<void> {
   // Filter by date string directly for DATE column comparison
+  const [dy, dm, dd] = date.split('-').map(Number);
+  const localStart = new Date(dy, dm - 1, dd, 0, 0, 0, 0);
+  const localEnd = new Date(dy, dm - 1, dd, 23, 59, 59, 999);
+
   const { data: entries, error: fetchError } = await supabase
     .from('emission_entries')
     .select('*, emission_factors(id, category, subcategory, item, unit, kg_co2e, source, year, created_at)')
     .eq('user_id', userId)
-    .gte('logged_at', `${date}T00:00:00.000Z`)
-    .lte('logged_at', `${date}T23:59:59.999Z`);
+    .gte('logged_at', localStart.toISOString())
+    .lte('logged_at', localEnd.toISOString());
 
   if (fetchError) throw fetchError;
 
@@ -159,12 +163,17 @@ export async function upsertWeeklySummary(userId: string, weekStart: string): Pr
   weekEndDate.setDate(weekStartDate.getDate() + 6);
   const weekEnd = weekEndDate.toLocaleDateString('en-CA');
 
+  const [wsy, wsm, wsd] = weekStart.split('-').map(Number);
+  const [wey, wem, wed] = weekEnd.split('-').map(Number);
+  const weekLocalStart = new Date(wsy, wsm - 1, wsd, 0, 0, 0, 0);
+  const weekLocalEnd = new Date(wey, wem - 1, wed, 23, 59, 59, 999);
+
   const { data: entries, error: fetchError } = await supabase
     .from('emission_entries')
     .select('*, emission_factors(id, category, subcategory, item, unit, kg_co2e, source, year, created_at)')
     .eq('user_id', userId)
-    .gte('logged_at', `${weekStart}T00:00:00.000Z`)
-    .lte('logged_at', `${weekEnd}T23:59:59.999Z`);
+    .gte('logged_at', weekLocalStart.toISOString())
+    .lte('logged_at', weekLocalEnd.toISOString());
 
   if (fetchError) throw fetchError;
 

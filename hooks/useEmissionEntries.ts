@@ -52,10 +52,15 @@ export function useEmissionEntries(
         .order('logged_at', { ascending: false });
 
       if (dateFrom) {
-        query = query.gte('logged_at', `${dateFrom}T00:00:00.000Z`);
+        // Parse as local date components to get correct local midnight in UTC
+        const [y, m, d] = dateFrom.split('-').map(Number);
+        const localStart = new Date(y, m - 1, d, 0, 0, 0, 0);
+        query = query.gte('logged_at', localStart.toISOString());
       }
       if (dateTo) {
-        query = query.lte('logged_at', `${dateTo}T23:59:59.999Z`);
+        const [y, m, d] = dateTo.split('-').map(Number);
+        const localEnd = new Date(y, m - 1, d, 23, 59, 59, 999);
+        query = query.lte('logged_at', localEnd.toISOString());
       }
 
       const { data, error } = await query;

@@ -17,13 +17,15 @@ import { colors, spacing, typography } from '@/lib/theme';
 export default function HomeScreen() {
   const { user } = useAuthStore();
   const today = getLocalDateString();
-  // Derive today's total directly from emission_entries — reactive to new entries immediately
-  const { data: todayEntries = [], isLoading: dailyLoading } = useEmissionEntries(user?.id, today, today);
   const { data: weekly, isLoading: weeklyLoading } = useWeeklySummary(user?.id);
-  // Fetch most recent entries for the "Recent" section (no date filter)
+  // Fetch all entries — filter today's in JS to avoid UTC midnight timezone mismatch
   const { data: recentEntries = [], isLoading: entriesLoading } = useEmissionEntries(user?.id);
 
-  const todayTotal = todayEntries.reduce((sum, e) => sum + e.kg_co2e_total, 0);
+  // Filter by local date in JS — avoids UTC midnight timezone mismatch
+  const todayTotal = recentEntries
+    .filter(e => getLocalDateString(new Date(e.logged_at)) === today)
+    .reduce((sum, e) => sum + e.kg_co2e_total, 0);
+  const isLoading = entriesLoading;
   const progress = Math.min(todayTotal / DAILY_CARBON_BUDGET_KG, 1); // clamp to [0, 1]
 
   // Determine ring color: green below target, orange approaching budget, red at/over budget
@@ -50,7 +52,7 @@ export default function HomeScreen() {
 
       {/* Progress Ring Card */}
       <VCard elevation="md" style={styles.ringCard}>
-        {dailyLoading ? (
+        {isLoading ? (
           <VSkeleton width={160} height={160} style={styles.skeleton} />
         ) : (
           <View style={styles.ringContainer}>
@@ -75,7 +77,7 @@ export default function HomeScreen() {
       </VCard>
 
       {/* Today Metric Card */}
-      {dailyLoading ? (
+      {isLoading ? (
         <View style={{ marginBottom: spacing.md }}>
           <VSkeleton width={'100%' as `${number}%`} height={80} />
         </View>
