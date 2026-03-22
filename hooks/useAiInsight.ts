@@ -85,7 +85,7 @@ export function useAiInsight(
 
       return data;
     },
-    enabled: !!userId,
+    enabled: !!userId && !!context,
     staleTime: 1000 * 60 * 60 * 23, // 23h — avoids redundant Supabase reads within session
     retry: 1,                         // one retry covers Edge Function cold-start 503
     retryDelay: 2000,                 // 2s delay gives cold-start time to recover
