@@ -5,11 +5,15 @@ import {
   Text,
   TouchableOpacity,
   StyleSheet,
+  Share,
 } from 'react-native';
 import { Image } from 'expo-image';
+import * as Clipboard from 'expo-clipboard';
+import { useRouter } from 'expo-router';
 import { useAuthStore } from '@/stores/authStore';
 import { useProfile, useUpdateProfile, uploadAvatar } from '@/hooks/useProfile';
 import { useEmissionEntries } from '@/hooks/useEmissionEntries';
+import { useMyChallenges, useCreateChallenge, useJoinChallenge } from '@/hooks/useChallenges';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import {
@@ -21,10 +25,13 @@ import {
   VSkeleton,
   VEmptyState,
 } from '@/components/ui';
+import ChallengeCard from '@/components/social/ChallengeCard';
 import { colors, spacing, typography, radii } from '@/lib/theme';
+import type { Challenge } from '@/types/challenge';
 
 // ─── Profile Screen ────────────────────────────────────────────────────────
 export default function ProfileScreen() {
+  const router = useRouter();
   const { user } = useAuthStore();
   const userId = user?.id;
 
@@ -90,7 +97,79 @@ export default function ProfileScreen() {
     return streak;
   }, [streakData]);
 
-  // Edit sheet state
+  // ── My Challenges state ──
+  const { data: participantRows = [], isLoading: challengesLoading } = useMyChallenges(userId);
+  const { mutate: createChallenge, isPending: isCreating } = useCreateChallenge();
+  const { mutate: joinChallenge, isPending: isJoining } = useJoinChallenge();
+
+  type SheetMode = 'none' | 'select' | 'create' | 'join' | 'created';
+  const [sheetMode, setSheetMode] = useState<SheetMode>('none');
+  const [challengeTitle, setChallengeTitle] = useState('');
+  const [durationDays, setDurationDays] = useState('30');
+  const [targetPct, setTargetPct] = useState('10');
+  const [inviteCodeInput, setInviteCodeInput] = useState('');
+  const [createdChallenge, setCreatedChallenge] = useState<Challenge | null>(null);
+
+  const isChallengeSheetOpen = sheetMode !== 'none';
+
+  const handleOpenChallengeSheet = () => {
+    setSheetMode('select');
+  };
+
+  const handleCloseChallengeSheet = () => {
+    setSheetMode('none');
+    setCreatedChallenge(null);
+    setChallengeTitle('');
+    setDurationDays('30');
+    setTargetPct('10');
+    setInviteCodeInput('');
+  };
+
+  const handleCreate = () => {
+    if (!userId) return;
+    createChallenge(
+      {
+        userId,
+        title: challengeTitle,
+        durationDays: parseInt(durationDays, 10) || 30,
+        targetReductionPct: parseFloat(targetPct) || 10,
+      },
+      {
+        onSuccess: (result) => {
+          setCreatedChallenge(result);
+          setSheetMode('created');
+        },
+      }
+    );
+  };
+
+  const handleJoin = () => {
+    if (!userId) return;
+    joinChallenge(
+      { userId, inviteCode: inviteCodeInput },
+      {
+        onSuccess: () => {
+          handleCloseChallengeSheet();
+        },
+      }
+    );
+  };
+
+  const handleCopyCode = async () => {
+    if (createdChallenge) {
+      await Clipboard.setStringAsync(createdChallenge.invite_code);
+    }
+  };
+
+  const handleShareCode = async () => {
+    if (createdChallenge) {
+      await Share.share({
+        message: `Join my Veridian carbon challenge! Use code: ${createdChallenge.invite_code}`,
+      });
+    }
+  };
+
+  // ── Edit sheet state ──
   const [editOpen, setEditOpen] = useState(false);
   const [displayName, setDisplayName] = useState('');
 
@@ -207,14 +286,36 @@ export default function ProfileScreen() {
       <VCard elevation="sm" style={styles.section}>
         <View style={styles.sectionHeader}>
           <Text style={styles.sectionTitle}>My Challenges</Text>
-          <TouchableOpacity hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+          <TouchableOpacity
+            onPress={handleOpenChallengeSheet}
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+          >
             <Text style={styles.sectionAction}>+ New</Text>
           </TouchableOpacity>
         </View>
-        <VEmptyState
-          title="No challenges yet"
-          body="Join or create a challenge"
-        />
+
+        {challengesLoading ? (
+          <>
+            <VSkeleton width="100%" height={56} borderRadius={8} style={styles.skeletonRow} />
+            <VSkeleton width="100%" height={56} borderRadius={8} style={styles.skeletonRow} />
+          </>
+        ) : participantRows.length === 0 ? (
+          <VEmptyState
+            title="No challenges yet"
+            body="Join or create a challenge"
+            ctaLabel="Get started"
+            onCta={handleOpenChallengeSheet}
+          />
+        ) : (
+          participantRows.map((cp) => (
+            <ChallengeCard
+              key={cp.id}
+              challenge={cp.challenges as Challenge}
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              onPress={() => router.push(`/challenge/${cp.challenge_id}` as any)}
+            />
+          ))
+        )}
       </VCard>
 
       {/* ── Achievements Section ── */}
@@ -259,6 +360,111 @@ export default function ProfileScreen() {
             disabled={isSaving}
           />
         </View>
+      </VBottomSheet>
+
+      {/* ── Challenge Bottom Sheet ── */}
+      <VBottomSheet
+        isOpen={isChallengeSheetOpen}
+        onClose={handleCloseChallengeSheet}
+        title={
+          sheetMode === 'create' ? 'New Challenge' :
+          sheetMode === 'join' ? 'Join Challenge' :
+          sheetMode === 'created' ? 'Challenge Created!' :
+          'Challenges'
+        }
+        snapPoints={[520]}
+      >
+        {sheetMode === 'select' && (
+          <View style={styles.selectMode}>
+            <VButton
+              variant="primary"
+              label="Create Challenge"
+              onPress={() => setSheetMode('create')}
+            />
+            <View style={styles.sheetButtonGap} />
+            <VButton
+              variant="secondary"
+              label="Join with Code"
+              onPress={() => setSheetMode('join')}
+            />
+          </View>
+        )}
+
+        {sheetMode === 'create' && (
+          <View>
+            <VInput
+              label="Challenge Title"
+              value={challengeTitle}
+              onChangeText={setChallengeTitle}
+              placeholder="e.g. Reduce by summer"
+            />
+            <VInput
+              label="Duration (days)"
+              value={durationDays}
+              onChangeText={setDurationDays}
+              placeholder="30"
+              keyboardType="number-pad"
+            />
+            <VInput
+              label="Target Reduction (%)"
+              value={targetPct}
+              onChangeText={setTargetPct}
+              placeholder="10"
+              keyboardType="decimal-pad"
+            />
+            <View style={styles.saveButton}>
+              <VButton
+                variant="primary"
+                label={isCreating ? 'Creating…' : 'Create'}
+                onPress={handleCreate}
+                disabled={isCreating || !challengeTitle.trim()}
+              />
+            </View>
+          </View>
+        )}
+
+        {sheetMode === 'join' && (
+          <View>
+            <VInput
+              label="Invite Code"
+              value={inviteCodeInput}
+              onChangeText={(t) => setInviteCodeInput(t.toUpperCase())}
+              placeholder="XXXXXXXX"
+              autoCapitalize="characters"
+              maxLength={8}
+            />
+            <View style={styles.saveButton}>
+              <VButton
+                variant="primary"
+                label={isJoining ? 'Joining…' : 'Join'}
+                onPress={handleJoin}
+                disabled={isJoining || inviteCodeInput.length < 8}
+              />
+            </View>
+          </View>
+        )}
+
+        {sheetMode === 'created' && createdChallenge && (
+          <View style={styles.createdMode}>
+            <Text style={styles.inviteCodeLabel}>Your Invite Code</Text>
+            <Text style={styles.inviteCode}>
+              {createdChallenge.invite_code}
+            </Text>
+            <View style={styles.inviteActions}>
+              <VButton
+                variant="primary"
+                label="Copy Code"
+                onPress={handleCopyCode}
+              />
+              <View style={styles.sheetButtonGap} />
+              <VButton
+                variant="secondary"
+                label="Share"
+                onPress={handleShareCode}
+              />
+            </View>
+          </View>
+        )}
       </VBottomSheet>
     </ScrollView>
   );
@@ -349,6 +555,9 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     paddingVertical: spacing.md,
   },
+  skeletonRow: {
+    marginBottom: spacing.sm,
+  },
   // Edit sheet
   sheetAvatarWrap: {
     alignItems: 'center',
@@ -375,5 +584,31 @@ const styles = StyleSheet.create({
   // Needed for borderRadius in avatarFallback inside sheet avatar
   sheetAvatarBorderRadius: {
     borderRadius: radii.full,
+  },
+  // Challenge sheet
+  selectMode: {
+    paddingTop: spacing.sm,
+  },
+  sheetButtonGap: {
+    height: spacing.sm,
+  },
+  createdMode: {
+    alignItems: 'center',
+    paddingTop: spacing.md,
+  },
+  inviteCodeLabel: {
+    fontSize: typography.sizes.sm,
+    color: colors.textSecondary,
+    marginBottom: spacing.sm,
+  },
+  inviteCode: {
+    fontSize: 32,
+    fontFamily: 'JetBrainsMono',
+    letterSpacing: 8,
+    color: colors.primary,
+    marginBottom: spacing.lg,
+  },
+  inviteActions: {
+    width: '100%',
   },
 });
