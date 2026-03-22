@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: unknown
-last_updated: "2026-03-22T20:23:09.022Z"
+last_updated: "2026-03-22T20:27:41.353Z"
 progress:
   total_phases: 5
   completed_phases: 4
   total_plans: 22
-  completed_plans: 19
+  completed_plans: 20
 ---
 
 # Veridian — Project State
@@ -107,6 +107,7 @@ See: .planning/PROJECT.md (updated 2026-03-15)
 - [Phase 05-01]: Used ts-ignore on dynamic import lines in Wave 0 stubs — TS2307 expected for modules not yet created
 - [Phase 05-01]: Excluded supabase/functions from tsconfig.json — Deno Edge Functions use npm: specifiers incompatible with standard tsc; pre-existing errors
 - [Phase 05-polish-launch]: Onboarding carousel: Reanimated 4.x Extrapolation.CLAMP, AsyncStorage '@veridian/onboarding_complete' key, Stack.Protected guard as first child of root Stack
+- [Phase 05-polish-launch]: useOfflineQueue: module-level dbPromise singleton for expo-sqlite v16; withTiming in useEffect not render body for Reanimated 3 correctness; hooks-before-early-return in VOfflineBanner
 
 ## Performance Metrics
 
@@ -130,6 +131,7 @@ See: .planning/PROJECT.md (updated 2026-03-15)
 | 04    | 04   | 4min     | 2     | 6     |
 | Phase 05 P01 | 5min | 2 tasks | 4 files |
 | Phase 05-polish-launch P02 | 12 | 2 tasks | 6 files |
+| Phase 05-polish-launch P04 | 140 | 2 tasks | 5 files |
 
 ## Next Action
 
