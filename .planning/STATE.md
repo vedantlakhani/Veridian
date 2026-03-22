@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: unknown
-last_updated: "2026-03-22T04:29:00.336Z"
+last_updated: "2026-03-22T04:31:24Z"
 progress:
   total_phases: 5
   completed_phases: 2
   total_plans: 13
-  completed_plans: 11
+  completed_plans: 12
 ---
 
 # Veridian — Project State
@@ -18,14 +18,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-15)
 
 **Core value:** Every user understands their true carbon impact and receives one actionable step to reduce it today.
-**Current focus:** Phase 2 — Core Tracking
+**Current focus:** Phase 3 — AI Engine
 
 ## Current Phase
 
-**Phase 2: Core Tracking**
-- Status: Complete ●
-- Current Plan: 5 of 5
-- Goal: Emission logging, calculation engine, history view, summary bar chart, and weekly challenge
+**Phase 3: AI Engine**
+- Status: In Progress ◐
+- Current Plan: 3 of 4
+- Goal: Edge Functions calling Claude API, cache-first AI insight hook, Home screen AI card
 
 ## Progress
 
@@ -33,7 +33,7 @@ See: .planning/PROJECT.md (updated 2026-03-15)
 |-------|--------|-------|----------|
 | 1     | ●      | 5     | 100%     |
 | 2     | ●      | 5     | 100%     |
-| 3     | ○      | 4     | 0%       |
+| 3     | ◐      | 4     | 50%      |
 | 4     | ○      | 4     | 0%       |
 | 5     | ○      | 5     | 0%       |
 
@@ -49,6 +49,8 @@ See: .planning/PROJECT.md (updated 2026-03-15)
 - **02-03**: TanStack Query hooks (useDailySummary, useWeeklySummary, useMonthlyTotals) and full Home dashboard with VProgressRing, VMetricCard, weekly category breakdown, recent entries list, VSkeleton loading states, VEmptyState
 - **02-04**: EmissionBarChart react-native-svg bar chart (Rect/G/Line/SvgText, overflow="visible" Android fix), Insights screen with date filter chips (today/week/month), weekly breakdown chart, monthly trend comparison, and date-filtered history list
 - **02-05**: Edit entry modal (app/entry/[id].tsx) pre-fills quantity with useUpdateEntry on save; swipe-to-delete in insights (Reanimated 3 Gesture.Pan, runOnJS); useEmissionRealtime hook (postgres_changes filtered by user_id) mounted in root layout
+- **03-01**: Two Deno Edge Functions (analyze-emissions using Sonnet 4.5, generate-suggestions using Haiku 4.5) calling Claude API server-side; two-client auth pattern; shared CORS module
+- **03-02**: Cache-first useAiInsight TanStack Query hook — SELECT ai_insights with gt('expires_at', now) before Edge Function call; zero-emission guard; staleTime 23h; retry 1 with 2s delay
 
 ## Decisions
 
@@ -81,6 +83,9 @@ See: .planning/PROJECT.md (updated 2026-03-15)
 - [Phase 03-01]: user_id sourced from verified JWT (getUser), never from request body — prevents privilege escalation
 - [Phase 03-01]: Two-client pattern: userClient (anon key for JWT verification) + supabaseAdmin (service role for DB writes)
 - [Phase 03-01]: Markdown fence regex strips Claude formatting variance before JSON.parse in both Edge Functions
+- [Phase 03-02]: Supabase SELECT is authoritative TTL check (not staleTime) — after app restart React Query has no cache; SELECT with gt('expires_at', now) prevents stale data
+- [Phase 03-02]: Guard (weeklyTotalKg === 0) returns null silently — avoids Claude API call for new users with no emission data
+- [Phase 03-02]: FunctionsHttpError cast used to access context.status for 401 detection — SupabaseClient types surface as FunctionsError without exposing context
 
 ## Performance Metrics
 
@@ -95,12 +100,13 @@ See: .planning/PROJECT.md (updated 2026-03-15)
 | 02    | 02   | 6min     | 2     | 5     |
 | 02    | 03   | 4min     | 2     | 2     |
 | 02    | 04   | 5min     | 2     | 4     |
-| Phase 03 P01 | 6min | 3 tasks | 3 files |
+| 03    | 01   | 6min     | 3     | 3     |
+| 03    | 02   | 2min     | 1     | 1     |
 
 ## Next Action
 
-Phase 2 complete and human-verified (all 6 tests passed). Proceed to Phase 3: AI Insights.
+Phase 3 in progress. Plans 03-01 and 03-02 complete. Proceed to Plan 03-03: Home screen AI card integration.
 
 ---
-*Last session: 2026-03-16*
-*Stopped at: Completed 02-04-PLAN.md*
+*Last session: 2026-03-22*
+*Stopped at: Completed 03-02-PLAN.md*

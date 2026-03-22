@@ -60,12 +60,13 @@ Plans:
 
 **Requirements covered:** AI-01 through AI-07
 
-**Plans:** 1/3 plans executed
+**Plans:** 2/4 plans executed
 
 Plans:
-- [ ] 03-01-PLAN.md — Supabase Edge Functions: _shared/cors.ts, analyze-emissions (Sonnet 4.5), generate-suggestions (Haiku 4.5); JWT auth, admin client INSERT, CORS preflight
-- [ ] 03-02-PLAN.md — hooks/useAiInsight.ts: cache-first React Query hook (Supabase SELECT first, Edge Function only when stale), staleTime 23h, EmissionContext type
+- [x] 03-01-PLAN.md — Supabase Edge Functions: _shared/cors.ts, analyze-emissions (Sonnet 4.5), generate-suggestions (Haiku 4.5); JWT auth, admin client INSERT, CORS preflight
+- [x] 03-02-PLAN.md — hooks/useAiInsight.ts: cache-first React Query hook (Supabase SELECT first, Edge Function only when stale), staleTime 23h, EmissionContext type
 - [ ] 03-03-PLAN.md — components/ui/VAiInsightCard.tsx + barrel export + Home screen integration; skeleton loading, graceful null on error
+- [ ] 03-04-PLAN.md — (remaining AI engine plan)
 
 **Success Criteria:**
 - AI insight appears on Home screen within 3 seconds of load
@@ -124,7 +125,7 @@ Plans:
 |-------|--------|-------|-----------------|
 | 1 | 5/5 | Complete    | 2026-03-16 |
 | 2 | 4/5 | In Progress|  |
-| 3 | 1/3 | In Progress|  |
+| 3 | 2/4 | In Progress|  |
 | 4 | ○ | 4 | Social challenges + achievements |
 | 5 | ○ | 5 | App Store submission ready |
 
@@ -132,4 +133,4 @@ Plans:
 
 ---
 *Roadmap created: 2026-03-15*
-*Last updated: 2026-03-22 — Phase 3 plans created*
+*Last updated: 2026-03-22 — Phase 3 Plan 02 complete (useAiInsight hook)*
