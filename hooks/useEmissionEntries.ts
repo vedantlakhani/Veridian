@@ -8,7 +8,32 @@ import {
   upsertWeeklySummary,
 } from '@/lib/emissions';
 import { checkAndUnlockAchievements } from '@/hooks/useAchievements';
+import { notifyStreakMilestone } from '@/hooks/useNotifications';
 import type { EmissionEntryWithFactor, EmissionFactor } from '@/types/emission';
+
+// ─── computeStreak ────────────────────────────────────────────────────────
+/**
+ * Given an array of daily_summary rows sorted descending by date,
+ * returns the number of consecutive days ending today.
+ */
+function computeStreak(rows: { date: string }[]): number {
+  if (rows.length === 0) return 0;
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  let streak = 0;
+  for (let i = 0; i < rows.length; i++) {
+    const d = new Date(rows[i].date);
+    d.setHours(0, 0, 0, 0);
+    const expected = new Date(today);
+    expected.setDate(today.getDate() - i);
+    if (d.getTime() === expected.getTime()) {
+      streak++;
+    } else {
+      break;
+    }
+  }
+  return streak;
+}
 
 // ─── Query Keys ────────────────────────────────────────────────────────────
 export const ENTRY_KEYS = {
@@ -112,6 +137,17 @@ export function useCreateEntry() {
         queryClient.invalidateQueries({ queryKey: ['achievements'] });
         // Store newly earned badges for toast consumption by profile screen
         queryClient.setQueryData(['newly_earned_achievements'], newBadges);
+      }
+      // Fire streak milestone notification at 3, 7, or 30 consecutive days
+      const { data: streakData } = await supabase
+        .from('daily_summaries')
+        .select('date')
+        .eq('user_id', variables.userId)
+        .order('date', { ascending: false })
+        .limit(30);
+      const streak = computeStreak(streakData ?? []);
+      if ([3, 7, 30].includes(streak)) {
+        void notifyStreakMilestone(streak);
       }
     },
   });

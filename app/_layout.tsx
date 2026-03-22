@@ -11,7 +11,7 @@ import { useEmissionRealtime } from '@/hooks/useEmissionRealtime';
 import { useOfflineQueue } from '@/hooks/useOfflineQueue';
 import { useCreateEntry } from '@/hooks/useEmissionEntries';
 import { VOfflineBanner } from '@/components/ui';
-// TODO: 05-03 — import useNotifications from '@/hooks/useNotifications'
+import { useNotifications } from '@/hooks/useNotifications';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -20,8 +20,10 @@ function AppNavigator() {
   const { session, user } = useAuthStore();
   const { onboardingComplete } = useOnboardingStore();
   useEmissionRealtime(user?.id);
+  useNotifications(user?.id);
   const { mutateAsync } = useCreateEntry();
   useOfflineQueue(mutateAsync);
+  // PLSH-04: Font loading occurs in child layouts (parallel with auth init) — no blocking sequential await
 
   return (
     <Stack screenOptions={{ headerShown: false }}>
