@@ -47,13 +47,13 @@
 
 ### AI Engine
 
-- [ ] **AI-01**: All Claude API calls are made via Supabase Edge Functions — zero direct client calls
-- [ ] **AI-02**: `analyze-emissions` Edge Function uses `claude-sonnet-4-5-20250929` for complex analysis
-- [ ] **AI-03**: `generate-suggestions` Edge Function uses `claude-haiku-4-5-20251001` for fast suggestions
+- [x] **AI-01**: All Claude API calls are made via Supabase Edge Functions — zero direct client calls
+- [x] **AI-02**: `analyze-emissions` Edge Function uses `claude-sonnet-4-5-20250929` for complex analysis
+- [x] **AI-03**: `generate-suggestions` Edge Function uses `claude-haiku-4-5-20251001` for fast suggestions
 - [ ] **AI-04**: Home screen shows AI-generated insight card based on recent emissions (updated daily)
 - [ ] **AI-05**: Insight card includes one specific, quantified reduction action
-- [ ] **AI-06**: AI suggestions are personalized to user's emission profile (not generic)
-- [ ] **AI-07**: API key stored in Edge Function secrets, never in client bundle or environment
+- [x] **AI-06**: AI suggestions are personalized to user's emission profile (not generic)
+- [x] **AI-07**: API key stored in Edge Function secrets, never in client bundle or environment
 
 ### Social & Challenges
 
@@ -141,13 +141,13 @@
 | TRACK-10 | Phase 2 | Pending |
 | TRACK-11 | Phase 2 | Pending |
 | TRACK-12 | Phase 2 | Pending |
-| AI-01 | Phase 3 | Pending |
-| AI-02 | Phase 3 | Pending |
-| AI-03 | Phase 3 | Pending |
+| AI-01 | Phase 3 | Complete |
+| AI-02 | Phase 3 | Complete |
+| AI-03 | Phase 3 | Complete |
 | AI-04 | Phase 3 | Pending |
 | AI-05 | Phase 3 | Pending |
-| AI-06 | Phase 3 | Pending |
-| AI-07 | Phase 3 | Pending |
+| AI-06 | Phase 3 | Complete |
+| AI-07 | Phase 3 | Complete |
 | SOCL-01 | Phase 4 | Pending |
 | SOCL-02 | Phase 4 | Pending |
 | SOCL-03 | Phase 4 | Pending |

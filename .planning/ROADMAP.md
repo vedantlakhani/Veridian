@@ -60,7 +60,7 @@ Plans:
 
 **Requirements covered:** AI-01 through AI-07
 
-**Plans:** 3 plans
+**Plans:** 1/3 plans executed
 
 Plans:
 - [ ] 03-01-PLAN.md — Supabase Edge Functions: _shared/cors.ts, analyze-emissions (Sonnet 4.5), generate-suggestions (Haiku 4.5); JWT auth, admin client INSERT, CORS preflight
@@ -124,7 +124,7 @@ Plans:
 |-------|--------|-------|-----------------|
 | 1 | 5/5 | Complete    | 2026-03-16 |
 | 2 | 4/5 | In Progress|  |
-| 3 | ○ | 3 | AI insights on home screen |
+| 3 | 1/3 | In Progress|  |
 | 4 | ○ | 4 | Social challenges + achievements |
 | 5 | ○ | 5 | App Store submission ready |
 

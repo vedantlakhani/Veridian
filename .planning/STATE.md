@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: unknown
-last_updated: "2026-03-16T17:00:00.000Z"
+last_updated: "2026-03-22T04:29:00.336Z"
 progress:
   total_phases: 5
   completed_phases: 2
-  total_plans: 10
-  completed_plans: 10
+  total_plans: 13
+  completed_plans: 11
 ---
 
 # Veridian — Project State
@@ -77,6 +77,10 @@ See: .planning/PROJECT.md (updated 2026-03-15)
 - [Phase 02]: upsertDailySummary recomputes from all entries (not delta) to prevent summary drift on edit/delete
 - [Phase 02]: VEmptyState uses body prop not subtitle — plan template was wrong; auto-fixed to match actual component API
 - [Phase 02-04]: overflow='visible' on Svg spread as any — SvgProps type doesn't expose overflow but react-native-svg supports it at runtime for Android clip fix
+- [Phase 03-01]: OPTIONS preflight handled before auth — ensures CORS works even for unauthenticated pre-flight browser requests
+- [Phase 03-01]: user_id sourced from verified JWT (getUser), never from request body — prevents privilege escalation
+- [Phase 03-01]: Two-client pattern: userClient (anon key for JWT verification) + supabaseAdmin (service role for DB writes)
+- [Phase 03-01]: Markdown fence regex strips Claude formatting variance before JSON.parse in both Edge Functions
 
 ## Performance Metrics
 
@@ -91,10 +95,11 @@ See: .planning/PROJECT.md (updated 2026-03-15)
 | 02    | 02   | 6min     | 2     | 5     |
 | 02    | 03   | 4min     | 2     | 2     |
 | 02    | 04   | 5min     | 2     | 4     |
+| Phase 03 P01 | 6min | 3 tasks | 3 files |
 
 ## Next Action
 
-Phase 2 complete. Run human verification (6 tests in Expo Go), then proceed to Phase 3: AI Insights.
+Phase 2 complete and human-verified (all 6 tests passed). Proceed to Phase 3: AI Insights.
 
 ---
 *Last session: 2026-03-16*
