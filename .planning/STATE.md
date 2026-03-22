@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: unknown
-last_updated: "2026-03-22T04:31:24Z"
+last_updated: "2026-03-22T04:37:46.184Z"
 progress:
   total_phases: 5
-  completed_phases: 2
+  completed_phases: 3
   total_plans: 13
-  completed_plans: 12
+  completed_plans: 13
 ---
 
 # Veridian — Project State
@@ -23,8 +23,8 @@ See: .planning/PROJECT.md (updated 2026-03-15)
 ## Current Phase
 
 **Phase 3: AI Engine**
-- Status: In Progress ◐
-- Current Plan: 3 of 4
+- Status: Complete ●
+- Current Plan: 4 of 4 (all plans complete)
 - Goal: Edge Functions calling Claude API, cache-first AI insight hook, Home screen AI card
 
 ## Progress
@@ -33,7 +33,7 @@ See: .planning/PROJECT.md (updated 2026-03-15)
 |-------|--------|-------|----------|
 | 1     | ●      | 5     | 100%     |
 | 2     | ●      | 5     | 100%     |
-| 3     | ◐      | 4     | 50%      |
+| 3     | ●      | 4     | 75%      |
 | 4     | ○      | 4     | 0%       |
 | 5     | ○      | 5     | 0%       |
 
@@ -51,6 +51,7 @@ See: .planning/PROJECT.md (updated 2026-03-15)
 - **02-05**: Edit entry modal (app/entry/[id].tsx) pre-fills quantity with useUpdateEntry on save; swipe-to-delete in insights (Reanimated 3 Gesture.Pan, runOnJS); useEmissionRealtime hook (postgres_changes filtered by user_id) mounted in root layout
 - **03-01**: Two Deno Edge Functions (analyze-emissions using Sonnet 4.5, generate-suggestions using Haiku 4.5) calling Claude API server-side; two-client auth pattern; shared CORS module
 - **03-02**: Cache-first useAiInsight TanStack Query hook — SELECT ai_insights with gt('expires_at', now) before Edge Function call; zero-emission guard; staleTime 23h; retry 1 with 2s delay
+- **03-03**: VAiInsightCard component with skeleton/null/content states; Home screen wired with emissionContext from weekly+entries, AI card inserted between Today Metric Card and This Week section
 
 ## Decisions
 
@@ -86,6 +87,9 @@ See: .planning/PROJECT.md (updated 2026-03-15)
 - [Phase 03-02]: Supabase SELECT is authoritative TTL check (not staleTime) — after app restart React Query has no cache; SELECT with gt('expires_at', now) prevents stale data
 - [Phase 03-02]: Guard (weeklyTotalKg === 0) returns null silently — avoids Claude API call for new users with no emission data
 - [Phase 03-02]: FunctionsHttpError cast used to access context.status for 401 detection — SupabaseClient types surface as FunctionsError without exposing context
+- [Phase 03]: VAiInsightCard returns null (not error UI) on error or missing insight — clean degradation, no screen disruption
+- [Phase 03]: emissionContext set to null until both weekly and recentEntries loaded — prevents premature Claude API call for partial data
+- [Phase 03]: AI insight card has independent loading state from main screen — insightLoading separate from isLoading/weeklyLoading
 
 ## Performance Metrics
 
@@ -102,11 +106,12 @@ See: .planning/PROJECT.md (updated 2026-03-15)
 | 02    | 04   | 5min     | 2     | 4     |
 | 03    | 01   | 6min     | 3     | 3     |
 | 03    | 02   | 2min     | 1     | 1     |
+| 03    | 03   | 4min     | 2     | 3     |
 
 ## Next Action
 
-Phase 3 in progress. Plans 03-01 and 03-02 complete. Proceed to Plan 03-03: Home screen AI card integration.
+Phase 3 complete — all 3 plans (03-01, 03-02, 03-03) done. Proceed to Phase 4 notifications.
 
 ---
 *Last session: 2026-03-22*
-*Stopped at: Completed 03-02-PLAN.md*
+*Stopped at: Completed 03-03-PLAN.md*
