@@ -83,7 +83,7 @@ Plans:
 
 **Requirements covered:** SOCL-01 through SOCL-06
 
-**Plans:** 2/4 plans executed
+**Plans:** 4/4 plans complete
 
 Plans:
 - [ ] 04-01-PLAN.md — DB migrations (Realtime, Storage bucket, profiles RLS), hooks/useProfile.ts (avatar upload), full Profile screen, all 5 Wave 0 test stubs
@@ -128,7 +128,7 @@ Plans:
 | 1 | 5/5 | Complete    | 2026-03-16 |
 | 2 | 4/5 | In Progress|  |
 | 3 | 3/3 | Complete    | 2026-03-22 |
-| 4 | 2/4 | In Progress|  |
+| 4 | 4/4 | Complete   | 2026-03-22 |
 | 5 | ○ | 5 | App Store submission ready |
 
 **Total plans:** 22

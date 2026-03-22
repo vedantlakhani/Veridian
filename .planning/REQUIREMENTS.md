@@ -60,9 +60,9 @@
 - [x] **SOCL-01**: User has a profile with display name, avatar, and lifetime carbon stats
 - [x] **SOCL-02**: User can create a challenge with name, duration, and target reduction percentage
 - [x] **SOCL-03**: User can join an existing challenge via invite code
-- [ ] **SOCL-04**: Challenge leaderboard shows participants ranked by emission reduction
-- [ ] **SOCL-05**: User earns achievement badges for first log, 7-day streak, 10% reduction, etc.
-- [ ] **SOCL-06**: User can view friends' challenges (not individual emission data — privacy)
+- [x] **SOCL-04**: Challenge leaderboard shows participants ranked by emission reduction
+- [x] **SOCL-05**: User earns achievement badges for first log, 7-day streak, 10% reduction, etc.
+- [x] **SOCL-06**: User can view friends' challenges (not individual emission data — privacy)
 
 ### Polish & Launch
 
@@ -151,9 +151,9 @@
 | SOCL-01 | Phase 4 | Complete |
 | SOCL-02 | Phase 4 | Complete |
 | SOCL-03 | Phase 4 | Complete |
-| SOCL-04 | Phase 4 | Pending |
-| SOCL-05 | Phase 4 | Pending |
-| SOCL-06 | Phase 4 | Pending |
+| SOCL-04 | Phase 4 | Complete |
+| SOCL-05 | Phase 4 | Complete |
+| SOCL-06 | Phase 4 | Complete |
 | PLSH-01 | Phase 5 | Pending |
 | PLSH-02 | Phase 5 | Pending |
 | PLSH-03 | Phase 5 | Pending |

@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: unknown
-last_updated: "2026-03-22T18:46:20.781Z"
+last_updated: "2026-03-22T18:53:19.718Z"
 progress:
   total_phases: 5
-  completed_phases: 3
+  completed_phases: 4
   total_plans: 17
-  completed_plans: 15
+  completed_plans: 17
 ---
 
 # Veridian — Project State
@@ -23,8 +23,8 @@ See: .planning/PROJECT.md (updated 2026-03-15)
 ## Current Phase
 
 **Phase 4: Social & Challenges**
-- Status: In Progress ◑
-- Current Plan: 3 of 4
+- Status: Complete ●
+- Current Plan: 4 of 4 (COMPLETE)
 - Goal: Profile screen, challenges flow, leaderboard, achievements
 
 ## Progress
@@ -34,7 +34,7 @@ See: .planning/PROJECT.md (updated 2026-03-15)
 | 1     | ●      | 5     | 100%     |
 | 2     | ●      | 5     | 100%     |
 | 3     | ●      | 4     | 100%     |
-| 4     | ◑      | 4     | 25%      |
+| 4     | ●      | 4     | 100%     |
 | 5     | ○      | 5     | 0%       |
 
 ## Completed Plans
@@ -53,6 +53,9 @@ See: .planning/PROJECT.md (updated 2026-03-15)
 - **03-02**: Cache-first useAiInsight TanStack Query hook — SELECT ai_insights with gt('expires_at', now) before Edge Function call; zero-emission guard; staleTime 23h; retry 1 with 2s delay
 - **03-03**: VAiInsightCard component with skeleton/null/content states; Home screen wired with emissionContext from weekly+entries, AI card inserted between Today Metric Card and This Week section
 - **04-01**: Supabase avatars Storage bucket, challenge_participants Realtime, profiles leaderboard RLS, useProfile/useUpdateProfile/uploadAvatar hooks, stats-first Profile screen, 5 Wave 0 test stubs
+- **04-02**: Challenge create/join flow with SheetMode state machine, useChallenges hooks (useMyChallenges/useCreateChallenge/useJoinChallenge), ChallengeCard component, invite code copy/share
+- **04-03**: useLeaderboard hook with _computeReductionPct and _sortLeaderboard, useChallengeRealtime Realtime subscription, LeaderboardRow component, challenge detail screen
+- **04-04**: Achievement badge system — useAchievements hook with all 4 criteria types, AchievementBadge SVG component (earned/locked states), AchievementToast Reanimated 3 slide-in, achievement detection wired into useEmissionEntries mutations, Profile screen badge row
 
 ## Decisions
 
@@ -96,6 +99,11 @@ See: .planning/PROJECT.md (updated 2026-03-15)
 - [Phase 04-01]: Profile stats use 3 independent TanStack Query hooks (all-time entries sum, weekly_summaries min, daily_summaries streak) — avoids new aggregation columns
 - [Phase 04-02]: SheetMode state machine (none/select/create/join/created) avoids multiple boolean flags for VBottomSheet challenge flow
 - [Phase 04-02]: router.push cast as any for /challenge/[id] — route file deferred to plan 04-03
+- [Phase 04-04]: checkAndUnlockAchievements is plain async function (not hook) for safe mutation onSuccess calling
+- [Phase 04-04]: Toast signaling uses queryClient.setQueryData + getQueryCache().subscribe for cross-component achievement notifications without prop drilling
+- [Phase 04-03]: _computeReductionPct and _sortLeaderboard exported with _ prefix for unit testing without mocking Supabase
+- [Phase 04-03]: useChallengeRealtime mounted in challenge screen (not root layout) — subscription scoped to leaderboard screen lifetime
+- [Phase 04-03]: SOCL-06 privacy enforced at component level — LeaderboardRow.tsx contains no baseline_kg or current_kg references; reduction_pct is the only performance metric visible
 
 ## Performance Metrics
 
@@ -115,11 +123,13 @@ See: .planning/PROJECT.md (updated 2026-03-15)
 | 03    | 03   | 4min     | 2     | 3     |
 | 04    | 01   | 7min     | 3     | 12    |
 | 04    | 02   | 5min     | 2     | 3     |
+| 04    | 03   | 5min     | 2     | 6     |
+| 04    | 04   | 4min     | 2     | 6     |
 
 ## Next Action
 
-Phase 4 in progress — 04-02 complete. Proceed to 04-03 (leaderboard: useLeaderboard hook, leaderboard screen, challenge detail).
+Phase 4 complete. Proceed to Phase 5 — Notifications & Polish.
 
 ---
 *Last session: 2026-03-22*
-*Stopped at: Completed 04-02-PLAN.md*
+*Stopped at: Completed 04-04-PLAN.md*
