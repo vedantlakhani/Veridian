@@ -105,12 +105,14 @@ Plans:
 
 **Requirements covered:** PLSH-01 through PLSH-08
 
-**Plans:**
-1. Onboarding flow — 3-screen carousel with Reanimated 3 animations, skip option, persisted completion state
-2. Push notifications — Expo Notifications setup, daily reminder scheduling, streak milestone notifications
-3. Performance & offline — Cold start optimization, navigation transition polish, offline entry caching with sync
-4. App Store assets — iOS screenshots (6.7", 6.1"), App Store description, privacy policy; Play Store equivalents
-5. Launch readiness — EAS Build config, TestFlight/internal track submission, launch checklist
+**Plans:** 5 plans
+
+Plans:
+- [ ] 05-01-PLAN.md — Wave 0 test stubs (useOnboarding, useNotifications, useOfflineQueue) covering PLSH-01/02/03/08
+- [ ] 05-02-PLAN.md — useOnboardingStore Zustand store + 3-screen Reanimated 3 carousel + root layout Stack.Protected gate
+- [ ] 05-03-PLAN.md — useNotifications hook (DAILY trigger + streak milestones) + streak notification wired into useEmissionEntries + parallel font loading
+- [ ] 05-04-PLAN.md — useOfflineQueue (expo-sqlite v16) + VOfflineBanner component + NetInfo flush on reconnect
+- [ ] 05-05-PLAN.md — app.json bundle ID fix + eas.json production profile + privacy policy HTML + store metadata
 
 **Success Criteria:**
 - Cold start <3s on iPhone 12 equivalent
@@ -135,4 +137,4 @@ Plans:
 
 ---
 *Roadmap created: 2026-03-15*
-*Last updated: 2026-03-22 — Phase 4 plans created (social challenges + achievements)*
+*Last updated: 2026-03-22 — Phase 5 plans created (onboarding, notifications, offline, store assets)*
