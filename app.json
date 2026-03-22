@@ -10,11 +10,11 @@
     "newArchEnabled": true,
     "ios": {
       "supportsTablet": false,
-      "bundleIdentifier": "com.veridian.app",
+      "bundleIdentifier": "com.vedantlakhani.veridian",
       "usesAppleSignIn": true
     },
     "android": {
-      "package": "com.veridian.app",
+      "package": "com.vedantlakhani.veridian",
       "adaptiveIcon": {
         "backgroundColor": "#1B7A4A",
         "foregroundImage": "./assets/images/android-icon-foreground.png",
