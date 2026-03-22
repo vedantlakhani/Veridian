@@ -1,7 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import { useAuthStore } from '@/stores/authStore';
-import type { FunctionsHttpError } from '@supabase/supabase-js';
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
@@ -71,25 +70,31 @@ export function useAiInsight(
       // Step 2: No fresh cache — guard against calling Claude with no data
       if (!context || context.weeklyTotalKg === 0) return null;
 
-      // Step 3: Call Edge Function — use session from Zustand auth store (always fresh)
-      const { data, error } = await supabase.functions.invoke<AiInsight>(
-        'generate-suggestions',
+      // Step 3: Direct fetch to Edge Function — bypasses supabase.functions.invoke()
+      // which internally overwrites our Authorization header with its own accessToken() call.
+      if (!session?.access_token) throw new Error('No session token available');
+
+      const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL!;
+      const supabaseAnonKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY!;
+      const response = await fetch(
+        `${supabaseUrl}/functions/v1/generate-suggestions`,
         {
-          body: context,
-          headers: session?.access_token
-            ? { Authorization: `Bearer ${session.access_token}` }
-            : {},
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${session.access_token}`,
+            'apikey': supabaseAnonKey,
+          },
+          body: JSON.stringify(context),
         },
       );
 
-      if (error) {
-        // 401 = token expired or user deauthorised; surface as a meaningful error
-        if ((error as FunctionsHttpError).context?.status === 401) {
-          throw new Error('AI service unauthorized — please sign in again');
-        }
-        throw new Error(`AI service error: ${error.message}`);
+      if (!response.ok) {
+        const errBody = await response.text();
+        throw new Error(`Edge Function error ${response.status}: ${errBody}`);
       }
 
+      const data = await response.json() as AiInsight;
       return data;
     },
     enabled: !!userId && !!context,

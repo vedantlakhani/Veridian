@@ -122,6 +122,11 @@ export default function HomeScreen() {
         </View>
       )}
 
+      {/* DEBUG — remove after diagnosis */}
+      <Text style={{ fontSize: 11, color: 'red', marginBottom: 4 }}>
+        {`AI: loading=${insightLoading} insight=${!!insight} ctx=${!!emissionContext} err=${insightError?.message?.slice(0, 80) ?? 'none'}`}
+      </Text>
+
       {/* AI Insight Card — loads independently, renders skeleton while fetching */}
       <VAiInsightCard
         insight={insight}
