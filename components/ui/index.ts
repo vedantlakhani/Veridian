@@ -10,3 +10,4 @@ export { VBottomSheet } from './VBottomSheet';
 export { VEmptyState } from './VEmptyState';
 export { VSkeleton } from './VSkeleton';
 export { VAiInsightCard } from './VAiInsightCard';
+export { VOfflineBanner } from './VOfflineBanner';

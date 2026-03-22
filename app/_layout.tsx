@@ -8,6 +8,9 @@ import { useAuthStore } from '@/stores/authStore';
 import { useOnboardingStore } from '@/stores/useOnboardingStore';
 import { queryClient } from '@/lib/queryClient';
 import { useEmissionRealtime } from '@/hooks/useEmissionRealtime';
+import { useOfflineQueue } from '@/hooks/useOfflineQueue';
+import { useCreateEntry } from '@/hooks/useEmissionEntries';
+import { VOfflineBanner } from '@/components/ui';
 // TODO: 05-03 — import useNotifications from '@/hooks/useNotifications'
 
 SplashScreen.preventAutoHideAsync();
@@ -17,6 +20,8 @@ function AppNavigator() {
   const { session, user } = useAuthStore();
   const { onboardingComplete } = useOnboardingStore();
   useEmissionRealtime(user?.id);
+  const { mutateAsync } = useCreateEntry();
+  useOfflineQueue(mutateAsync);
 
   return (
     <Stack screenOptions={{ headerShown: false }}>
@@ -55,6 +60,7 @@ export default function RootLayout() {
     <GestureHandlerRootView style={{ flex: 1 }}>
       <QueryClientProvider client={queryClient}>
         <StatusBar style="dark" />
+        <VOfflineBanner />
         <AppNavigator />
       </QueryClientProvider>
     </GestureHandlerRootView>
