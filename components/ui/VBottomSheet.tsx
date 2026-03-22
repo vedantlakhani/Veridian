@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -36,10 +36,19 @@ export function VBottomSheet({
 }: VBottomSheetProps) {
   const translateY = useSharedValue(CLOSED_Y);
   const context = useSharedValue({ y: 0 });
+  // visible tracks whether the component should be mounted at all
+  const [visible, setVisible] = useState(isOpen);
 
-  // Animate open/close in response to isOpen prop — must be in useEffect, not render body
+  // Animate open/close — use withSpring callback to unmount only after animation completes
   useEffect(() => {
-    translateY.value = withSpring(isOpen ? 0 : SCREEN_HEIGHT, { damping: 50 });
+    if (isOpen) {
+      setVisible(true);
+      translateY.value = withSpring(0, { damping: 50 });
+    } else {
+      translateY.value = withSpring(SCREEN_HEIGHT, { damping: 50 }, (finished) => {
+        if (finished) runOnJS(setVisible)(false);
+      });
+    }
   }, [isOpen]);
 
   const gesture = Gesture.Pan()
@@ -66,7 +75,7 @@ export function VBottomSheet({
     transform: [{ translateY: translateY.value }],
   }));
 
-  if (!isOpen && translateY.value >= SCREEN_HEIGHT) return null;
+  if (!visible) return null;
 
   return (
     <View style={StyleSheet.absoluteFill} pointerEvents={isOpen ? 'auto' : 'none'}>
