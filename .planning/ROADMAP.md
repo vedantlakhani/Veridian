@@ -2,7 +2,7 @@
 
 **Created:** 2026-03-15
 **Milestone:** v1.0 — Foundations to Launch
-**Total Phases:** 5
+**Total Phases:** 6
 
 ---
 
@@ -123,6 +123,30 @@ Plans:
 
 ---
 
+## Phase 6: Design Elevation & Carbon Calculator
+
+**Goal:** Klima-level visual redesign across the entire app — full dark mode skin, carbon footprint calculator onboarding flow, and polished micro-interactions. Every screen elevated to Apple Design Award quality.
+
+**Requirements covered:** DSGN-01 through DSGN-11
+
+**Plans:** 5 plans
+
+Plans:
+- [ ] 06-01-PLAN.md — Wave 0 test stubs + dark theme token replacement + StatusBar/app.json fixes + global hardcoded hex sweep across all screens
+- [ ] 06-02-PLAN.md — Carbon calculator: DB migration (baseline_kg), 8-question flow with animated CO₂ counter, results screen, useBaseline hook
+- [ ] 06-03-PLAN.md — Home dashboard hero redesign: full-bleed nature photography, expo-linear-gradient overlay, 80sp JetBrains Mono metric
+- [ ] 06-04-PLAN.md — Log + Insights screens dark redesign + Breathe Effect transitions on form reveal + EmissionBarChart dark axis
+- [ ] 06-05-PLAN.md — Profile, Challenges, Achievements dark skin + auth screen final sweep + full Phase 6 green gate
+
+**Success Criteria:**
+- Full dark mode applied consistently across all 20+ screens
+- Carbon calculator onboarding: 8 questions across 4 categories, live annual CO₂ updates, results screen with breakdown vs global average (4.7t)
+- Cold start renders in dark mode without flash of light theme
+- Klima-comparable visual quality — bold hero numbers, nature-inspired photography, minimal chrome
+- TypeScript compiles with zero errors, all existing tests pass
+
+---
+
 ## Milestone Summary
 
 | Phase | Status | Plans | Key Deliverable |
@@ -132,9 +156,10 @@ Plans:
 | 3 | 3/3 | Complete    | 2026-03-22 |
 | 4 | 4/4 | Complete   | 2026-03-22 |
 | 5 | 5/5 | Complete   | 2026-03-22 |
+| 6 | 0/5 | Planned    | 2026-03-28 |
 
-**Total plans:** 22
+**Total plans:** 27
 
 ---
 *Roadmap created: 2026-03-15*
-*Last updated: 2026-03-22 — Phase 5 plans created (onboarding, notifications, offline, store assets)*
+*Last updated: 2026-03-28 — Phase 6 plans created (06-01 through 06-05)*
