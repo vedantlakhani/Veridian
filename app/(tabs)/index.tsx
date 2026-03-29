@@ -27,28 +27,29 @@ const HERO_IMAGES = [
   require('@/assets/images/hero-sky.jpg'),
 ];
 
+// Rotate photo by day of week
+const todayPhoto = HERO_IMAGES[new Date().getDay() % HERO_IMAGES.length];
+
 export default function HomeScreen() {
   const { user } = useAuthStore();
   const today = getLocalDateString();
   const { data: weekly, isLoading: weeklyLoading } = useWeeklySummary(user?.id);
-  // Fetch all entries — filter today's in JS to avoid UTC midnight timezone mismatch
   const { data: recentEntries = [], isLoading: entriesLoading } = useEmissionEntries(user?.id);
 
-  // Filter by local date in JS — avoids UTC midnight timezone mismatch
   const todayTotal = recentEntries
     .filter(e => getLocalDateString(new Date(e.logged_at)) === today)
     .reduce((sum, e) => sum + e.kg_co2e_total, 0);
+
   const isLoading = entriesLoading;
-  const progress = Math.min(todayTotal / DAILY_CARBON_BUDGET_KG, 1); // clamp to [0, 1]
+  const progress = Math.min(todayTotal / DAILY_CARBON_BUDGET_KG, 1);
 
-  // Determine ring color: green below target, orange approaching budget, red at/over budget
+  // Softer palette that reads well over photo without overwhelming green
   const ringColor =
-    todayTotal <= 7 ? colors.primary :
-    todayTotal <= 15 ? colors.warning :
-    colors.error;
+    todayTotal === 0 ? 'rgba(255,255,255,0.6)' :
+    todayTotal <= 7 ? '#4ADE80' :
+    todayTotal <= 15 ? '#F59E0B' :
+    '#EF4444';
 
-  // Build emission context for the AI insight hook.
-  // Pass null until both weekly summary and entries are loaded — avoids a premature Claude call.
   const emissionContext: EmissionContext | null =
     weekly && recentEntries.length > 0
       ? {
@@ -56,7 +57,6 @@ export default function HomeScreen() {
           foodKg: weekly.breakdown?.food ?? 0,
           transportKg: weekly.breakdown?.transport ?? 0,
           energyKg: weekly.breakdown?.energy ?? 0,
-          // Top 3 items by kg_co2e_total from recent entries (last 7 days of data)
           topItems: [...recentEntries]
             .sort((a, b) => b.kg_co2e_total - a.kg_co2e_total)
             .slice(0, 3)
@@ -68,230 +68,214 @@ export default function HomeScreen() {
         }
       : null;
 
-  const {
-    data: insight,
-    isLoading: insightLoading,
-    error: insightError,
-  } = useAiInsight(user?.id, emissionContext);
+  const { data: insight, isLoading: insightLoading, error: insightError } = useAiInsight(
+    user?.id,
+    emissionContext,
+  );
+
+  const statusLabel =
+    todayTotal === 0 ? 'Nothing logged yet' :
+    progress < 0.5 ? 'On track today' :
+    progress < 1 ? 'Getting close' :
+    'Over daily budget';
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.background }}>
 
-      {/* Layer 1: Full-bleed hero photo (absolute, fills entire screen) */}
-      <ImageBackground
-        source={HERO_IMAGES[0]}
-        style={StyleSheet.absoluteFillObject}
-        contentFit="cover"
-      />
+      {/* ── Hero section: fixed height, photo + ring centered ── */}
+      <View style={styles.heroContainer}>
+        <ImageBackground
+          source={todayPhoto}
+          style={StyleSheet.absoluteFillObject}
+          contentFit="cover"
+        />
+        {/* Subtle top scrim so status bar icons read */}
+        <LinearGradient
+          colors={['rgba(0,0,0,0.3)', 'transparent']}
+          locations={[0, 0.25]}
+          style={StyleSheet.absoluteFillObject}
+        />
+        {/* Bottom fade to dark background */}
+        <LinearGradient
+          colors={['transparent', colors.background]}
+          locations={[0.6, 1]}
+          style={StyleSheet.absoluteFillObject}
+        />
 
-      {/* Layer 2: Gradient overlay (bottom-to-top dark fade starting at 35% from top) */}
-      <LinearGradient
-        colors={['transparent', 'rgba(25,28,28,0.7)', '#191C1C']}
-        locations={[0, 0.45, 0.85]}
-        style={[StyleSheet.absoluteFillObject, { top: '35%' as unknown as number }]}
-      />
+        <SafeAreaView style={styles.heroContent} edges={['top']}>
+          <Text style={styles.dateLabel}>Today</Text>
 
-      {/* Layer 3: Safe area content — no backgroundColor so photo shows through */}
-      <SafeAreaView style={{ flex: 1 }}>
-        <ScrollView
-          style={{ flex: 1 }}
-          contentContainerStyle={styles.scrollContent}
-          showsVerticalScrollIndicator={false}
-        >
-
-          {/* Hero section (top 40% of screen) */}
-          <View style={styles.heroSection}>
-            <Text style={styles.heroLabel}>Today</Text>
-            {isLoading ? (
-              <VSkeleton width={200} height={96} style={{ alignSelf: 'center' }} />
-            ) : (
-              <Text style={styles.heroMetric}>
-                {todayTotal.toFixed(1)}
-              </Text>
-            )}
-            <Text style={styles.heroUnit}>kg CO₂e</Text>
-            <Text style={styles.heroBudget}>
-              {(progress * 100).toFixed(0)}% of {DAILY_CARBON_BUDGET_KG} kg daily budget
-            </Text>
-          </View>
-
-          {/* Dark content sections below (sit on top of solid #191C1C) */}
-
-          {/* Weekly progress ring — compact dark card */}
-          <VCard elevation="md" style={styles.ringCard}>
-            {weeklyLoading ? (
-              <VSkeleton width={120} height={120} style={{ alignSelf: 'center' }} />
-            ) : (
-              <View style={styles.ringContainer}>
-                <VProgressRing
-                  progress={progress}
-                  size={120}
-                  strokeWidth={10}
-                  color={ringColor}
-                >
-                  <View style={{ alignItems: 'center' }}>
-                    <Text style={[styles.ringValue, { color: ringColor }]}>
-                      {(progress * 100).toFixed(0)}%
-                    </Text>
-                  </View>
-                </VProgressRing>
-                <View style={styles.weeklyBreakdown}>
-                  <Text style={styles.sectionTitle}>This Week</Text>
-                  <View style={styles.weeklyRow}>
-                    <CategoryMetric label="Food" value={weekly?.breakdown?.food ?? 0} color={colors.food} />
-                    <CategoryMetric label="Transport" value={weekly?.breakdown?.transport ?? 0} color={colors.transport} />
-                    <CategoryMetric label="Energy" value={weekly?.breakdown?.energy ?? 0} color={colors.energy} />
-                  </View>
-                  <Text style={styles.weeklyTotal}>
-                    {(weekly?.total_kg_co2e ?? 0).toFixed(1)} kg CO₂e total
-                  </Text>
-                </View>
-              </View>
-            )}
-          </VCard>
-
-          {/* AI Insight */}
-          <VAiInsightCard insight={insight} isLoading={insightLoading} error={insightError} />
-
-          {/* Recent Entries */}
-          <Text style={styles.sectionTitle}>Recent Entries</Text>
-          {entriesLoading ? (
-            <>
-              <View style={{ marginBottom: spacing.sm }}>
-                <VSkeleton width={'100%' as `${number}%`} height={56} />
-              </View>
-              <View style={{ marginBottom: spacing.sm }}>
-                <VSkeleton width={'100%' as `${number}%`} height={56} />
-              </View>
-            </>
-          ) : recentEntries.length === 0 ? (
-            <VEmptyState
-              title="No emissions logged yet"
-              body="Tap the Log tab to record your first entry"
+          {isLoading ? (
+            <VSkeleton
+              width={220}
+              height={220}
+              style={{ borderRadius: 110, alignSelf: 'center', marginVertical: spacing.lg }}
             />
           ) : (
-            recentEntries.slice(0, 5).map((entry) => (
-              <VCard key={entry.id} elevation="sm" style={styles.entryCard}>
-                <View style={styles.entryRow}>
-                  <View style={styles.entryLeft}>
-                    <VBadge
-                      label={entry.emission_factors.category}
-                      variant={entry.emission_factors.category}
-                    />
-                    <Text style={styles.entryItem} numberOfLines={1}>
-                      {entry.emission_factors.item}
-                    </Text>
-                  </View>
-                  <Text style={styles.entryValue}>
-                    {entry.kg_co2e_total.toFixed(2)} kg
+            <View style={styles.ringWrap}>
+              <VProgressRing
+                progress={progress}
+                size={220}
+                strokeWidth={12}
+                color={ringColor}
+              >
+                <View style={styles.ringInner}>
+                  <Text style={styles.ringMetric}>
+                    {todayTotal.toFixed(1)}
                   </Text>
+                  <Text style={styles.ringUnit}>kg CO₂e</Text>
                 </View>
-              </VCard>
-            ))
+              </VProgressRing>
+            </View>
           )}
 
-        </ScrollView>
-      </SafeAreaView>
+          <Text style={styles.statusLabel}>{statusLabel}</Text>
+        </SafeAreaView>
+      </View>
 
+      {/* ── Scrollable content ── */}
+      <ScrollView
+        style={{ flex: 1 }}
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+      >
+        {/* This Week */}
+        <VCard elevation="md" style={styles.weekCard}>
+          <Text style={styles.sectionTitle}>This Week</Text>
+          {weeklyLoading ? (
+            <VSkeleton width="100%" height={40} />
+          ) : (
+            <>
+              <View style={styles.weekRow}>
+                <CategoryPill label="Food" value={weekly?.breakdown?.food ?? 0} color={colors.food} />
+                <CategoryPill label="Transport" value={weekly?.breakdown?.transport ?? 0} color={colors.transport} />
+                <CategoryPill label="Energy" value={weekly?.breakdown?.energy ?? 0} color={colors.energy} />
+              </View>
+              <Text style={styles.weekTotal}>
+                {(weekly?.total_kg_co2e ?? 0).toFixed(1)} kg total this week
+              </Text>
+            </>
+          )}
+        </VCard>
+
+        {/* AI Insight */}
+        <VAiInsightCard insight={insight} isLoading={insightLoading} error={insightError} />
+
+        {/* Recent Entries */}
+        <Text style={styles.sectionTitle}>Recent</Text>
+        {entriesLoading ? (
+          <>
+            <View style={{ marginBottom: spacing.sm }}><VSkeleton width="100%" height={56} /></View>
+            <View style={{ marginBottom: spacing.sm }}><VSkeleton width="100%" height={56} /></View>
+          </>
+        ) : recentEntries.length === 0 ? (
+          <VEmptyState title="No entries yet" body="Tap Log to record your first emission" />
+        ) : (
+          recentEntries.slice(0, 5).map((entry) => (
+            <VCard key={entry.id} elevation="sm" style={styles.entryCard}>
+              <View style={styles.entryRow}>
+                <View style={styles.entryLeft}>
+                  <VBadge
+                    label={entry.emission_factors.category}
+                    variant={entry.emission_factors.category}
+                  />
+                  <Text style={styles.entryItem} numberOfLines={1}>
+                    {entry.emission_factors.item}
+                  </Text>
+                </View>
+                <Text style={styles.entryValue}>
+                  {entry.kg_co2e_total.toFixed(2)} kg
+                </Text>
+              </View>
+            </VCard>
+          ))
+        )}
+      </ScrollView>
     </View>
   );
 }
 
-// Inline sub-component — avoids creating a separate file for a simple display element
-function CategoryMetric({
-  label,
-  value,
-  color,
-}: {
-  label: string;
-  value: number;
-  color: string;
-}) {
+function CategoryPill({ label, value, color }: { label: string; value: number; color: string }) {
   return (
-    <View style={catStyles.container}>
-      <View style={[catStyles.dot, { backgroundColor: color }]} />
-      <Text style={catStyles.label}>{label}</Text>
-      <Text style={[catStyles.value, { fontFamily: 'JetBrainsMono' }]}>
+    <View style={pillStyles.wrap}>
+      <View style={[pillStyles.dot, { backgroundColor: color }]} />
+      <Text style={pillStyles.label}>{label}</Text>
+      <Text style={[pillStyles.value, { fontFamily: 'JetBrainsMono_700Bold', color }]}>
         {value.toFixed(1)}
       </Text>
-      <Text style={catStyles.unit}>kg</Text>
     </View>
   );
 }
 
-const catStyles = StyleSheet.create({
-  container: { flex: 1, alignItems: 'center', gap: 4 },
-  dot: { width: 8, height: 8, borderRadius: 4 },
-  label: { fontSize: 11, color: colors.textSecondary, fontWeight: '500' },
-  value: { fontSize: 17, fontWeight: '700', color: colors.textPrimary },
-  unit: { fontSize: 11, color: colors.textSecondary },
+const pillStyles = StyleSheet.create({
+  wrap: { flex: 1, alignItems: 'center', gap: 3 },
+  dot: { width: 6, height: 6, borderRadius: 3 },
+  label: { fontSize: 11, color: colors.textSecondary },
+  value: { fontSize: 16, fontWeight: '700' },
 });
 
 const styles = StyleSheet.create({
-  scrollContent: {
-    paddingBottom: spacing.xxl,
+  heroContainer: {
+    height: 400,
+    position: 'relative',
   },
-  heroSection: {
+  heroContent: {
+    flex: 1,
     alignItems: 'center',
-    paddingTop: spacing.xxl + spacing.lg,
-    paddingBottom: spacing.xl,
-    paddingHorizontal: spacing.lg,
-    minHeight: 280,
     justifyContent: 'center',
   },
-  heroLabel: {
-    fontSize: typography.sizes.md,
+  dateLabel: {
+    fontSize: 11,
     fontWeight: '600',
-    color: 'rgba(255,255,255,0.7)',
-    letterSpacing: 2,
+    color: 'rgba(255,255,255,0.65)',
+    letterSpacing: 3,
     textTransform: 'uppercase',
-    marginBottom: spacing.xs,
-  },
-  heroMetric: {
-    fontFamily: 'JetBrainsMono_700Bold',
-    fontSize: 80,
-    fontWeight: '700',
-    color: '#FFFFFF',
-    textAlign: 'center',
-    textShadowColor: 'rgba(0,0,0,0.4)',
-    textShadowOffset: { width: 0, height: 2 },
-    textShadowRadius: 8,
-    lineHeight: 88,
-  },
-  heroUnit: {
-    fontSize: typography.sizes.md,
-    color: 'rgba(255,255,255,0.8)',
-    fontWeight: '500',
-    marginTop: spacing.xs,
-  },
-  heroBudget: {
-    fontSize: typography.sizes.sm,
-    color: 'rgba(255,255,255,0.5)',
-    marginTop: spacing.xs,
-  },
-  ringCard: {
-    marginHorizontal: spacing.lg,
     marginBottom: spacing.md,
-    backgroundColor: colors.surface,
   },
-  ringContainer: {
-    flexDirection: 'row',
+  ringWrap: {
     alignItems: 'center',
-    gap: spacing.lg,
-    padding: spacing.sm,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.5,
+    shadowRadius: 20,
+    elevation: 10,
   },
-  weeklyBreakdown: { flex: 1 },
-  ringValue: {
+  ringInner: {
+    alignItems: 'center',
+    gap: 2,
+  },
+  ringMetric: {
     fontFamily: 'JetBrainsMono_700Bold',
-    fontSize: typography.sizes.xl,
-    fontWeight: '700',
+    fontSize: 48,
+    color: '#FFFFFF',
+    lineHeight: 52,
   },
-  weeklyRow: {
+  ringUnit: {
+    fontSize: 11,
+    color: 'rgba(255,255,255,0.6)',
+    letterSpacing: 1.5,
+    textTransform: 'uppercase',
+  },
+  statusLabel: {
+    fontSize: 12,
+    fontWeight: '500',
+    color: 'rgba(255,255,255,0.55)',
+    letterSpacing: 1,
+    marginTop: spacing.md,
+    textTransform: 'uppercase',
+  },
+  scrollContent: {
+    paddingHorizontal: spacing.lg,
+    paddingTop: spacing.md,
+    paddingBottom: spacing.xxl,
+  },
+  weekCard: { marginBottom: spacing.md },
+  weekRow: {
     flexDirection: 'row',
     justifyContent: 'space-around',
-    marginBottom: spacing.xs,
+    marginVertical: spacing.sm,
   },
-  weeklyTotal: {
+  weekTotal: {
     fontSize: typography.sizes.xs,
     color: colors.textSecondary,
     textAlign: 'center',
@@ -301,18 +285,16 @@ const styles = StyleSheet.create({
     fontSize: typography.sizes.lg,
     fontWeight: '700',
     color: colors.textPrimary,
-    marginTop: spacing.md,
     marginBottom: spacing.sm,
-    paddingHorizontal: spacing.lg,
+    marginTop: spacing.sm,
   },
-  entryCard: { marginHorizontal: spacing.lg, marginBottom: spacing.sm },
+  entryCard: { marginBottom: spacing.sm },
   entryRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   entryLeft: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, flex: 1 },
   entryItem: { fontSize: typography.sizes.sm, color: colors.textPrimary, flex: 1 },
   entryValue: {
     fontFamily: 'JetBrainsMono_700Bold',
     fontSize: typography.sizes.sm,
-    fontWeight: '600',
     color: colors.textPrimary,
   },
 });

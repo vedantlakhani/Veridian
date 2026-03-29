@@ -36,7 +36,7 @@ import type { Challenge } from '@/types/challenge';
 // ─── Profile Screen ────────────────────────────────────────────────────────
 export default function ProfileScreen() {
   const router = useRouter();
-  const { user } = useAuthStore();
+  const { user, signOut } = useAuthStore();
   const userId = user?.id;
 
   const { data: profile, isLoading: profileLoading } = useProfile(userId);
@@ -371,6 +371,11 @@ export default function ProfileScreen() {
         )}
       </VCard>
 
+      {/* ── Sign Out ── */}
+      <TouchableOpacity style={styles.signOutRow} onPress={() => void signOut()}>
+        <Text style={styles.signOutText}>Sign Out</Text>
+      </TouchableOpacity>
+
       {/* ── Edit Profile Bottom Sheet ── */}
       <VBottomSheet
         isOpen={editOpen}
@@ -635,6 +640,21 @@ const styles = StyleSheet.create({
   // Needed for borderRadius in avatarFallback inside sheet avatar
   sheetAvatarBorderRadius: {
     borderRadius: radii.full,
+  },
+  signOutRow: {
+    marginHorizontal: spacing.lg,
+    marginTop: spacing.lg,
+    marginBottom: spacing.sm,
+    paddingVertical: spacing.md,
+    alignItems: 'center',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(255,80,80,0.3)',
+  },
+  signOutText: {
+    fontSize: typography.sizes.md,
+    fontWeight: '600',
+    color: '#FF5050',
   },
   // Challenge sheet
   selectMode: {
