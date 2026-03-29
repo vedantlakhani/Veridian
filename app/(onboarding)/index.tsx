@@ -189,7 +189,8 @@ export default function OnboardingScreen() {
 
   const handleGetStarted = () => {
     void complete().then(() => {
-      router.push('/onboarding/calculator');
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      router.push('/onboarding/calculator' as any);
     });
   };
 
