@@ -188,10 +188,8 @@ export default function OnboardingScreen() {
   };
 
   const handleGetStarted = () => {
-    void complete().then(() => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      router.push('/onboarding/calculator' as any);
-    });
+    // Do NOT call complete() here — onboarding completes after the calculator flow
+    router.push('/calculator' as any);
   };
 
   const renderItem = ({ index }: { item: typeof SLIDES[number]; index: number }) => {
