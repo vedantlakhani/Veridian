@@ -19,10 +19,10 @@ interface VButtonProps extends TouchableOpacityProps {
 }
 
 const variantStyles = {
-  primary: { bg: colors.primary, text: '#FFFFFF', border: colors.primary },
+  primary: { bg: colors.primary, text: colors.textPrimary, border: colors.primary },
   secondary: { bg: colors.surface, text: colors.primary, border: colors.primary },
   ghost: { bg: 'transparent', text: colors.primary, border: 'transparent' },
-  destructive: { bg: colors.error, text: '#FFFFFF', border: colors.error },
+  destructive: { bg: colors.error, text: colors.textPrimary, border: colors.error },
 };
 
 const sizeStyles = {

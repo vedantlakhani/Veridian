@@ -9,11 +9,11 @@ interface VBadgeProps {
 }
 
 const variantColors: Record<BadgeVariant, { bg: string; text: string }> = {
-  food:      { bg: '#FFF7ED', text: colors.food },
-  transport: { bg: '#EFF6FF', text: colors.transport },
-  energy:    { bg: '#FAF5FF', text: colors.energy },
-  success:   { bg: '#F0FDF4', text: colors.success },
-  warning:   { bg: '#FFFBEB', text: colors.warning },
+  food:      { bg: colors.foodBg, text: colors.food },
+  transport: { bg: colors.transportBg, text: colors.transport },
+  energy:    { bg: colors.energyBg, text: colors.energy },
+  success:   { bg: colors.successBg, text: colors.success },
+  warning:   { bg: colors.energyBg, text: colors.warning },
   error:     { bg: colors.errorLight, text: colors.error },
   neutral:   { bg: colors.divider, text: colors.textSecondary },
 };

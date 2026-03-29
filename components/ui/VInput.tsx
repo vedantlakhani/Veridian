@@ -61,7 +61,7 @@ const styles = StyleSheet.create({
   label: {
     fontSize: typography.sizes.sm,
     fontWeight: '600',
-    color: '#374151',
+    color: colors.textPrimary,
   },
   required: { color: colors.error },
   inputRow: {

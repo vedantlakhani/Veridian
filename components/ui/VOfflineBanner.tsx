@@ -1,5 +1,6 @@
 import React, { useEffect } from 'react';
 import { Text, StyleSheet } from 'react-native';
+import { colors } from '@/lib/theme';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -12,7 +13,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
  * Fixed-position banner that appears at the top of the screen when the
  * device is offline and auto-dismisses when connectivity returns.
  *
- * Design: Forest Green (#1B7A4A) background, white text.
+ * Design: Forest Green (colors.primary) background, white text.
  * Animation: Reanimated 3 withTiming fade + slide on connectivity change.
  * Interaction: pointerEvents="none" — never blocks touches on content below.
  */
@@ -57,13 +58,13 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     zIndex: 9999,
-    backgroundColor: '#1B7A4A',
+    backgroundColor: colors.primary,
     paddingVertical: 8,
     paddingHorizontal: 16,
     alignItems: 'center',
   },
   text: {
-    color: '#FFFFFF',
+    color: colors.textPrimary,
     fontSize: 13,
     fontFamily: 'Inter',
     textAlign: 'center',

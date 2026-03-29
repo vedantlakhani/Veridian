@@ -12,6 +12,7 @@ import {
 import { Link } from 'expo-router';
 import { useState } from 'react';
 import { useAuthStore } from '@/stores/authStore';
+import { colors } from '@/lib/theme';
 
 export default function LoginScreen() {
   const [email, setEmail] = useState('');
@@ -60,7 +61,7 @@ export default function LoginScreen() {
               value={email}
               onChangeText={(v) => { setEmail(v); setAuthError(null); }}
               placeholder="you@example.com"
-              placeholderTextColor="#9CA3AF"
+              placeholderTextColor={colors.textTertiary}
               autoCapitalize="none"
               keyboardType="email-address"
               autoComplete="email"
@@ -75,7 +76,7 @@ export default function LoginScreen() {
               value={password}
               onChangeText={(v) => { setPassword(v); setAuthError(null); }}
               placeholder="••••••••"
-              placeholderTextColor="#9CA3AF"
+              placeholderTextColor={colors.textTertiary}
               secureTextEntry
               autoComplete="password"
               textContentType="password"
@@ -95,7 +96,7 @@ export default function LoginScreen() {
             activeOpacity={0.8}
           >
             {loading ? (
-              <ActivityIndicator color="#FFFFFF" />
+              <ActivityIndicator color={colors.textPrimary} />
             ) : (
               <Text style={styles.primaryButtonText}>Sign In</Text>
             )}
@@ -146,60 +147,60 @@ export default function LoginScreen() {
 }
 
 const styles = StyleSheet.create({
-  flex: { flex: 1, backgroundColor: '#F8FAF9' },
+  flex: { flex: 1, backgroundColor: colors.background },
   container: { flexGrow: 1, padding: 24, justifyContent: 'center' },
   header: { alignItems: 'center', marginBottom: 40 },
-  logo: { fontSize: 40, fontWeight: '800', color: '#1B7A4A', letterSpacing: -1 },
-  tagline: { fontSize: 15, color: '#6B7280', marginTop: 8 },
+  logo: { fontSize: 40, fontWeight: '800', color: colors.primary, letterSpacing: -1 },
+  tagline: { fontSize: 15, color: colors.textSecondary, marginTop: 8 },
   form: { gap: 16 },
   field: { gap: 6 },
-  label: { fontSize: 13, fontWeight: '600', color: '#374151' },
+  label: { fontSize: 13, fontWeight: '600', color: colors.textPrimary },
   input: {
     height: 48,
     borderWidth: 1,
-    borderColor: '#E5E7EB',
+    borderColor: colors.border,
     borderRadius: 12,
     paddingHorizontal: 16,
     fontSize: 15,
-    color: '#111827',
-    backgroundColor: '#FFFFFF',
+    color: colors.textPrimary,
+    backgroundColor: colors.surface,
   },
   errorBox: {
-    backgroundColor: '#FEF2F2',
+    backgroundColor: colors.errorLight,
     borderRadius: 8,
     padding: 12,
     borderWidth: 1,
-    borderColor: '#FECACA',
+    borderColor: colors.errorBorder,
   },
-  errorText: { fontSize: 13, color: '#DC2626' },
+  errorText: { fontSize: 13, color: colors.error },
   primaryButton: {
     height: 52,
-    backgroundColor: '#1B7A4A',
+    backgroundColor: colors.primary,
     borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
     marginTop: 4,
   },
   buttonDisabled: { opacity: 0.6 },
-  primaryButtonText: { fontSize: 16, fontWeight: '700', color: '#FFFFFF' },
+  primaryButtonText: { fontSize: 16, fontWeight: '700', color: colors.textPrimary },
   forgotLink: { alignSelf: 'center' },
-  forgotText: { fontSize: 13, color: '#1B7A4A', fontWeight: '500' },
+  forgotText: { fontSize: 13, color: colors.primary, fontWeight: '500' },
   dividerRow: { flexDirection: 'row', alignItems: 'center', gap: 12, marginVertical: 4 },
-  dividerLine: { flex: 1, height: 1, backgroundColor: '#E5E7EB' },
-  dividerText: { fontSize: 13, color: '#9CA3AF' },
+  dividerLine: { flex: 1, height: 1, backgroundColor: colors.divider },
+  dividerText: { fontSize: 13, color: colors.textSecondary },
   socialButton: {
     height: 52,
     borderWidth: 1,
-    borderColor: '#E5E7EB',
+    borderColor: colors.border,
     borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: colors.surface,
   },
-  socialButtonText: { fontSize: 15, fontWeight: '600', color: '#111827' },
+  socialButtonText: { fontSize: 15, fontWeight: '600', color: colors.textPrimary },
   appleButton: { backgroundColor: '#000000', borderColor: '#000000' },
-  appleButtonText: { color: '#FFFFFF' },
+  appleButtonText: { color: colors.textPrimary },
   footer: { flexDirection: 'row', justifyContent: 'center', marginTop: 32 },
-  footerText: { fontSize: 14, color: '#6B7280' },
-  footerLink: { fontSize: 14, color: '#1B7A4A', fontWeight: '600' },
+  footerText: { fontSize: 14, color: colors.textSecondary },
+  footerLink: { fontSize: 14, color: colors.primary, fontWeight: '600' },
 });

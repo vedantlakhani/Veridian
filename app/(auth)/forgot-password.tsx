@@ -11,6 +11,7 @@ import {
 import { router } from 'expo-router';
 import { useState } from 'react';
 import { useAuthStore } from '@/stores/authStore';
+import { colors } from '@/lib/theme';
 
 export default function ForgotPasswordScreen() {
   const [email, setEmail] = useState('');
@@ -67,7 +68,7 @@ export default function ForgotPasswordScreen() {
             value={email}
             onChangeText={(v) => { setEmail(v); setAuthError(null); }}
             placeholder="you@example.com"
-            placeholderTextColor="#9CA3AF"
+            placeholderTextColor={colors.textTertiary}
             autoCapitalize="none"
             keyboardType="email-address"
             autoComplete="email"
@@ -88,7 +89,7 @@ export default function ForgotPasswordScreen() {
           activeOpacity={0.8}
         >
           {loading ? (
-            <ActivityIndicator color="#FFFFFF" />
+            <ActivityIndicator color={colors.textPrimary} />
           ) : (
             <Text style={styles.primaryButtonText}>Send Reset Link</Text>
           )}
@@ -99,60 +100,60 @@ export default function ForgotPasswordScreen() {
 }
 
 const styles = StyleSheet.create({
-  flex: { flex: 1, backgroundColor: '#F8FAF9' },
+  flex: { flex: 1, backgroundColor: colors.background },
   container: { flex: 1, padding: 24, paddingTop: 60 },
   backRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 40 },
-  backArrow: { fontSize: 20, color: '#1B7A4A' },
-  backText: { fontSize: 15, color: '#1B7A4A', fontWeight: '500' },
-  title: { fontSize: 28, fontWeight: '700', color: '#111827', marginBottom: 8 },
-  subtitle: { fontSize: 15, color: '#6B7280', marginBottom: 32, lineHeight: 22 },
+  backArrow: { fontSize: 20, color: colors.primary },
+  backText: { fontSize: 15, color: colors.primary, fontWeight: '500' },
+  title: { fontSize: 28, fontWeight: '700', color: colors.textPrimary, marginBottom: 8 },
+  subtitle: { fontSize: 15, color: colors.textSecondary, marginBottom: 32, lineHeight: 22 },
   field: { gap: 6, marginBottom: 16 },
-  label: { fontSize: 13, fontWeight: '600', color: '#374151' },
+  label: { fontSize: 13, fontWeight: '600', color: colors.textPrimary },
   input: {
     height: 48,
     borderWidth: 1,
-    borderColor: '#E5E7EB',
+    borderColor: colors.border,
     borderRadius: 12,
     paddingHorizontal: 16,
     fontSize: 15,
-    color: '#111827',
-    backgroundColor: '#FFFFFF',
+    color: colors.textPrimary,
+    backgroundColor: colors.surface,
   },
   errorBox: {
-    backgroundColor: '#FEF2F2',
+    backgroundColor: colors.errorLight,
     borderRadius: 8,
     padding: 12,
     borderWidth: 1,
-    borderColor: '#FECACA',
+    borderColor: colors.errorBorder,
     marginBottom: 16,
   },
-  errorText: { fontSize: 13, color: '#DC2626' },
+  errorText: { fontSize: 13, color: colors.error },
   primaryButton: {
     height: 52,
-    backgroundColor: '#1B7A4A',
+    backgroundColor: colors.primary,
     borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
   },
   buttonDisabled: { opacity: 0.6 },
-  primaryButtonText: { fontSize: 16, fontWeight: '700', color: '#FFFFFF' },
+  primaryButtonText: { fontSize: 16, fontWeight: '700', color: colors.textPrimary },
   successContainer: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
     padding: 32,
-    backgroundColor: '#F8FAF9',
+    backgroundColor: colors.background,
   },
-  successTitle: { fontSize: 24, fontWeight: '700', color: '#111827', marginBottom: 12 },
-  successBody: { fontSize: 15, color: '#6B7280', textAlign: 'center', lineHeight: 22 },
+  successTitle: { fontSize: 24, fontWeight: '700', color: colors.textPrimary, marginBottom: 12 },
+  successBody: { fontSize: 15, color: colors.textSecondary, textAlign: 'center', lineHeight: 22 },
   backButton: {
     marginTop: 24,
     height: 52,
     width: 200,
-    backgroundColor: '#1B7A4A',
+    backgroundColor: colors.primary,
     borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  backButtonText: { fontSize: 15, fontWeight: '600', color: '#FFFFFF' },
+  backButtonText: { fontSize: 15, fontWeight: '600', color: colors.textPrimary },
 });

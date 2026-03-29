@@ -29,6 +29,6 @@ describe('navigation / tabs', () => {
     expect(fs.existsSync(layoutPath)).toBe(true);
     const content = fs.readFileSync(layoutPath, 'utf-8');
     expect(content).toContain('Tabs');
-    expect(content).toContain('#1B7A4A'); // primary color in tabBarActiveTintColor
+    expect(content).toContain('colors.primary'); // primary color in tabBarActiveTintColor
   });
 });

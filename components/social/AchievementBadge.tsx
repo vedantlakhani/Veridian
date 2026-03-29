@@ -29,7 +29,7 @@ export default function AchievementBadge({
   earned,
   size = 56,
 }: AchievementBadgeProps) {
-  const circleColor = earned ? colors.primary : (colors.textTertiary ?? '#9CA3AF');
+  const circleColor = earned ? colors.primaryContainer : colors.textTertiary;
   const iconPath = BADGE_ICONS[achievement.criteria_type];
 
   return (
