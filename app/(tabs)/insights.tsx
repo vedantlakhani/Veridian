@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { ScrollView, View, Text, StyleSheet, useWindowDimensions, TouchableOpacity, Pressable } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, { useSharedValue, useAnimatedStyle, withSpring, runOnJS } from 'react-native-reanimated';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import { router } from 'expo-router';
@@ -108,6 +109,7 @@ function EntryRow({ entry, userId }: { entry: EmissionEntryWithFactor; userId: s
 export default function InsightsScreen() {
   const { user } = useAuthStore();
   const { width } = useWindowDimensions();
+  const insets = useSafeAreaInsets();
   const chartWidth = width - spacing.lg * 2;
 
   const [filter, setFilter] = useState<DateFilter>('week');
@@ -147,7 +149,7 @@ export default function InsightsScreen() {
   return (
     <ScrollView
       style={styles.container}
-      contentContainerStyle={styles.content}
+      contentContainerStyle={[styles.content, { paddingTop: insets.top + spacing.sm }]}
       showsVerticalScrollIndicator={false}
     >
       <Text style={styles.heading}>Insights</Text>
@@ -253,6 +255,7 @@ const styles = StyleSheet.create({
   heading: {
     fontSize: typography.sizes.xxl, fontWeight: '700',
     color: colors.textPrimary, marginBottom: spacing.lg,
+    marginTop: spacing.lg,
   },
   filterRow: { flexDirection: 'row', gap: spacing.sm, marginBottom: spacing.md, flexWrap: 'wrap' },
   sectionTitle: {

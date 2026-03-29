@@ -7,6 +7,7 @@ import {
   StyleSheet,
   Share,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Image } from 'expo-image';
 import * as Clipboard from 'expo-clipboard';
 import { useRouter } from 'expo-router';
@@ -38,6 +39,7 @@ export default function ProfileScreen() {
   const router = useRouter();
   const { user, signOut } = useAuthStore();
   const userId = user?.id;
+  const insets = useSafeAreaInsets();
 
   const { data: profile, isLoading: profileLoading } = useProfile(userId);
   const { mutate: updateProfile, isPending: isSaving } = useUpdateProfile();
@@ -233,7 +235,7 @@ export default function ProfileScreen() {
   return (
     <ScrollView
       style={styles.container}
-      contentContainerStyle={styles.content}
+      contentContainerStyle={[styles.content, { paddingTop: insets.top + spacing.sm }]}
       showsVerticalScrollIndicator={false}
     >
       {/* ── Header ── */}

@@ -2,6 +2,7 @@ import { ScrollView, View, Text, StyleSheet } from 'react-native';
 import { ImageBackground } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import Svg, { Circle } from 'react-native-svg';
 import { useWeeklySummary } from '@/hooks/useSummaries';
 import { useEmissionEntries } from '@/hooks/useEmissionEntries';
 import { useAuthStore } from '@/stores/authStore';
@@ -29,6 +30,49 @@ const HERO_IMAGES = [
 
 const todayPhoto = HERO_IMAGES[new Date().getDay() % HERO_IMAGES.length];
 
+// ─── Budget Ring ──────────────────────────────────────────────────────────────
+const RING_SIZE = 168;
+const STROKE = 10;
+const RADIUS = (RING_SIZE - STROKE) / 2;
+const CIRCUMFERENCE = 2 * Math.PI * RADIUS;
+
+function BudgetRing({ progress }: { progress: number }) {
+  const clamped = Math.min(progress, 1);
+  const offset = CIRCUMFERENCE * (1 - clamped);
+  const ringColor =
+    clamped >= 1 ? '#EF4444' : clamped >= 0.5 ? '#F59E0B' : '#4ADE80';
+
+  return (
+    <Svg
+      width={RING_SIZE}
+      height={RING_SIZE}
+      style={{ transform: [{ rotate: '-90deg' }] }}
+    >
+      {/* Track */}
+      <Circle
+        cx={RING_SIZE / 2}
+        cy={RING_SIZE / 2}
+        r={RADIUS}
+        stroke="rgba(255,255,255,0.18)"
+        strokeWidth={STROKE}
+        fill="none"
+      />
+      {/* Progress arc */}
+      <Circle
+        cx={RING_SIZE / 2}
+        cy={RING_SIZE / 2}
+        r={RADIUS}
+        stroke={ringColor}
+        strokeWidth={STROKE}
+        fill="none"
+        strokeDasharray={CIRCUMFERENCE}
+        strokeDashoffset={offset}
+        strokeLinecap="round"
+      />
+    </Svg>
+  );
+}
+
 export default function HomeScreen() {
   const { user } = useAuthStore();
   const today = getLocalDateString();
@@ -42,23 +86,22 @@ export default function HomeScreen() {
 
   const progress = Math.min(todayTotal / DAILY_CARBON_BUDGET_KG, 1);
 
-  // Status statement — Klima-style bold hero text
   const firstName = profile?.display_name?.split(' ')[0] ?? user?.email?.split('@')[0] ?? '';
-  const statusLine1 = firstName ? `${firstName}, you are` : 'You are';
+  const greeting = firstName ? `${firstName}, you are` : 'You are';
 
-  let statusLine2: string;
+  let statusLabel: string;
   let statusColor: string;
   if (todayTotal === 0) {
-    statusLine2 = 'getting started';
-    statusColor = 'rgba(255,255,255,0.85)';
+    statusLabel = 'getting started';
+    statusColor = 'rgba(255,255,255,0.7)';
   } else if (progress < 0.5) {
-    statusLine2 = '#on track';
+    statusLabel = '#on track';
     statusColor = '#4ADE80';
   } else if (progress < 1) {
-    statusLine2 = '#near limit';
+    statusLabel = '#near limit';
     statusColor = '#F59E0B';
   } else {
-    statusLine2 = '#over budget';
+    statusLabel = '#over budget';
     statusColor = '#EF4444';
   }
 
@@ -88,31 +131,45 @@ export default function HomeScreen() {
   return (
     <View style={{ flex: 1, backgroundColor: colors.background }}>
 
-      {/* ── Hero photo + status statement ── */}
+      {/* ── Hero: full-bleed photo + ring ── */}
       <View style={styles.heroContainer}>
         <ImageBackground
           source={todayPhoto}
           style={StyleSheet.absoluteFillObject}
           contentFit="cover"
         />
-        {/* Top scrim — status bar legibility */}
+        {/* Dark scrim for legibility */}
         <LinearGradient
-          colors={['rgba(0,0,0,0.35)', 'transparent']}
-          locations={[0, 0.3]}
+          colors={['rgba(0,0,0,0.55)', 'rgba(0,0,0,0.30)', 'rgba(0,0,0,0.55)']}
+          locations={[0, 0.5, 1]}
           style={StyleSheet.absoluteFillObject}
         />
-        {/* Bottom fade into dark bg */}
+        {/* Bottom fade into app background */}
         <LinearGradient
           colors={['transparent', colors.background]}
-          locations={[0.5, 1]}
+          locations={[0.65, 1]}
           style={StyleSheet.absoluteFillObject}
         />
 
         <SafeAreaView style={styles.heroContent} edges={['top']}>
-          {/* Klima-style: small greeting + bold status */}
-          <Text style={styles.greeting}>{statusLine1}</Text>
-          <Text style={[styles.statusBold, { color: statusColor }]}>
-            {statusLine2}
+          {/* Greeting — top left */}
+          <Text style={styles.greeting}>{greeting}</Text>
+
+          {/* Ring — centered */}
+          <View style={styles.ringWrapper}>
+            <BudgetRing progress={progress} />
+            {/* Inner text overlay */}
+            <View style={styles.ringCenter}>
+              <Text style={styles.ringPercent}>
+                {(progress * 100).toFixed(0)}%
+              </Text>
+              <Text style={styles.ringSubLabel}>daily budget</Text>
+            </View>
+          </View>
+
+          {/* Status label — below ring */}
+          <Text style={[styles.statusLabel, { color: statusColor }]}>
+            {statusLabel}
           </Text>
           {todayTotal > 0 && (
             <Text style={styles.todayKg}>
@@ -122,19 +179,17 @@ export default function HomeScreen() {
         </SafeAreaView>
       </View>
 
-      {/* ── Data card + scrollable content ── */}
+      {/* ── Scrollable content ── */}
       <ScrollView
         style={{ flex: 1 }}
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
-        {/* Main data card — white-ish surface, bold numbers */}
+        {/* Data card */}
         <VCard elevation="lg" style={styles.dataCard}>
           <View style={styles.dataRow}>
             <View style={styles.dataCol}>
-              <Text style={styles.dataNumber}>
-                {todayTotal.toFixed(1)}
-              </Text>
+              <Text style={styles.dataNumber}>{todayTotal.toFixed(1)}</Text>
               <Text style={styles.dataLabel}>kg today</Text>
             </View>
             <View style={styles.dataDivider} />
@@ -147,13 +202,16 @@ export default function HomeScreen() {
             <View style={styles.dataDivider} />
             <View style={styles.dataCol}>
               <Text style={[styles.dataNumber, { color: progress >= 1 ? '#EF4444' : colors.primary }]}>
-                {(progress * 100).toFixed(0)}%
+                {(DAILY_CARBON_BUDGET_KG - todayTotal > 0
+                  ? DAILY_CARBON_BUDGET_KG - todayTotal
+                  : 0
+                ).toFixed(1)}
               </Text>
-              <Text style={styles.dataLabel}>of daily limit</Text>
+              <Text style={styles.dataLabel}>kg remaining</Text>
             </View>
           </View>
 
-          {/* Progress bars — Klima style */}
+          {/* Category bars */}
           {!weeklyLoading && (
             <View style={styles.barsSection}>
               <ProgressBar
@@ -232,34 +290,60 @@ const barStyles = StyleSheet.create({
 
 const styles = StyleSheet.create({
   heroContainer: {
-    height: 320,
+    height: 380,
     position: 'relative',
   },
   heroContent: {
     flex: 1,
-    justifyContent: 'flex-end',
+    alignItems: 'center',
     paddingHorizontal: spacing.xl,
     paddingBottom: spacing.xl,
   },
   greeting: {
-    fontSize: 16,
-    color: 'rgba(255,255,255,0.75)',
+    fontSize: 13,
+    color: 'rgba(255,255,255,0.65)',
     fontWeight: '500',
-    marginBottom: 4,
+    letterSpacing: 0.3,
+    alignSelf: 'flex-start',
+    marginBottom: spacing.sm,
   },
-  statusBold: {
+  ringWrapper: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    position: 'relative',
+  },
+  ringCenter: {
+    position: 'absolute',
+    alignItems: 'center',
+  },
+  ringPercent: {
     fontFamily: 'JetBrainsMono_700Bold',
-    fontSize: 38,
+    fontSize: 36,
     fontWeight: '800',
-    lineHeight: 44,
-    textShadowColor: 'rgba(0,0,0,0.5)',
+    color: '#FFFFFF',
+    textShadowColor: 'rgba(0,0,0,0.6)',
+    textShadowOffset: { width: 0, height: 2 },
+    textShadowRadius: 6,
+  },
+  ringSubLabel: {
+    fontSize: 11,
+    color: 'rgba(255,255,255,0.55)',
+    marginTop: 2,
+    letterSpacing: 0.5,
+  },
+  statusLabel: {
+    fontFamily: 'JetBrainsMono_700Bold',
+    fontSize: 22,
+    fontWeight: '700',
+    textShadowColor: 'rgba(0,0,0,0.7)',
     textShadowOffset: { width: 0, height: 2 },
     textShadowRadius: 8,
+    marginBottom: 4,
   },
   todayKg: {
-    fontSize: 14,
-    color: 'rgba(255,255,255,0.55)',
-    marginTop: spacing.xs,
+    fontSize: 13,
+    color: 'rgba(255,255,255,0.5)',
   },
 
   scrollContent: {
@@ -287,10 +371,10 @@ const styles = StyleSheet.create({
   },
   dataNumber: {
     fontFamily: 'JetBrainsMono_700Bold',
-    fontSize: 28,
+    fontSize: 26,
     fontWeight: '700',
     color: colors.textPrimary,
-    lineHeight: 32,
+    lineHeight: 30,
   },
   dataLabel: {
     fontSize: 11,
