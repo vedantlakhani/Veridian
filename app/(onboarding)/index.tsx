@@ -189,7 +189,7 @@ export default function OnboardingScreen() {
 
   const handleGetStarted = () => {
     void complete().then(() => {
-      router.replace('/(auth)/login');
+      router.push('/onboarding/calculator');
     });
   };
 

@@ -3,6 +3,7 @@ export interface UserProfile {
   display_name: string | null;
   avatar_url: string | null;
   created_at: string;            // ISO 8601 string from Supabase
+  baseline_kg?: number | null;   // Annual kg CO₂e from onboarding carbon calculator
 }
 
 export interface AiInsight {
