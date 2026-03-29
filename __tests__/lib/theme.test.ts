@@ -2,11 +2,11 @@ import { colors, spacing, typography, shadows, theme } from '@/lib/theme';
 
 describe('theme', () => {
   it('exports colors with primary green', () => {
-    expect(colors.primary).toBe('#1B7A4A');
+    expect(colors.primary).toBe('#006036');
   });
 
   it('exports background mist color', () => {
-    expect(colors.background).toBe('#F8FAF9');
+    expect(colors.background).toBe('#191C1C');
   });
 
   it('exports spacing on 4px grid', () => {
