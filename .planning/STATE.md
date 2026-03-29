@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: unknown
-last_updated: "2026-03-29T02:32:44.095Z"
+last_updated: "2026-03-29T02:33:18.641Z"
 progress:
   total_phases: 6
   completed_phases: 5
   total_plans: 27
-  completed_plans: 25
+  completed_plans: 26
 ---
 
 # Veridian — Project State
@@ -24,7 +24,7 @@ See: .planning/PROJECT.md (updated 2026-03-15)
 
 **Phase 6: Design Elevation**
 - Status: In Progress ◐
-- Current Plan: 2 of 5 (Plan 01 complete)
+- Current Plan: 4 of 5 (Plans 01-03 complete)
 - Goal: Carbon calculator onboarding, dark mode, accessibility, polish, app icon refresh
 
 ## Progress
@@ -63,6 +63,7 @@ See: .planning/PROJECT.md (updated 2026-03-15)
 - **05-05**: EAS Build config (development/preview/production profiles), bundle IDs corrected to com.vedantlakhani.veridian, docs/privacy-policy.html (GitHub Pages), docs/store-metadata.md (App Store + Play Store copy), TypeScript + Jest green gate passed
 - **06-01**: Dark theme foundation — lib/theme.ts dark token set (#191C1C bg, #1E2120 surface, #006036 primary), StatusBar style=light, app.json dark config, hex sweep across all auth/component files, 3 Wave 0 test stubs
 - **06-02**: Carbon calculator onboarding — DB migration (baseline_kg), 8-question multi-step flow with Reanimated 3 AnimatedTextInput counter + runOnJS slide transitions, ResultsScreen with tCO₂e + category breakdown, useBaseline hook for post-signup profile write
+- **06-03**: Home screen hero redesign — ImageBackground full-bleed nature photo, LinearGradient overlay, 80sp JetBrains Mono metric, SafeAreaView transparent, expo-linear-gradient installed, 5 Unsplash placeholder hero assets
 
 ## Decisions
 
@@ -124,6 +125,8 @@ See: .planning/PROJECT.md (updated 2026-03-15)
 - [Phase 06]: [Phase 06-02] PRIMARY_CONTAINER = '#E8F5EE' as local file constant — theme.ts has no primaryContainer token; avoids polluting shared theme with single-use token
 - [Phase 06]: [Phase 06-02] calcFootprint exported as pure function from calculator.tsx — no Supabase dependencies, testable without mocking
 - [Phase 06]: setTimeout(80ms) before breathe-in trigger sequences VBottomSheet visible before form animation in log.tsx
+- [Phase 06]: LinearGradient top set to '35%' as unknown as number — RN StyleSheet accepts percentage strings at runtime but TS type expects number; cast avoids error without breaking layout
+- [Phase 06]: VMetricCard removed from Home screen — 80sp hero metric replaces its function entirely in the new Klima-style layout
 
 ## Performance Metrics
 
@@ -155,6 +158,7 @@ See: .planning/PROJECT.md (updated 2026-03-15)
 | 06    | 01   | ~15min  | 2     | 16    |
 | Phase 06 P02 | 5min | 2 tasks | 6 files |
 | Phase 06 P04 | 8min | 2 tasks | 1 files |
+| Phase 06 P03 | 3min | 2 tasks | 8 files |
 
 ## Next Action
 
@@ -173,8 +177,10 @@ Phase 6 in progress. Next: execute 06-03-PLAN.md (continue Phase 6 design elevat
 - [Phase 06-01]: Warning chip bg mapped to colors.energyBg (#1F1A00) — no dedicated warningBg token; dark amber context is visually appropriate
 - [Phase 06-02]: router.push('/onboarding/calculator' as any) — Expo typed routes regenerated at expo start; as any cast consistent with /challenge/[id] pattern (Plan 04-02)
 - [Phase 06-02]: PRIMARY_CONTAINER = '#E8F5EE' as local file constant — theme.ts has no primaryContainer token; avoids polluting shared theme with single-use token
+- [Phase 06-03]: LinearGradient top '35%' as unknown as number — RN accepts percentage strings at runtime; TS cast avoids compiler error without breaking layout
+- [Phase 06-03]: VMetricCard removed from Home — 80sp hero metric replaces its function in the new immersive layout; SafeAreaView has no backgroundColor to preserve photo bleed
 - [Phase 06-02]: calcFootprint exported as pure function from calculator.tsx — no Supabase dependencies, testable without mocking
 
 ---
 *Last session: 2026-03-29*
-*Stopped at: Completed 06-01-PLAN.md — dark theme foundation, hex sweep*
+*Stopped at: Completed 06-03-PLAN.md — Home hero redesign with full-bleed photo + 80sp metric*
