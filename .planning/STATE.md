@@ -2,13 +2,13 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: unknown
-last_updated: "2026-03-29T02:33:18.641Z"
+status: complete
+last_updated: "2026-03-29T11:12:58.688Z"
 progress:
   total_phases: 6
-  completed_phases: 5
+  completed_phases: 6
   total_plans: 27
-  completed_plans: 26
+  completed_plans: 27
 ---
 
 # Veridian — Project State
@@ -18,13 +18,13 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-15)
 
 **Core value:** Every user understands their true carbon impact and receives one actionable step to reduce it today.
-**Current focus:** Phase 6 — Design Elevation
+**Current focus:** All 6 phases complete — ready for EAS Build + App Store submission
 
 ## Current Phase
 
 **Phase 6: Design Elevation**
-- Status: In Progress ◐
-- Current Plan: 4 of 5 (Plans 01-03 complete)
+- Status: Complete ●
+- Current Plan: 5 of 5 (All plans complete)
 - Goal: Carbon calculator onboarding, dark mode, accessibility, polish, app icon refresh
 
 ## Progress
@@ -36,6 +36,7 @@ See: .planning/PROJECT.md (updated 2026-03-15)
 | 3     | ●      | 4     | 100%     |
 | 4     | ●      | 4     | 100%     |
 | 5     | ●      | 5     | 100%     |
+| 6     | ●      | 5     | 100%     |
 
 ## Completed Plans
 
@@ -64,6 +65,8 @@ See: .planning/PROJECT.md (updated 2026-03-15)
 - **06-01**: Dark theme foundation — lib/theme.ts dark token set (#191C1C bg, #1E2120 surface, #006036 primary), StatusBar style=light, app.json dark config, hex sweep across all auth/component files, 3 Wave 0 test stubs
 - **06-02**: Carbon calculator onboarding — DB migration (baseline_kg), 8-question multi-step flow with Reanimated 3 AnimatedTextInput counter + runOnJS slide transitions, ResultsScreen with tCO₂e + category breakdown, useBaseline hook for post-signup profile write
 - **06-03**: Home screen hero redesign — ImageBackground full-bleed nature photo, LinearGradient overlay, 80sp JetBrains Mono metric, SafeAreaView transparent, expo-linear-gradient installed, 5 Unsplash placeholder hero assets
+- **06-04**: Log screen Breathe animation + Insights dark pass — Log tab dark skin with Reanimated 3 opacity pulse, Insights screen dark token sweep
+- **06-05**: Profile/Auth final dark sweep + Phase 6 green gate — 7 target files verified clean, Phase 6 confirmed complete (30 test suites, 113 tests passing, TypeScript 0 errors)
 
 ## Decisions
 
@@ -127,6 +130,8 @@ See: .planning/PROJECT.md (updated 2026-03-15)
 - [Phase 06]: setTimeout(80ms) before breathe-in trigger sequences VBottomSheet visible before form animation in log.tsx
 - [Phase 06]: LinearGradient top set to '35%' as unknown as number — RN StyleSheet accepts percentage strings at runtime but TS type expects number; cast avoids error without breaking layout
 - [Phase 06]: VMetricCard removed from Home screen — 80sp hero metric replaces its function entirely in the new Klima-style layout
+- [Phase 06-05]: All 7 target files (profile, challenge detail, ChallengeCard, LeaderboardRow, login, signup, forgot-password) passed dark sweep with zero changes needed — 06-01 sweep was complete
+- [Phase 06-05]: Apple button #000000 retained in login.tsx — brand compliance requirement per Apple HIG, explicitly exempted from dark token replacement
 
 ## Performance Metrics
 
@@ -159,10 +164,13 @@ See: .planning/PROJECT.md (updated 2026-03-15)
 | Phase 06 P02 | 5min | 2 tasks | 6 files |
 | Phase 06 P04 | 8min | 2 tasks | 1 files |
 | Phase 06 P03 | 3min | 2 tasks | 8 files |
+| Phase 06 P05 | 8min | 2 tasks | 7 files |
 
 ## Next Action
 
-Phase 6 in progress. Next: execute 06-03-PLAN.md (continue Phase 6 design elevation tasks).
+All 27 plans across 6 phases complete. Ready for EAS Build submission and App Store / Play Store review.
+*Last session: 2026-03-29*
+*Stopped at: Completed 06-05-PLAN.md — Profile/Auth final dark sweep + Phase 6 green gate (all phases complete)*
 
 ## Key Decisions (Phase 05)
 

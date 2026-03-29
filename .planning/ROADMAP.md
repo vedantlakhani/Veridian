@@ -129,14 +129,14 @@ Plans:
 
 **Requirements covered:** DSGN-01 through DSGN-11
 
-**Plans:** 4/5 plans executed
+**Plans:** 5/5 plans complete
 
 Plans:
 - [ ] 06-01-PLAN.md — Wave 0 test stubs + dark theme token replacement + StatusBar/app.json fixes + global hardcoded hex sweep across all screens
 - [ ] 06-02-PLAN.md — Carbon calculator: DB migration (baseline_kg), 8-question flow with animated CO₂ counter, results screen, useBaseline hook
 - [ ] 06-03-PLAN.md — Home dashboard hero redesign: full-bleed nature photography, expo-linear-gradient overlay, 80sp JetBrains Mono metric
 - [ ] 06-04-PLAN.md — Log + Insights screens dark redesign + Breathe Effect transitions on form reveal + EmissionBarChart dark axis
-- [ ] 06-05-PLAN.md — Profile, Challenges, Achievements dark skin + auth screen final sweep + full Phase 6 green gate
+- [x] 06-05-PLAN.md — Profile, Challenges, Achievements dark skin + auth screen final sweep + full Phase 6 green gate (completed 2026-03-29)
 
 **Success Criteria:**
 - Full dark mode applied consistently across all 20+ screens
@@ -156,7 +156,7 @@ Plans:
 | 3 | 3/3 | Complete    | 2026-03-22 |
 | 4 | 4/4 | Complete   | 2026-03-22 |
 | 5 | 5/5 | Complete   | 2026-03-22 |
-| 6 | 4/5 | In Progress|  |
+| 6 | 5/5 | Complete   | 2026-03-29 |
 
 **Total plans:** 27
 
