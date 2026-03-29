@@ -24,7 +24,7 @@ See: .planning/PROJECT.md (updated 2026-03-15)
 
 **Phase 6: Design Elevation**
 - Status: In Progress ◐
-- Current Plan: 2 of 5 (Plan 02 complete)
+- Current Plan: 2 of 5 (Plan 01 complete)
 - Goal: Carbon calculator onboarding, dark mode, accessibility, polish, app icon refresh
 
 ## Progress
@@ -61,6 +61,7 @@ See: .planning/PROJECT.md (updated 2026-03-15)
 - **05-03**: Push notifications — useStreakNotifications (daily-summaries query, expo-notifications scheduling), useAchievementNotifications (queryCache subscription), NotificationSettingsCard in Profile
 - **05-04**: App icon 1024x1024, adaptive icon, splash screen, accessibility audit (accessibilityLabel + accessibilityHint on all interactive elements)
 - **05-05**: EAS Build config (development/preview/production profiles), bundle IDs corrected to com.vedantlakhani.veridian, docs/privacy-policy.html (GitHub Pages), docs/store-metadata.md (App Store + Play Store copy), TypeScript + Jest green gate passed
+- **06-01**: Dark theme foundation — lib/theme.ts dark token set (#191C1C bg, #1E2120 surface, #006036 primary), StatusBar style=light, app.json dark config, hex sweep across all auth/component files, 3 Wave 0 test stubs
 - **06-02**: Carbon calculator onboarding — DB migration (baseline_kg), 8-question multi-step flow with Reanimated 3 AnimatedTextInput counter + runOnJS slide transitions, ResultsScreen with tCO₂e + category breakdown, useBaseline hook for post-signup profile write
 
 ## Decisions
@@ -150,6 +151,7 @@ See: .planning/PROJECT.md (updated 2026-03-15)
 | 05 | 04 | 8min | 2 | 6 |
 | 05 | 05 | 8min | 2 | 4 |
 | Phase 05 P05 | 8min | 2 tasks | 4 files |
+| 06    | 01   | ~15min  | 2     | 16    |
 | Phase 06 P02 | 5min | 2 tasks | 6 files |
 
 ## Next Action
@@ -165,10 +167,12 @@ Phase 6 in progress. Next: execute 06-03-PLAN.md (continue Phase 6 design elevat
 
 ## Key Decisions (Phase 06)
 
+- [Phase 06-01]: AchievementBadge earned circle → colors.primaryContainer (#1B7A4A) for better contrast vs new primary #006036 at small sizes
+- [Phase 06-01]: Warning chip bg mapped to colors.energyBg (#1F1A00) — no dedicated warningBg token; dark amber context is visually appropriate
 - [Phase 06-02]: router.push('/onboarding/calculator' as any) — Expo typed routes regenerated at expo start; as any cast consistent with /challenge/[id] pattern (Plan 04-02)
 - [Phase 06-02]: PRIMARY_CONTAINER = '#E8F5EE' as local file constant — theme.ts has no primaryContainer token; avoids polluting shared theme with single-use token
 - [Phase 06-02]: calcFootprint exported as pure function from calculator.tsx — no Supabase dependencies, testable without mocking
 
 ---
 *Last session: 2026-03-29*
-*Stopped at: Completed 06-02-PLAN.md — carbon calculator onboarding*
+*Stopped at: Completed 06-01-PLAN.md — dark theme foundation, hex sweep*
