@@ -5,9 +5,9 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useWeeklySummary } from '@/hooks/useSummaries';
 import { useEmissionEntries } from '@/hooks/useEmissionEntries';
 import { useAuthStore } from '@/stores/authStore';
+import { useProfile } from '@/hooks/useProfile';
 import { getLocalDateString } from '@/lib/emissions';
 import {
-  VProgressRing,
   VCard,
   VSkeleton,
   VEmptyState,
@@ -27,12 +27,12 @@ const HERO_IMAGES = [
   require('@/assets/images/hero-sky.jpg'),
 ];
 
-// Rotate photo by day of week
 const todayPhoto = HERO_IMAGES[new Date().getDay() % HERO_IMAGES.length];
 
 export default function HomeScreen() {
   const { user } = useAuthStore();
   const today = getLocalDateString();
+  const { data: profile } = useProfile(user?.id);
   const { data: weekly, isLoading: weeklyLoading } = useWeeklySummary(user?.id);
   const { data: recentEntries = [], isLoading: entriesLoading } = useEmissionEntries(user?.id);
 
@@ -40,15 +40,27 @@ export default function HomeScreen() {
     .filter(e => getLocalDateString(new Date(e.logged_at)) === today)
     .reduce((sum, e) => sum + e.kg_co2e_total, 0);
 
-  const isLoading = entriesLoading;
   const progress = Math.min(todayTotal / DAILY_CARBON_BUDGET_KG, 1);
 
-  // Softer palette that reads well over photo without overwhelming green
-  const ringColor =
-    todayTotal === 0 ? 'rgba(255,255,255,0.6)' :
-    todayTotal <= 7 ? '#4ADE80' :
-    todayTotal <= 15 ? '#F59E0B' :
-    '#EF4444';
+  // Status statement — Klima-style bold hero text
+  const firstName = profile?.display_name?.split(' ')[0] ?? user?.email?.split('@')[0] ?? '';
+  const statusLine1 = firstName ? `${firstName}, you are` : 'You are';
+
+  let statusLine2: string;
+  let statusColor: string;
+  if (todayTotal === 0) {
+    statusLine2 = 'getting started';
+    statusColor = 'rgba(255,255,255,0.85)';
+  } else if (progress < 0.5) {
+    statusLine2 = '#on track';
+    statusColor = '#4ADE80';
+  } else if (progress < 1) {
+    statusLine2 = '#near limit';
+    statusColor = '#F59E0B';
+  } else {
+    statusLine2 = '#over budget';
+    statusColor = '#EF4444';
+  }
 
   const emissionContext: EmissionContext | null =
     weekly && recentEntries.length > 0
@@ -73,95 +85,103 @@ export default function HomeScreen() {
     emissionContext,
   );
 
-  const statusLabel =
-    todayTotal === 0 ? 'Nothing logged yet' :
-    progress < 0.5 ? 'On track today' :
-    progress < 1 ? 'Getting close' :
-    'Over daily budget';
-
   return (
     <View style={{ flex: 1, backgroundColor: colors.background }}>
 
-      {/* ── Hero section: fixed height, photo + ring centered ── */}
+      {/* ── Hero photo + status statement ── */}
       <View style={styles.heroContainer}>
         <ImageBackground
           source={todayPhoto}
           style={StyleSheet.absoluteFillObject}
           contentFit="cover"
         />
-        {/* Subtle top scrim so status bar icons read */}
+        {/* Top scrim — status bar legibility */}
         <LinearGradient
-          colors={['rgba(0,0,0,0.3)', 'transparent']}
-          locations={[0, 0.25]}
+          colors={['rgba(0,0,0,0.35)', 'transparent']}
+          locations={[0, 0.3]}
           style={StyleSheet.absoluteFillObject}
         />
-        {/* Bottom fade to dark background */}
+        {/* Bottom fade into dark bg */}
         <LinearGradient
           colors={['transparent', colors.background]}
-          locations={[0.6, 1]}
+          locations={[0.5, 1]}
           style={StyleSheet.absoluteFillObject}
         />
 
         <SafeAreaView style={styles.heroContent} edges={['top']}>
-          <Text style={styles.dateLabel}>Today</Text>
-
-          {isLoading ? (
-            <VSkeleton
-              width={220}
-              height={220}
-              style={{ borderRadius: 110, alignSelf: 'center', marginVertical: spacing.lg }}
-            />
-          ) : (
-            <View style={styles.ringWrap}>
-              <VProgressRing
-                progress={progress}
-                size={220}
-                strokeWidth={12}
-                color={ringColor}
-              >
-                <View style={styles.ringInner}>
-                  <Text style={styles.ringMetric}>
-                    {todayTotal.toFixed(1)}
-                  </Text>
-                  <Text style={styles.ringUnit}>kg CO₂e</Text>
-                </View>
-              </VProgressRing>
-            </View>
+          {/* Klima-style: small greeting + bold status */}
+          <Text style={styles.greeting}>{statusLine1}</Text>
+          <Text style={[styles.statusBold, { color: statusColor }]}>
+            {statusLine2}
+          </Text>
+          {todayTotal > 0 && (
+            <Text style={styles.todayKg}>
+              {todayTotal.toFixed(1)} kg CO₂e today
+            </Text>
           )}
-
-          <Text style={styles.statusLabel}>{statusLabel}</Text>
         </SafeAreaView>
       </View>
 
-      {/* ── Scrollable content ── */}
+      {/* ── Data card + scrollable content ── */}
       <ScrollView
         style={{ flex: 1 }}
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
-        {/* This Week */}
-        <VCard elevation="md" style={styles.weekCard}>
-          <Text style={styles.sectionTitle}>This Week</Text>
-          {weeklyLoading ? (
-            <VSkeleton width="100%" height={40} />
-          ) : (
-            <>
-              <View style={styles.weekRow}>
-                <CategoryPill label="Food" value={weekly?.breakdown?.food ?? 0} color={colors.food} />
-                <CategoryPill label="Transport" value={weekly?.breakdown?.transport ?? 0} color={colors.transport} />
-                <CategoryPill label="Energy" value={weekly?.breakdown?.energy ?? 0} color={colors.energy} />
-              </View>
-              <Text style={styles.weekTotal}>
-                {(weekly?.total_kg_co2e ?? 0).toFixed(1)} kg total this week
+        {/* Main data card — white-ish surface, bold numbers */}
+        <VCard elevation="lg" style={styles.dataCard}>
+          <View style={styles.dataRow}>
+            <View style={styles.dataCol}>
+              <Text style={styles.dataNumber}>
+                {todayTotal.toFixed(1)}
               </Text>
-            </>
+              <Text style={styles.dataLabel}>kg today</Text>
+            </View>
+            <View style={styles.dataDivider} />
+            <View style={styles.dataCol}>
+              <Text style={styles.dataNumber}>
+                {(weekly?.total_kg_co2e ?? 0).toFixed(1)}
+              </Text>
+              <Text style={styles.dataLabel}>kg this week</Text>
+            </View>
+            <View style={styles.dataDivider} />
+            <View style={styles.dataCol}>
+              <Text style={[styles.dataNumber, { color: progress >= 1 ? '#EF4444' : colors.primary }]}>
+                {(progress * 100).toFixed(0)}%
+              </Text>
+              <Text style={styles.dataLabel}>of daily limit</Text>
+            </View>
+          </View>
+
+          {/* Progress bars — Klima style */}
+          {!weeklyLoading && (
+            <View style={styles.barsSection}>
+              <ProgressBar
+                label="Food"
+                value={weekly?.breakdown?.food ?? 0}
+                max={DAILY_CARBON_BUDGET_KG * 7}
+                color={colors.food}
+              />
+              <ProgressBar
+                label="Transport"
+                value={weekly?.breakdown?.transport ?? 0}
+                max={DAILY_CARBON_BUDGET_KG * 7}
+                color={colors.transport}
+              />
+              <ProgressBar
+                label="Energy"
+                value={weekly?.breakdown?.energy ?? 0}
+                max={DAILY_CARBON_BUDGET_KG * 7}
+                color={colors.energy}
+              />
+            </View>
           )}
         </VCard>
 
         {/* AI Insight */}
         <VAiInsightCard insight={insight} isLoading={insightLoading} error={insightError} />
 
-        {/* Recent Entries */}
+        {/* Recent entries */}
         <Text style={styles.sectionTitle}>Recent</Text>
         {entriesLoading ? (
           <>
@@ -175,17 +195,10 @@ export default function HomeScreen() {
             <VCard key={entry.id} elevation="sm" style={styles.entryCard}>
               <View style={styles.entryRow}>
                 <View style={styles.entryLeft}>
-                  <VBadge
-                    label={entry.emission_factors.category}
-                    variant={entry.emission_factors.category}
-                  />
-                  <Text style={styles.entryItem} numberOfLines={1}>
-                    {entry.emission_factors.item}
-                  </Text>
+                  <VBadge label={entry.emission_factors.category} variant={entry.emission_factors.category} />
+                  <Text style={styles.entryItem} numberOfLines={1}>{entry.emission_factors.item}</Text>
                 </View>
-                <Text style={styles.entryValue}>
-                  {entry.kg_co2e_total.toFixed(2)} kg
-                </Text>
+                <Text style={styles.entryValue}>{entry.kg_co2e_total.toFixed(2)} kg</Text>
               </View>
             </VCard>
           ))
@@ -195,91 +208,99 @@ export default function HomeScreen() {
   );
 }
 
-function CategoryPill({ label, value, color }: { label: string; value: number; color: string }) {
+function ProgressBar({ label, value, max, color }: { label: string; value: number; max: number; color: string }) {
+  const pct = Math.min(value / max, 1);
+  const tons = (value / 1000).toFixed(2);
   return (
-    <View style={pillStyles.wrap}>
-      <View style={[pillStyles.dot, { backgroundColor: color }]} />
-      <Text style={pillStyles.label}>{label}</Text>
-      <Text style={[pillStyles.value, { fontFamily: 'JetBrainsMono_700Bold', color }]}>
-        {value.toFixed(1)}
-      </Text>
+    <View style={barStyles.row}>
+      <Text style={barStyles.label}>{label}</Text>
+      <View style={barStyles.track}>
+        <View style={[barStyles.fill, { width: `${pct * 100}%` as `${number}%`, backgroundColor: color }]} />
+      </View>
+      <Text style={barStyles.value}>{tons}t</Text>
     </View>
   );
 }
 
-const pillStyles = StyleSheet.create({
-  wrap: { flex: 1, alignItems: 'center', gap: 3 },
-  dot: { width: 6, height: 6, borderRadius: 3 },
-  label: { fontSize: 11, color: colors.textSecondary },
-  value: { fontSize: 16, fontWeight: '700' },
+const barStyles = StyleSheet.create({
+  row: { flexDirection: 'row', alignItems: 'center', marginBottom: spacing.sm, gap: spacing.sm },
+  label: { fontSize: 12, color: colors.textSecondary, width: 64 },
+  track: { flex: 1, height: 6, backgroundColor: colors.background, borderRadius: 3, overflow: 'hidden' },
+  fill: { height: 6, borderRadius: 3 },
+  value: { fontSize: 12, color: colors.textSecondary, width: 32, textAlign: 'right' },
 });
 
 const styles = StyleSheet.create({
   heroContainer: {
-    height: 400,
+    height: 320,
     position: 'relative',
   },
   heroContent: {
     flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
+    justifyContent: 'flex-end',
+    paddingHorizontal: spacing.xl,
+    paddingBottom: spacing.xl,
   },
-  dateLabel: {
-    fontSize: 11,
-    fontWeight: '600',
-    color: 'rgba(255,255,255,0.65)',
-    letterSpacing: 3,
-    textTransform: 'uppercase',
-    marginBottom: spacing.md,
-  },
-  ringWrap: {
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.5,
-    shadowRadius: 20,
-    elevation: 10,
-  },
-  ringInner: {
-    alignItems: 'center',
-    gap: 2,
-  },
-  ringMetric: {
-    fontFamily: 'JetBrainsMono_700Bold',
-    fontSize: 48,
-    color: '#FFFFFF',
-    lineHeight: 52,
-  },
-  ringUnit: {
-    fontSize: 11,
-    color: 'rgba(255,255,255,0.6)',
-    letterSpacing: 1.5,
-    textTransform: 'uppercase',
-  },
-  statusLabel: {
-    fontSize: 12,
+  greeting: {
+    fontSize: 16,
+    color: 'rgba(255,255,255,0.75)',
     fontWeight: '500',
-    color: 'rgba(255,255,255,0.55)',
-    letterSpacing: 1,
-    marginTop: spacing.md,
-    textTransform: 'uppercase',
+    marginBottom: 4,
   },
+  statusBold: {
+    fontFamily: 'JetBrainsMono_700Bold',
+    fontSize: 38,
+    fontWeight: '800',
+    lineHeight: 44,
+    textShadowColor: 'rgba(0,0,0,0.5)',
+    textShadowOffset: { width: 0, height: 2 },
+    textShadowRadius: 8,
+  },
+  todayKg: {
+    fontSize: 14,
+    color: 'rgba(255,255,255,0.55)',
+    marginTop: spacing.xs,
+  },
+
   scrollContent: {
     paddingHorizontal: spacing.lg,
     paddingTop: spacing.md,
     paddingBottom: spacing.xxl,
   },
-  weekCard: { marginBottom: spacing.md },
-  weekRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    marginVertical: spacing.sm,
+  dataCard: {
+    marginBottom: spacing.md,
+    paddingVertical: spacing.lg,
   },
-  weekTotal: {
-    fontSize: typography.sizes.xs,
+  dataRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: spacing.lg,
+  },
+  dataCol: {
+    flex: 1,
+    alignItems: 'center',
+  },
+  dataDivider: {
+    width: 1,
+    height: 40,
+    backgroundColor: colors.background,
+  },
+  dataNumber: {
+    fontFamily: 'JetBrainsMono_700Bold',
+    fontSize: 28,
+    fontWeight: '700',
+    color: colors.textPrimary,
+    lineHeight: 32,
+  },
+  dataLabel: {
+    fontSize: 11,
     color: colors.textSecondary,
-    textAlign: 'center',
-    marginTop: spacing.xs,
+    marginTop: 2,
+  },
+  barsSection: {
+    borderTopWidth: 1,
+    borderTopColor: colors.background,
+    paddingTop: spacing.md,
   },
   sectionTitle: {
     fontSize: typography.sizes.lg,
