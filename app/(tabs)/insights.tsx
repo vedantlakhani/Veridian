@@ -5,7 +5,7 @@ import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import { router } from 'expo-router';
 import { useAuthStore } from '@/stores/authStore';
 import { useEmissionEntries, useDeleteEntry } from '@/hooks/useEmissionEntries';
-import { useWeeklySummary, useMonthlyTotals } from '@/hooks/useSummaries';
+import { useMonthlyTotals } from '@/hooks/useSummaries';
 import { getLocalDateString, getISOWeekStart } from '@/lib/emissions';
 import { EmissionBarChart } from '@/components/charts/EmissionBarChart';
 import { VChip, VCard, VBadge, VSkeleton, VEmptyState } from '@/components/ui';
@@ -116,15 +116,23 @@ export default function InsightsScreen() {
   const { data: entries = [], isLoading: entriesLoading } = useEmissionEntries(
     user?.id, dateFrom, dateTo
   );
-  const { data: weekly, isLoading: weeklyLoading } = useWeeklySummary(user?.id);
   const { data: monthly, isLoading: monthlyLoading } = useMonthlyTotals(user?.id);
 
-  // Build bar chart data from weekly breakdown
+  // Build bar chart data from filtered entries — respects the active date filter
+  const categoryTotals = entries.reduce<Record<string, number>>((acc, e) => {
+    const cat = e.emission_factors.category;
+    acc[cat] = (acc[cat] ?? 0) + e.kg_co2e_total;
+    return acc;
+  }, {});
   const barChartData = [
-    { label: 'Food', value: weekly?.breakdown?.food ?? 0, color: colors.food },
-    { label: 'Transport', value: weekly?.breakdown?.transport ?? 0, color: colors.transport },
-    { label: 'Energy', value: weekly?.breakdown?.energy ?? 0, color: colors.energy },
+    { label: 'Food', value: categoryTotals['food'] ?? 0, color: colors.food },
+    { label: 'Transport', value: categoryTotals['transport'] ?? 0, color: colors.transport },
+    { label: 'Energy', value: categoryTotals['energy'] ?? 0, color: colors.energy },
   ];
+  const chartTitle =
+    filter === 'today' ? 'Today · kg CO₂e' :
+    filter === 'week' ? 'This week · kg CO₂e' :
+    'This month · kg CO₂e';
 
   // Format trend label for monthly comparison
   const trendLabel =
@@ -156,17 +164,21 @@ export default function InsightsScreen() {
         ))}
       </View>
 
-      {/* Weekly Bar Chart */}
-      <Text style={styles.sectionTitle}>Weekly Breakdown</Text>
-      {weeklyLoading ? (
+      {/* Bar Chart — respects active filter */}
+      <Text style={styles.sectionTitle}>
+        {filter === 'today' ? "Today's Breakdown" :
+         filter === 'week' ? 'Weekly Breakdown' :
+         'Monthly Breakdown'}
+      </Text>
+      {entriesLoading ? (
         <VSkeleton width={chartWidth} height={200} style={{ marginBottom: spacing.md }} />
       ) : (
         <VCard elevation="sm" style={styles.chartCard}>
           <EmissionBarChart
             data={barChartData}
-            width={chartWidth - spacing.lg * 2} // account for VCard padding
+            width={chartWidth - spacing.lg * 2}
             height={200}
-            title={"This week · kg CO₂e"}
+            title={chartTitle}
           />
         </VCard>
       )}
