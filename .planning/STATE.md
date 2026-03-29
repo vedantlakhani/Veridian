@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: unknown
-last_updated: "2026-03-29T02:27:36.831Z"
+last_updated: "2026-03-29T02:32:44.095Z"
 progress:
   total_phases: 6
   completed_phases: 5
   total_plans: 27
-  completed_plans: 23
+  completed_plans: 25
 ---
 
 # Veridian — Project State
@@ -123,6 +123,7 @@ See: .planning/PROJECT.md (updated 2026-03-15)
 - [Phase 06]: [Phase 06-02] router.push('/onboarding/calculator' as any) — Expo typed routes regenerated at expo start; as any cast consistent with /challenge/[id] pattern
 - [Phase 06]: [Phase 06-02] PRIMARY_CONTAINER = '#E8F5EE' as local file constant — theme.ts has no primaryContainer token; avoids polluting shared theme with single-use token
 - [Phase 06]: [Phase 06-02] calcFootprint exported as pure function from calculator.tsx — no Supabase dependencies, testable without mocking
+- [Phase 06]: setTimeout(80ms) before breathe-in trigger sequences VBottomSheet visible before form animation in log.tsx
 
 ## Performance Metrics
 
@@ -153,6 +154,7 @@ See: .planning/PROJECT.md (updated 2026-03-15)
 | Phase 05 P05 | 8min | 2 tasks | 4 files |
 | 06    | 01   | ~15min  | 2     | 16    |
 | Phase 06 P02 | 5min | 2 tasks | 6 files |
+| Phase 06 P04 | 8min | 2 tasks | 1 files |
 
 ## Next Action
 
