@@ -1,5 +1,8 @@
 import { useState } from 'react';
 import { View, Text, ScrollView, StyleSheet } from 'react-native';
+import Animated, {
+  useSharedValue, withSpring, withTiming, useAnimatedStyle,
+} from 'react-native-reanimated';
 import { VBottomSheet } from '@/components/ui';
 import { CategorySelector } from '@/components/log/CategorySelector';
 import { FoodForm } from '@/components/log/FoodForm';
@@ -16,12 +19,30 @@ export default function LogScreen() {
   const [selectedCategory, setSelectedCategory] = useState<EmissionCategory | null>(null);
   const [sheetOpen, setSheetOpen] = useState(false);
 
+  const breatheScale = useSharedValue(0.95);
+  const breatheOpacity = useSharedValue(0);
+
+  const breatheStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: breatheScale.value }],
+    opacity: breatheOpacity.value,
+  }));
+
   const handleCategorySelect = (cat: EmissionCategory) => {
     setSelectedCategory(cat);
+    // Reset breathe state BEFORE opening (form content is stale from previous selection)
+    breatheScale.value = 0.95;
+    breatheOpacity.value = 0;
     setSheetOpen(true);
+    // Trigger breathe-in with slight delay so sheet is visible first
+    setTimeout(() => {
+      breatheScale.value = withSpring(1, { damping: 18, stiffness: 180 });
+      breatheOpacity.value = withTiming(1, { duration: 250 });
+    }, 80);
   };
 
   const handleClose = () => {
+    breatheScale.value = 0.95;
+    breatheOpacity.value = 0;
     setSheetOpen(false);
   };
 
@@ -47,15 +68,17 @@ export default function LogScreen() {
       </ScrollView>
 
       <VBottomSheet isOpen={sheetOpen} onClose={handleClose} title={sheetTitle}>
-        {selectedCategory === 'food' && (
-          <FoodForm onSubmit={handleSubmit} isSubmitting={createEntry.isPending} />
-        )}
-        {selectedCategory === 'transport' && (
-          <TransportForm onSubmit={handleSubmit} isSubmitting={createEntry.isPending} />
-        )}
-        {selectedCategory === 'energy' && (
-          <EnergyForm onSubmit={handleSubmit} isSubmitting={createEntry.isPending} />
-        )}
+        <Animated.View style={[styles.formContainer, breatheStyle]}>
+          {selectedCategory === 'food' && (
+            <FoodForm onSubmit={handleSubmit} isSubmitting={createEntry.isPending} />
+          )}
+          {selectedCategory === 'transport' && (
+            <TransportForm onSubmit={handleSubmit} isSubmitting={createEntry.isPending} />
+          )}
+          {selectedCategory === 'energy' && (
+            <EnergyForm onSubmit={handleSubmit} isSubmitting={createEntry.isPending} />
+          )}
+        </Animated.View>
       </VBottomSheet>
     </View>
   );
@@ -74,5 +97,9 @@ const styles = StyleSheet.create({
     fontSize: typography.sizes.md,
     color: colors.textSecondary,
     marginBottom: spacing.lg,
+  },
+  formContainer: {
+    // No specific layout — just wraps children for animation
+    // VBottomSheet handles its own padding
   },
 });
