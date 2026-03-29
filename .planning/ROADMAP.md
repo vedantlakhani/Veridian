@@ -129,7 +129,7 @@ Plans:
 
 **Requirements covered:** DSGN-01 through DSGN-11
 
-**Plans:** 5 plans
+**Plans:** 1/5 plans executed
 
 Plans:
 - [ ] 06-01-PLAN.md — Wave 0 test stubs + dark theme token replacement + StatusBar/app.json fixes + global hardcoded hex sweep across all screens
@@ -156,7 +156,7 @@ Plans:
 | 3 | 3/3 | Complete    | 2026-03-22 |
 | 4 | 4/4 | Complete   | 2026-03-22 |
 | 5 | 5/5 | Complete   | 2026-03-22 |
-| 6 | 0/5 | Planned    | 2026-03-28 |
+| 6 | 1/5 | In Progress|  |
 
 **Total plans:** 27
 

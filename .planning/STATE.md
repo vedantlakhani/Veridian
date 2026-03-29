@@ -2,13 +2,13 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: complete
-last_updated: "2026-03-22T20:45:00.000Z"
+status: unknown
+last_updated: "2026-03-29T02:27:36.831Z"
 progress:
-  total_phases: 5
+  total_phases: 6
   completed_phases: 5
-  total_plans: 22
-  completed_plans: 22
+  total_plans: 27
+  completed_plans: 23
 ---
 
 # Veridian — Project State
@@ -18,14 +18,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-15)
 
 **Core value:** Every user understands their true carbon impact and receives one actionable step to reduce it today.
-**Current focus:** Phase 4 — Social & Challenges
+**Current focus:** Phase 6 — Design Elevation
 
 ## Current Phase
 
-**Phase 5: Polish & Launch**
-- Status: Complete ●
-- Current Plan: 5 of 5 (COMPLETE)
-- Goal: Onboarding, performance, notifications, assets, store submission
+**Phase 6: Design Elevation**
+- Status: In Progress ◐
+- Current Plan: 2 of 5 (Plan 02 complete)
+- Goal: Carbon calculator onboarding, dark mode, accessibility, polish, app icon refresh
 
 ## Progress
 
@@ -61,6 +61,7 @@ See: .planning/PROJECT.md (updated 2026-03-15)
 - **05-03**: Push notifications — useStreakNotifications (daily-summaries query, expo-notifications scheduling), useAchievementNotifications (queryCache subscription), NotificationSettingsCard in Profile
 - **05-04**: App icon 1024x1024, adaptive icon, splash screen, accessibility audit (accessibilityLabel + accessibilityHint on all interactive elements)
 - **05-05**: EAS Build config (development/preview/production profiles), bundle IDs corrected to com.vedantlakhani.veridian, docs/privacy-policy.html (GitHub Pages), docs/store-metadata.md (App Store + Play Store copy), TypeScript + Jest green gate passed
+- **06-02**: Carbon calculator onboarding — DB migration (baseline_kg), 8-question multi-step flow with Reanimated 3 AnimatedTextInput counter + runOnJS slide transitions, ResultsScreen with tCO₂e + category breakdown, useBaseline hook for post-signup profile write
 
 ## Decisions
 
@@ -118,6 +119,9 @@ See: .planning/PROJECT.md (updated 2026-03-15)
 - [Phase 05]: Bundle ID changed to com.vedantlakhani.veridian — com.veridian.app was placeholder
 - [Phase 05]: eas.json appVersionSource: remote required for autoIncrement to work correctly with EAS remote versioning
 - [Phase 05]: Privacy policy covers Anthropic Claude API as third-party processor — server-side Edge Function only
+- [Phase 06]: [Phase 06-02] router.push('/onboarding/calculator' as any) — Expo typed routes regenerated at expo start; as any cast consistent with /challenge/[id] pattern
+- [Phase 06]: [Phase 06-02] PRIMARY_CONTAINER = '#E8F5EE' as local file constant — theme.ts has no primaryContainer token; avoids polluting shared theme with single-use token
+- [Phase 06]: [Phase 06-02] calcFootprint exported as pure function from calculator.tsx — no Supabase dependencies, testable without mocking
 
 ## Performance Metrics
 
@@ -146,13 +150,11 @@ See: .planning/PROJECT.md (updated 2026-03-15)
 | 05 | 04 | 8min | 2 | 6 |
 | 05 | 05 | 8min | 2 | 4 |
 | Phase 05 P05 | 8min | 2 tasks | 4 files |
+| Phase 06 P02 | 5min | 2 tasks | 6 files |
 
 ## Next Action
 
-All phases complete. Veridian v1.0.0 is submission-ready.
-- Run `eas build --profile production` after filling in Apple/Google credentials in eas.json
-- Host docs/privacy-policy.html on GitHub Pages at vedantlakhani.github.io/veridian-privacy/
-- Upload assets and metadata from docs/store-metadata.md to App Store Connect and Play Console
+Phase 6 in progress. Next: execute 06-03-PLAN.md (continue Phase 6 design elevation tasks).
 
 ## Key Decisions (Phase 05)
 
@@ -161,6 +163,12 @@ All phases complete. Veridian v1.0.0 is submission-ready.
 - [Phase 05-05]: EAS submit section uses placeholder Apple credentials — developer fills in before running eas submit
 - [Phase 05-05]: Privacy policy covers Anthropic Claude API as third-party processor (server-side Edge Function only)
 
+## Key Decisions (Phase 06)
+
+- [Phase 06-02]: router.push('/onboarding/calculator' as any) — Expo typed routes regenerated at expo start; as any cast consistent with /challenge/[id] pattern (Plan 04-02)
+- [Phase 06-02]: PRIMARY_CONTAINER = '#E8F5EE' as local file constant — theme.ts has no primaryContainer token; avoids polluting shared theme with single-use token
+- [Phase 06-02]: calcFootprint exported as pure function from calculator.tsx — no Supabase dependencies, testable without mocking
+
 ---
-*Last session: 2026-03-22*
-*Stopped at: Completed 05-05-PLAN.md — Phase 5 complete, all 22 plans done*
+*Last session: 2026-03-29*
+*Stopped at: Completed 06-02-PLAN.md — carbon calculator onboarding*
