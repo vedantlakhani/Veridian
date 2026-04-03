@@ -4,6 +4,8 @@ import { View } from 'react-native';
 import { colors } from '@/lib/theme';
 import { useAuthStore } from '@/stores/authStore';
 import { useProfile } from '@/hooks/useProfile';
+import { useOnboardingStore } from '@/stores/useOnboardingStore';
+import { useBaseline } from '@/hooks/useBaseline';
 
 function HomeIcon({ focused }: { focused: boolean }) {
   const c = focused ? colors.primary : colors.textSecondary;
@@ -49,14 +51,25 @@ export default function TabLayout() {
   const router = useRouter();
   const { user } = useAuthStore();
   const { data: profile, isLoading: profileLoading } = useProfile(user?.id);
+  const { pendingBaselineKg, clearPendingBaseline } = useOnboardingStore();
+  const { saveBaseline } = useBaseline();
 
-  // Per-account onboarding gate: if baseline_kg is null the user never completed
-  // the carbon calculator — redirect regardless of device AsyncStorage state.
   useEffect(() => {
-    if (!profileLoading && profile && profile.baseline_kg == null) {
-      router.replace('/calculator' as any);
+    if (profileLoading) return;
+
+    // Auto-save pending baseline (calculated pre-signup in the calculator)
+    if (pendingBaselineKg != null && user?.id) {
+      void saveBaseline(pendingBaselineKg).then(() => clearPendingBaseline());
+      return;
     }
-  }, [profile, profileLoading]);
+
+    // Gate: null profile = brand-new user with no row yet, also catch explicit null baseline_kg
+    const needsCalculator =
+      profile === null || (profile && profile.baseline_kg == null);
+    if (needsCalculator && pendingBaselineKg == null) {
+      router.replace('/carbon-calculator' as any);
+    }
+  }, [profile, profileLoading, pendingBaselineKg, user?.id]);
 
   return (
     <Tabs

@@ -19,6 +19,8 @@ import Animated, {
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { useOnboardingStore } from '@/stores/useOnboardingStore';
+import { useAuthStore } from '@/stores/authStore';
+import { useBaseline } from '@/hooks/useBaseline';
 import { colors, spacing, typography, radii } from '@/lib/theme';
 
 // ─── Animated TextInput component for CO₂ counter ────────────────────────────
@@ -402,7 +404,9 @@ interface ResultsScreenProps {
 
 function ResultsScreen({ answers, totalKg }: ResultsScreenProps) {
   const router = useRouter();
-  const { complete } = useOnboardingStore();
+  const { complete, setPendingBaseline } = useOnboardingStore();
+  const { user } = useAuthStore();
+  const { saveBaseline } = useBaseline();
 
   const totalTonnes = (totalKg / 1000).toFixed(1);
   const globalAvgTonnes = (GLOBAL_AVG_KG / 1000).toFixed(1);
@@ -418,11 +422,21 @@ function ResultsScreen({ answers, totalKg }: ResultsScreenProps) {
   const shoppingKg = (CLOTHES_KG[answers.shopping_clothes ?? ''] ?? 300) +
     (ELECTRONICS_KG[answers.shopping_electronics ?? ''] ?? 400);
 
-  const handleSignUp = () => {
-    void complete().then(() => {
-      router.push('/(auth)/signup' as any);
-    });
+  const handleCta = () => {
+    if (user) {
+      // Post-auth: user already signed in, save directly and go to tabs
+      void saveBaseline(totalKg).then(() => {
+        router.replace('/(tabs)' as any);
+      });
+    } else {
+      // Pre-auth: stash baseline, mark onboarding done, go to signup
+      void setPendingBaseline(totalKg).then(() => complete()).then(() => {
+        router.push('/(auth)/signup' as any);
+      });
+    }
   };
+
+  const ctaLabel = user ? 'Save my footprint' : 'Save my footprint — Sign Up';
 
   return (
     <ScrollView
@@ -472,10 +486,10 @@ function ResultsScreen({ answers, totalKg }: ResultsScreenProps) {
       {/* CTA */}
       <TouchableOpacity
         style={resultsStyles.cta}
-        onPress={handleSignUp}
+        onPress={handleCta}
         activeOpacity={0.85}
       >
-        <Text style={resultsStyles.ctaText}>Save my footprint — Sign Up</Text>
+        <Text style={resultsStyles.ctaText}>{ctaLabel}</Text>
       </TouchableOpacity>
 
       <Text style={resultsStyles.ctaHint}>
