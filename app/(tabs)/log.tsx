@@ -1,46 +1,77 @@
-import { useState } from 'react';
-import { View, Text, ScrollView, StyleSheet, TouchableOpacity } from 'react-native';
-import Animated, {
-  useSharedValue, withSpring, withTiming, useAnimatedStyle,
-} from 'react-native-reanimated';
-import { VBottomSheet, VCard, VBadge, VSkeleton, VEmptyState } from '@/components/ui';
-import { FoodForm } from '@/components/log/FoodForm';
-import { TransportForm } from '@/components/log/TransportForm';
-import { EnergyForm } from '@/components/log/EnergyForm';
+import { useState, useMemo } from 'react';
+import {
+  View, Text, ScrollView, StyleSheet, TouchableOpacity,
+  TextInput, KeyboardAvoidingView, Platform,
+} from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import Animated, { useSharedValue, withSpring, withTiming, useAnimatedStyle } from 'react-native-reanimated';
+import { VBottomSheet, VSkeleton } from '@/components/ui';
 import { useCreateEntry, useEmissionEntries } from '@/hooks/useEmissionEntries';
+import { useAllEmissionFactors } from '@/hooks/useAllEmissionFactors';
 import { useAuthStore } from '@/stores/authStore';
 import { getLocalDateString } from '@/lib/emissions';
-import type { EmissionCategory, EmissionFactor } from '@/types/emission';
 import { colors, spacing, typography, radii } from '@/lib/theme';
+import type { EmissionCategory, EmissionFactor } from '@/types/emission';
 
-const CATEGORY_CARDS: { key: EmissionCategory; label: string; icon: string; color: string }[] = [
-  { key: 'food', label: 'Food', icon: '🌿', color: colors.food },
-  { key: 'transport', label: 'Transport', icon: '🚗', color: colors.transport },
-  { key: 'energy', label: 'Energy', icon: '⚡', color: colors.energy },
+type FilterTab = 'all' | EmissionCategory;
+
+const TABS: { key: FilterTab; label: string }[] = [
+  { key: 'all', label: 'All' },
+  { key: 'food', label: 'Food' },
+  { key: 'transport', label: 'Transport' },
+  { key: 'energy', label: 'Energy' },
 ];
+
+const CATEGORY_META: Record<EmissionCategory, { color: string; icon: string }> = {
+  food: { color: colors.food, icon: '🌿' },
+  transport: { color: colors.transport, icon: '🚗' },
+  energy: { color: colors.energy, icon: '⚡' },
+};
 
 export default function LogScreen() {
   const { user } = useAuthStore();
+  const insets = useSafeAreaInsets();
   const createEntry = useCreateEntry();
-  const [selectedCategory, setSelectedCategory] = useState<EmissionCategory | null>(null);
+
+  const [activeTab, setActiveTab] = useState<FilterTab>('all');
+  const [selectedFactor, setSelectedFactor] = useState<EmissionFactor | null>(null);
+  const [quantity, setQuantity] = useState('');
   const [sheetOpen, setSheetOpen] = useState(false);
 
-  const today = getLocalDateString();
-  const { data: allEntries = [], isLoading: entriesLoading } = useEmissionEntries(user?.id);
-  const todayEntries = allEntries.filter(
-    e => getLocalDateString(new Date(e.logged_at)) === today
-  );
+  const { data: factors = [], isLoading: factorsLoading } = useAllEmissionFactors();
 
+  const today = getLocalDateString();
+  const { data: allEntries = [] } = useEmissionEntries(user?.id, today, today);
+
+  const todayTotal = allEntries.reduce((sum, e) => sum + e.kg_co2e_total, 0);
+
+  const filteredFactors = useMemo(() => {
+    if (activeTab === 'all') return factors;
+    return factors.filter(f => f.category === activeTab);
+  }, [factors, activeTab]);
+
+  // Group by subcategory for display
+  const grouped = useMemo(() => {
+    const map: Record<string, EmissionFactor[]> = {};
+    for (const f of filteredFactors) {
+      const key = `${f.category}::${f.subcategory}`;
+      if (!map[key]) map[key] = [];
+      map[key].push(f);
+    }
+    return map;
+  }, [filteredFactors]);
+
+  // Breathe animation for sheet content
   const breatheScale = useSharedValue(0.95);
   const breatheOpacity = useSharedValue(0);
-
   const breatheStyle = useAnimatedStyle(() => ({
     transform: [{ scale: breatheScale.value }],
     opacity: breatheOpacity.value,
   }));
 
-  const handleCategorySelect = (cat: EmissionCategory) => {
-    setSelectedCategory(cat);
+  const handleFactorTap = (factor: EmissionFactor) => {
+    setSelectedFactor(factor);
+    setQuantity('1'); // sensible default
     breatheScale.value = 0.95;
     breatheOpacity.value = 0;
     setSheetOpen(true);
@@ -51,100 +82,189 @@ export default function LogScreen() {
   };
 
   const handleClose = () => {
-    breatheScale.value = 0.95;
-    breatheOpacity.value = 0;
     setSheetOpen(false);
+    setSelectedFactor(null);
+    setQuantity('');
   };
 
-  const handleSubmit = (factor: EmissionFactor, quantity: number) => {
-    if (!user?.id) return;
+  const handleLog = () => {
+    const qty = parseFloat(quantity);
+    if (!user?.id || !selectedFactor || !(qty > 0)) return;
     createEntry.mutate(
-      { userId: user.id, factor, quantity },
-      { onSuccess: () => setSheetOpen(false) }
+      { userId: user.id, factor: selectedFactor, quantity: qty },
+      { onSuccess: handleClose }
     );
   };
 
-  const sheetTitle =
-    selectedCategory === 'food' ? 'Log Food' :
-    selectedCategory === 'transport' ? 'Log Transport' :
-    selectedCategory === 'energy' ? 'Log Energy' : '';
-
-  const todayTotal = todayEntries.reduce((sum, e) => sum + e.kg_co2e_total, 0);
+  const canLog = !!selectedFactor && parseFloat(quantity) > 0 && !createEntry.isPending;
+  const meta = selectedFactor ? CATEGORY_META[selectedFactor.category as EmissionCategory] : null;
+  const co2Preview = selectedFactor && parseFloat(quantity) > 0
+    ? (selectedFactor.kg_co2e * parseFloat(quantity)).toFixed(2)
+    : null;
 
   return (
-    <View style={styles.container}>
-      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-        <Text style={styles.heading}>Log Entry</Text>
-        <Text style={styles.subheading}>What are you tracking today?</Text>
-
-        {/* Category cards */}
-        <View style={styles.categoryGrid}>
-          {CATEGORY_CARDS.map((cat) => (
-            <TouchableOpacity
-              key={cat.key}
-              style={[styles.categoryCard, { borderColor: `${cat.color}40` }]}
-              onPress={() => handleCategorySelect(cat.key)}
-              activeOpacity={0.7}
-            >
-              <Text style={styles.categoryIcon}>{cat.icon}</Text>
-              <Text style={[styles.categoryLabel, { color: cat.color }]}>{cat.label}</Text>
-            </TouchableOpacity>
-          ))}
+    <View style={[styles.container, { paddingTop: insets.top }]}>
+      {/* ── Header ── */}
+      <View style={styles.header}>
+        <View>
+          <Text style={styles.heading}>Log Activity</Text>
+          <Text style={styles.subheading}>What did you do today?</Text>
         </View>
+        {todayTotal > 0 && (
+          <View style={styles.totalPill}>
+            <Text style={styles.totalPillText}>{todayTotal.toFixed(1)} kg today</Text>
+          </View>
+        )}
+      </View>
 
-        {/* Today's log */}
-        <View style={styles.todayHeader}>
-          <Text style={styles.sectionTitle}>Today</Text>
-          {todayEntries.length > 0 && (
-            <Text style={styles.todayTotal}>
-              {todayTotal.toFixed(1)} kg CO₂e
+      {/* ── Category filter tabs ── */}
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={styles.tabsRow}
+      >
+        {TABS.map(tab => (
+          <TouchableOpacity
+            key={tab.key}
+            style={[styles.tab, activeTab === tab.key && styles.tabActive]}
+            onPress={() => setActiveTab(tab.key)}
+            activeOpacity={0.7}
+          >
+            <Text style={[styles.tabLabel, activeTab === tab.key && styles.tabLabelActive]}>
+              {tab.label}
             </Text>
-          )}
-        </View>
+          </TouchableOpacity>
+        ))}
+      </ScrollView>
 
-        {entriesLoading ? (
-          <>
-            <View style={{ marginBottom: spacing.sm }}><VSkeleton width="100%" height={56} /></View>
-            <View style={{ marginBottom: spacing.sm }}><VSkeleton width="100%" height={56} /></View>
-          </>
-        ) : todayEntries.length === 0 ? (
-          <VEmptyState
-            title="Nothing logged yet"
-            body="Tap a category above to record your first entry today"
-          />
-        ) : (
-          todayEntries.map((entry) => (
-            <VCard key={entry.id} elevation="sm" style={styles.entryCard}>
-              <View style={styles.entryRow}>
-                <View style={styles.entryLeft}>
-                  <VBadge
-                    label={entry.emission_factors.category}
-                    variant={entry.emission_factors.category}
-                  />
-                  <Text style={styles.entryItem} numberOfLines={1}>
-                    {entry.emission_factors.item}
-                  </Text>
-                </View>
-                <Text style={styles.entryValue}>
-                  {entry.kg_co2e_total.toFixed(2)} kg
-                </Text>
-              </View>
-            </VCard>
+      {/* ── Activity cards ── */}
+      <ScrollView
+        style={styles.scroll}
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+      >
+        {factorsLoading ? (
+          Array.from({ length: 6 }).map((_, i) => (
+            <VSkeleton key={i} width="100%" height={68} style={{ marginBottom: spacing.sm }} />
           ))
+        ) : (
+          Object.entries(grouped).map(([key, items]) => {
+            const [categoryRaw, subcategory] = key.split('::');
+            const category = categoryRaw as EmissionCategory;
+            const { color, icon } = CATEGORY_META[category] ?? { color: colors.primary, icon: '•' };
+            return (
+              <View key={key} style={styles.group}>
+                <View style={styles.groupHeader}>
+                  <Text style={styles.groupIcon}>{icon}</Text>
+                  <Text style={[styles.groupLabel, { color }]}>{subcategory}</Text>
+                </View>
+                {items.map(factor => (
+                  <TouchableOpacity
+                    key={factor.id}
+                    style={styles.factorCard}
+                    onPress={() => handleFactorTap(factor)}
+                    activeOpacity={0.7}
+                  >
+                    {/* Category color accent bar */}
+                    <View style={[styles.accentBar, { backgroundColor: color }]} />
+                    <View style={styles.factorContent}>
+                      <Text style={styles.factorItem}>{factor.item}</Text>
+                      <Text style={styles.factorUnit}>per {factor.unit}</Text>
+                    </View>
+                    <Text style={[styles.factorCo2, { color }]}>
+                      {factor.kg_co2e < 1
+                        ? `${(factor.kg_co2e * 1000).toFixed(0)}g`
+                        : `${factor.kg_co2e.toFixed(2)}kg`}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            );
+          })
+        )}
+
+        {/* ── Today's logged entries ── */}
+        {allEntries.length > 0 && (
+          <View style={styles.todaySection}>
+            <View style={styles.todayHeader}>
+              <Text style={styles.todayTitle}>Logged today</Text>
+              <Text style={styles.todayTotal}>{todayTotal.toFixed(1)} kg CO₂e</Text>
+            </View>
+            {allEntries.map(entry => {
+              const c = CATEGORY_META[entry.emission_factors.category as EmissionCategory];
+              return (
+                <View key={entry.id} style={styles.loggedRow}>
+                  <View style={[styles.loggedDot, { backgroundColor: c?.color ?? colors.primary }]} />
+                  <Text style={styles.loggedItem} numberOfLines={1}>{entry.emission_factors.item}</Text>
+                  <Text style={styles.loggedValue}>{entry.kg_co2e_total.toFixed(2)} kg</Text>
+                </View>
+              );
+            })}
+          </View>
         )}
       </ScrollView>
 
-      <VBottomSheet isOpen={sheetOpen} onClose={handleClose} title={sheetTitle}>
+      {/* ── Quick-log bottom sheet ── */}
+      <VBottomSheet
+        isOpen={sheetOpen}
+        onClose={handleClose}
+        title={selectedFactor?.item ?? ''}
+      >
         <Animated.View style={breatheStyle}>
-          {selectedCategory === 'food' && (
-            <FoodForm onSubmit={handleSubmit} isSubmitting={createEntry.isPending} />
-          )}
-          {selectedCategory === 'transport' && (
-            <TransportForm onSubmit={handleSubmit} isSubmitting={createEntry.isPending} />
-          )}
-          {selectedCategory === 'energy' && (
-            <EnergyForm onSubmit={handleSubmit} isSubmitting={createEntry.isPending} />
-          )}
+          <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+            {selectedFactor && (
+              <View style={sheet.container}>
+                {/* CO2 preview */}
+                <View style={[sheet.preview, { borderColor: `${meta?.color ?? colors.primary}30` }]}>
+                  <Text style={sheet.previewLabel}>CO₂ estimate</Text>
+                  <Text style={[sheet.previewValue, { color: meta?.color ?? colors.primary }]}>
+                    {co2Preview ? `${co2Preview} kg` : '—'}
+                  </Text>
+                  <Text style={sheet.previewSub}>
+                    {selectedFactor.kg_co2e} kg per {selectedFactor.unit}
+                  </Text>
+                </View>
+
+                {/* Quantity input */}
+                <Text style={sheet.qtyLabel}>Quantity ({selectedFactor.unit})</Text>
+
+                {/* Quick-pick buttons */}
+                <View style={sheet.quickRow}>
+                  {['0.5', '1', '2', '5'].map(v => (
+                    <TouchableOpacity
+                      key={v}
+                      style={[sheet.quickBtn, quantity === v && { backgroundColor: meta?.color ?? colors.primary }]}
+                      onPress={() => setQuantity(v)}
+                    >
+                      <Text style={[sheet.quickBtnText, quantity === v && { color: '#fff' }]}>{v}</Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+
+                <TextInput
+                  style={sheet.input}
+                  value={quantity}
+                  onChangeText={setQuantity}
+                  keyboardType="decimal-pad"
+                  placeholder="Custom amount"
+                  placeholderTextColor={colors.textSecondary}
+                  selectTextOnFocus
+                />
+
+                <TouchableOpacity
+                  style={[sheet.logBtn, { backgroundColor: meta?.color ?? colors.primary }, !canLog && sheet.logBtnDisabled]}
+                  onPress={handleLog}
+                  disabled={!canLog}
+                  activeOpacity={0.85}
+                >
+                  <Text style={sheet.logBtnText}>
+                    {createEntry.isPending ? 'Logging…' : `Log ${co2Preview ? `· ${co2Preview} kg` : ''}`}
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            )}
+          </KeyboardAvoidingView>
         </Animated.View>
       </VBottomSheet>
     </View>
@@ -153,65 +273,220 @@ export default function LogScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background },
-  content: { padding: spacing.lg, paddingBottom: spacing.xxl },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    justifyContent: 'space-between',
+    paddingHorizontal: spacing.lg,
+    paddingBottom: spacing.sm,
+    paddingTop: spacing.sm,
+  },
   heading: {
     fontSize: typography.sizes.xxl,
     fontWeight: '700',
     color: colors.textPrimary,
-    marginBottom: spacing.xs,
-    marginTop: spacing.lg,
   },
   subheading: {
-    fontSize: typography.sizes.md,
+    fontSize: typography.sizes.sm,
     color: colors.textSecondary,
-    marginBottom: spacing.xl,
+    marginTop: 2,
   },
-  categoryGrid: {
-    flexDirection: 'row',
-    gap: spacing.md,
-    marginBottom: spacing.xl,
-  },
-  categoryCard: {
-    flex: 1,
+  totalPill: {
     backgroundColor: colors.surface,
-    borderRadius: radii.lg,
-    borderWidth: 1,
-    paddingVertical: spacing.lg,
-    alignItems: 'center',
+    borderRadius: radii.full,
+    paddingHorizontal: spacing.md,
+    paddingVertical: 6,
+  },
+  totalPillText: {
+    fontFamily: 'JetBrainsMono_700Bold',
+    fontSize: typography.sizes.xs,
+    color: colors.textSecondary,
+  },
+  tabsRow: {
+    paddingHorizontal: spacing.lg,
+    paddingBottom: spacing.sm,
     gap: spacing.sm,
   },
-  categoryIcon: {
-    fontSize: 28,
+  tab: {
+    paddingHorizontal: spacing.md,
+    paddingVertical: 7,
+    borderRadius: radii.full,
+    backgroundColor: colors.surface,
   },
-  categoryLabel: {
+  tabActive: {
+    backgroundColor: colors.primary,
+  },
+  tabLabel: {
     fontSize: typography.sizes.sm,
     fontWeight: '600',
-    letterSpacing: 0.5,
+    color: colors.textSecondary,
+  },
+  tabLabelActive: {
+    color: '#FFFFFF',
+  },
+  scroll: { flex: 1 },
+  scrollContent: {
+    paddingHorizontal: spacing.lg,
+    paddingBottom: spacing.xxl,
+  },
+  group: { marginBottom: spacing.md },
+  groupHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+    marginBottom: spacing.xs,
+    marginTop: spacing.sm,
+  },
+  groupIcon: { fontSize: 13 },
+  groupLabel: {
+    fontSize: typography.sizes.xs,
+    fontWeight: '700',
+    textTransform: 'uppercase',
+    letterSpacing: 0.8,
+  },
+  factorCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.surface,
+    borderRadius: radii.md,
+    marginBottom: 6,
+    overflow: 'hidden',
+  },
+  accentBar: {
+    width: 4,
+    alignSelf: 'stretch',
+  },
+  factorContent: {
+    flex: 1,
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.md,
+  },
+  factorItem: {
+    fontSize: typography.sizes.md,
+    fontWeight: '600',
+    color: colors.textPrimary,
+  },
+  factorUnit: {
+    fontSize: typography.sizes.xs,
+    color: colors.textSecondary,
+    marginTop: 2,
+  },
+  factorCo2: {
+    fontFamily: 'JetBrainsMono_700Bold',
+    fontSize: typography.sizes.sm,
+    fontWeight: '700',
+    paddingRight: spacing.md,
+  },
+  todaySection: {
+    marginTop: spacing.lg,
+    paddingTop: spacing.md,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: colors.surface,
   },
   todayHeader: {
     flexDirection: 'row',
-    alignItems: 'center',
     justifyContent: 'space-between',
+    alignItems: 'center',
     marginBottom: spacing.sm,
   },
-  sectionTitle: {
-    fontSize: typography.sizes.lg,
+  todayTitle: {
+    fontSize: typography.sizes.md,
     fontWeight: '700',
     color: colors.textPrimary,
   },
   todayTotal: {
-    fontFamily: 'JetBrainsMono',
+    fontFamily: 'JetBrainsMono_700Bold',
     fontSize: typography.sizes.sm,
     color: colors.textSecondary,
   },
-  entryCard: { marginBottom: spacing.sm },
-  entryRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  entryLeft: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, flex: 1 },
-  entryItem: { fontSize: typography.sizes.sm, color: colors.textPrimary, flex: 1 },
-  entryValue: {
+  loggedRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    paddingVertical: 8,
+  },
+  loggedDot: { width: 8, height: 8, borderRadius: 4 },
+  loggedItem: { flex: 1, fontSize: typography.sizes.sm, color: colors.textPrimary },
+  loggedValue: {
     fontFamily: 'JetBrainsMono_700Bold',
+    fontSize: typography.sizes.xs,
+    color: colors.textSecondary,
+  },
+});
+
+const sheet = StyleSheet.create({
+  container: { paddingHorizontal: spacing.sm, paddingBottom: spacing.xl },
+  preview: {
+    alignItems: 'center',
+    paddingVertical: spacing.lg,
+    marginBottom: spacing.lg,
+    borderRadius: radii.lg,
+    borderWidth: 1,
+    backgroundColor: colors.surface,
+  },
+  previewLabel: {
+    fontSize: typography.sizes.xs,
+    color: colors.textSecondary,
+    textTransform: 'uppercase',
+    letterSpacing: 0.8,
+    marginBottom: 4,
+  },
+  previewValue: {
+    fontFamily: 'JetBrainsMono_700Bold',
+    fontSize: 40,
+    fontWeight: '800',
+    lineHeight: 46,
+  },
+  previewSub: {
+    fontSize: typography.sizes.xs,
+    color: colors.textSecondary,
+    marginTop: 4,
+  },
+  qtyLabel: {
     fontSize: typography.sizes.sm,
     fontWeight: '600',
+    color: colors.textSecondary,
+    marginBottom: spacing.sm,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  quickRow: {
+    flexDirection: 'row',
+    gap: spacing.sm,
+    marginBottom: spacing.md,
+  },
+  quickBtn: {
+    flex: 1,
+    paddingVertical: 10,
+    borderRadius: radii.md,
+    backgroundColor: colors.surface,
+    alignItems: 'center',
+  },
+  quickBtnText: {
+    fontSize: typography.sizes.md,
+    fontWeight: '700',
+    color: colors.textSecondary,
+  },
+  input: {
+    backgroundColor: colors.surface,
+    borderRadius: radii.md,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.md,
+    fontSize: typography.sizes.lg,
     color: colors.textPrimary,
+    fontFamily: 'JetBrainsMono_700Bold',
+    marginBottom: spacing.md,
+    textAlign: 'center',
+  },
+  logBtn: {
+    borderRadius: radii.lg,
+    paddingVertical: spacing.md,
+    alignItems: 'center',
+  },
+  logBtnDisabled: { opacity: 0.45 },
+  logBtnText: {
+    fontSize: typography.sizes.lg,
+    fontWeight: '700',
+    color: '#FFFFFF',
   },
 });
