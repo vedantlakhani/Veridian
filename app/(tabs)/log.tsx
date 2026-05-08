@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react';
 import {
   View, Text, ScrollView, StyleSheet, TouchableOpacity,
-  TextInput, KeyboardAvoidingView, Platform,
+  TextInput, KeyboardAvoidingView, Platform, Alert,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, { useSharedValue, withSpring, withTiming, useAnimatedStyle } from 'react-native-reanimated';
@@ -9,6 +9,7 @@ import { VBottomSheet, VSkeleton } from '@/components/ui';
 import { useCreateEntry, useEmissionEntries } from '@/hooks/useEmissionEntries';
 import { useAllEmissionFactors } from '@/hooks/useAllEmissionFactors';
 import { useAuthStore } from '@/stores/authStore';
+import { useMotionDetection } from '@/hooks/useMotionDetection';
 import { getLocalDateString } from '@/lib/emissions';
 import { colors, spacing, typography, radii } from '@/lib/theme';
 import type { EmissionCategory, EmissionFactor } from '@/types/emission';
@@ -39,6 +40,7 @@ export default function LogScreen() {
   const [sheetOpen, setSheetOpen] = useState(false);
 
   const { data: factors = [], isLoading: factorsLoading } = useAllEmissionFactors();
+  const { pendingTrips, dismiss, markLogged, requestPermissions, hasPermission } = useMotionDetection();
 
   const today = getLocalDateString();
   const { data: allEntries = [] } = useEmissionEntries(user?.id, today, today);
@@ -102,6 +104,38 @@ export default function LogScreen() {
     ? (selectedFactor.kg_co2e * parseFloat(quantity)).toFixed(2)
     : null;
 
+  // Find the best-matching transport factor for a detected car trip (km unit)
+  const carFactor = useMemo(
+    () => factors.find(f =>
+      f.category === 'transport' &&
+      f.unit === 'km' &&
+      /petrol.*medium|medium.*petrol|car.*medium|medium.*car/i.test(f.item)
+    ) ?? factors.find(f => f.category === 'transport' && f.unit === 'km'),
+    [factors],
+  );
+
+  const handleLogTrip = async (tripId: string, distanceKm: number) => {
+    if (!user?.id || !carFactor) {
+      Alert.alert('Cannot log', 'Transport emission factor not found — add one in the database.');
+      return;
+    }
+    createEntry.mutate(
+      { userId: user.id, factor: carFactor, quantity: distanceKm },
+      { onSuccess: () => void markLogged(tripId) },
+    );
+  };
+
+  const handleEnableDetection = async () => {
+    const granted = await requestPermissions();
+    if (!granted) {
+      Alert.alert(
+        'Location needed',
+        'Veridian needs "Always" location access to detect trips in the background. Enable it in Settings → Veridian → Location → Always.',
+        [{ text: 'OK' }],
+      );
+    }
+  };
+
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
       {/* ── Header ── */}
@@ -136,6 +170,47 @@ export default function LogScreen() {
           </TouchableOpacity>
         ))}
       </ScrollView>
+
+      {/* ── Detected trips banner ── */}
+      {hasPermission === null || hasPermission === false ? (
+        <TouchableOpacity style={detect.enableBanner} onPress={handleEnableDetection} activeOpacity={0.8}>
+          <Text style={detect.enableIcon}>📍</Text>
+          <View style={{ flex: 1 }}>
+            <Text style={detect.enableTitle}>Auto-detect trips</Text>
+            <Text style={detect.enableSub}>Tap to let Veridian detect your transport automatically</Text>
+          </View>
+          <Text style={detect.enableCaret}>›</Text>
+        </TouchableOpacity>
+      ) : pendingTrips.length > 0 ? (
+        <View style={detect.section}>
+          <Text style={detect.sectionTitle}>Trips detected today</Text>
+          {pendingTrips.map(trip => {
+            const estimatedKg = (trip.distanceKm * trip.kgPerKm).toFixed(2);
+            return (
+              <View key={trip.id} style={detect.tripCard}>
+                <View style={detect.tripLeft}>
+                  <Text style={detect.tripIcon}>🚗</Text>
+                  <View>
+                    <Text style={detect.tripDistance}>{trip.distanceKm} km</Text>
+                    <Text style={detect.tripSub}>{trip.avgSpeedKmh} km/h avg · petrol car</Text>
+                  </View>
+                </View>
+                <Text style={detect.tripKg}>{estimatedKg} kg</Text>
+                <TouchableOpacity
+                  style={detect.logBtn}
+                  onPress={() => void handleLogTrip(trip.id, trip.distanceKm)}
+                  activeOpacity={0.8}
+                >
+                  <Text style={detect.logBtnText}>Log it</Text>
+                </TouchableOpacity>
+                <TouchableOpacity onPress={() => void dismiss(trip.id)} activeOpacity={0.7}>
+                  <Text style={detect.dismissText}>✕</Text>
+                </TouchableOpacity>
+              </View>
+            );
+          })}
+        </View>
+      ) : null}
 
       {/* ── Activity cards ── */}
       <ScrollView
@@ -411,6 +486,99 @@ const styles = StyleSheet.create({
     fontFamily: 'JetBrainsMono_700Bold',
     fontSize: typography.sizes.xs,
     color: colors.textSecondary,
+  },
+});
+
+const detect = StyleSheet.create({
+  enableBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    marginHorizontal: spacing.lg,
+    marginBottom: spacing.sm,
+    backgroundColor: colors.surface,
+    borderRadius: radii.md,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.md,
+    borderWidth: 1,
+    borderColor: `${colors.transport}30`,
+  },
+  enableIcon: { fontSize: 20 },
+  enableTitle: {
+    fontSize: typography.sizes.sm,
+    fontWeight: '700',
+    color: colors.textPrimary,
+  },
+  enableSub: {
+    fontSize: typography.sizes.xs,
+    color: colors.textSecondary,
+    marginTop: 2,
+  },
+  enableCaret: {
+    fontSize: 20,
+    color: colors.textSecondary,
+  },
+  section: {
+    marginHorizontal: spacing.lg,
+    marginBottom: spacing.sm,
+  },
+  sectionTitle: {
+    fontSize: typography.sizes.xs,
+    fontWeight: '700',
+    color: colors.transport,
+    textTransform: 'uppercase',
+    letterSpacing: 0.8,
+    marginBottom: spacing.xs,
+  },
+  tripCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    backgroundColor: colors.surface,
+    borderRadius: radii.md,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    marginBottom: 6,
+    borderLeftWidth: 3,
+    borderLeftColor: colors.transport,
+  },
+  tripLeft: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+  },
+  tripIcon: { fontSize: 18 },
+  tripDistance: {
+    fontSize: typography.sizes.md,
+    fontWeight: '700',
+    color: colors.textPrimary,
+  },
+  tripSub: {
+    fontSize: typography.sizes.xs,
+    color: colors.textSecondary,
+    marginTop: 1,
+  },
+  tripKg: {
+    fontFamily: 'JetBrainsMono_700Bold',
+    fontSize: typography.sizes.sm,
+    color: colors.transport,
+  },
+  logBtn: {
+    backgroundColor: colors.transport,
+    borderRadius: radii.sm,
+    paddingHorizontal: spacing.md,
+    paddingVertical: 6,
+  },
+  logBtnText: {
+    fontSize: typography.sizes.xs,
+    fontWeight: '700',
+    color: '#fff',
+  },
+  dismissText: {
+    fontSize: 16,
+    color: colors.textSecondary,
+    paddingHorizontal: 4,
   },
 });
 

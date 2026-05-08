@@ -1,3 +1,5 @@
+// Register background location task before any navigation renders
+import '@/tasks/locationTask';
 import { Stack } from 'expo-router';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { QueryClientProvider } from '@tanstack/react-query';
