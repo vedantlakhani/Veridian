@@ -13,12 +13,18 @@ const authStorage = Platform.OS !== 'web'
   ? (typeof localStorage !== 'undefined' ? localStorage : undefined)
   : undefined;
 
+// Force native fetch — prevents whatwg-fetch polyfill from intercepting requests
+const nativeFetch = global.fetch;
+
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {
     storage: authStorage,
     autoRefreshToken: true,
     persistSession: true,
     detectSessionInUrl: false,      // CRITICAL: must be false for React Native
+  },
+  global: {
+    fetch: nativeFetch,
   },
 });
 

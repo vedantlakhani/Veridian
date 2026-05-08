@@ -50,26 +50,29 @@ function PersonIcon({ focused }: { focused: boolean }) {
 export default function TabLayout() {
   const router = useRouter();
   const { user } = useAuthStore();
-  const { data: profile, isLoading: profileLoading } = useProfile(user?.id);
+  const { data: profile, isLoading: profileLoading, isFetching: profileFetching } = useProfile(user?.id);
   const { pendingBaselineKg, clearPendingBaseline } = useOnboardingStore();
   const { saveBaseline } = useBaseline();
 
   useEffect(() => {
-    if (profileLoading) return;
+    // Wait for any query activity to settle before making gate decisions
+    if (profileLoading || profileFetching) return;
 
-    // Auto-save pending baseline (calculated pre-signup in the calculator)
+    // A pending baseline means we just came from the calculator pre-signup.
+    // Save it now that we have a user, then clear the flag. The cache patch
+    // in useBaseline.onSuccess ensures the gate won't fire again afterward.
     if (pendingBaselineKg != null && user?.id) {
       void saveBaseline(pendingBaselineKg).then(() => clearPendingBaseline());
       return;
     }
 
-    // Gate: null profile = brand-new user with no row yet, also catch explicit null baseline_kg
+    // Gate: redirect only when we have settled data confirming no baseline yet
     const needsCalculator =
-      profile === null || (profile && profile.baseline_kg == null);
-    if (needsCalculator && pendingBaselineKg == null) {
+      profile === null || (profile != null && profile.baseline_kg == null);
+    if (needsCalculator) {
       router.replace('/carbon-calculator' as any);
     }
-  }, [profile, profileLoading, pendingBaselineKg, user?.id]);
+  }, [profile, profileLoading, profileFetching, pendingBaselineKg, user?.id]);
 
   return (
     <Tabs
