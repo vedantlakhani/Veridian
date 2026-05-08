@@ -82,7 +82,7 @@ const styles = StyleSheet.create({
   },
   suggestion: {
     fontSize: typography.sizes.sm,
-    color: colors.primaryDark,
+    color: colors.primaryLight,
     fontWeight: '600',
   },
 });

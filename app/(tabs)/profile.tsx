@@ -32,6 +32,7 @@ import {
 } from '@/components/ui';
 import ChallengeCard from '@/components/social/ChallengeCard';
 import { colors, spacing, typography, radii } from '@/lib/theme';
+import { resolveDisplayName, formatStreak } from '@/lib/format';
 import type { Challenge } from '@/types/challenge';
 
 // ─── Profile Screen ────────────────────────────────────────────────────────
@@ -195,18 +196,21 @@ export default function ProfileScreen() {
 
   // ── Edit sheet state ──
   const [editOpen, setEditOpen] = useState(false);
-  const [displayName, setDisplayName] = useState('');
+  const [displayNameInput, setDisplayNameInput] = useState('');
 
   const handleOpenEdit = () => {
-    setDisplayName(profile?.display_name ?? '');
+    setDisplayNameInput(profile?.display_name ?? '');
     setEditOpen(true);
   };
 
   const handleSave = () => {
     if (!userId) return;
-    updateProfile({ userId, displayName }, {
-      onSuccess: () => setEditOpen(false),
-    });
+    updateProfile(
+      { userId, displayName: displayNameInput },
+      {
+        onSuccess: () => setEditOpen(false),
+      }
+    );
   };
 
   const handleAvatarTap = async () => {
@@ -223,14 +227,19 @@ export default function ProfileScreen() {
 
   const statsLoading = profileLoading || entriesLoading || bestWeekLoading || streakLoading;
 
-  // Derive display name initials for avatar fallback
-  const initials = profile?.display_name
-    ? profile.display_name
-        .split(' ')
-        .slice(0, 2)
-        .map((w) => w[0]?.toUpperCase() ?? '')
-        .join('')
-    : (user?.email?.[0]?.toUpperCase() ?? '?');
+  // Resolved display name (cleans email prefix, strips digits, title-cases)
+  const displayName = resolveDisplayName(profile?.display_name, user?.email);
+
+  // Initials for avatar fallback — derive from resolved display name
+  const initials = useMemo(() => {
+    const source = displayName && displayName !== 'You' ? displayName : (user?.email ?? '?');
+    const parts = source.split(/[\s@]+/).filter(Boolean);
+    if (parts.length === 0) return '?';
+    return parts
+      .slice(0, 2)
+      .map((w) => w[0]?.toUpperCase() ?? '')
+      .join('');
+  }, [displayName, user?.email]);
 
   return (
     <ScrollView
@@ -248,8 +257,16 @@ export default function ProfileScreen() {
               contentFit="cover"
             />
           ) : (
-            <View style={[styles.avatar, styles.avatarFallback]}>
-              <Text style={styles.avatarInitials}>{initials}</Text>
+            <View
+              style={[
+                styles.avatar,
+                styles.avatarFallback,
+                { backgroundColor: colors.primary },
+              ]}
+            >
+              <Text style={[styles.avatarInitials, { color: '#F2F5F3' }]}>
+                {initials}
+              </Text>
             </View>
           )}
         </TouchableOpacity>
@@ -258,9 +275,16 @@ export default function ProfileScreen() {
           {profileLoading ? (
             <VSkeleton width={140} height={20} />
           ) : (
-            <Text style={styles.displayName}>
-              {profile?.display_name ?? user?.email ?? 'Your Profile'}
-            </Text>
+            <>
+              <Text style={styles.displayName} numberOfLines={1}>
+                {displayName}
+              </Text>
+              {!!user?.email && (
+                <Text style={styles.emailText} numberOfLines={1}>
+                  {user.email}
+                </Text>
+              )}
+            </>
           )}
         </View>
 
@@ -298,8 +322,8 @@ export default function ProfileScreen() {
           </View>
           <View style={styles.statCard}>
             <VMetricCard
-              value={currentStreak}
-              unit="days"
+              value={Math.floor(currentStreak ?? 0)}
+              unit={currentStreak === 1 ? 'day' : 'days'}
               label="Streak"
             />
           </View>
@@ -339,6 +363,13 @@ export default function ProfileScreen() {
               onPress={() => router.push(`/challenge/${cp.challenge_id}` as any)}
             />
           ))
+        )}
+
+        {/* Streak helper line */}
+        {!statsLoading && currentStreak > 0 && (
+          <Text style={styles.streakHelper}>
+            {`Current streak: ${formatStreak(currentStreak)}`}
+          </Text>
         )}
       </VCard>
 
@@ -392,8 +423,16 @@ export default function ProfileScreen() {
               contentFit="cover"
             />
           ) : (
-            <View style={[styles.sheetAvatar, styles.avatarFallback]}>
-              <Text style={styles.sheetAvatarInitials}>{initials}</Text>
+            <View
+              style={[
+                styles.sheetAvatar,
+                styles.avatarFallback,
+                { backgroundColor: colors.primary },
+              ]}
+            >
+              <Text style={[styles.sheetAvatarInitials, { color: '#F2F5F3' }]}>
+                {initials}
+              </Text>
             </View>
           )}
           <Text style={styles.changePhotoText}>Tap to change photo</Text>
@@ -401,8 +440,8 @@ export default function ProfileScreen() {
 
         <VInput
           label="Display Name"
-          value={displayName}
-          onChangeText={setDisplayName}
+          value={displayNameInput}
+          onChangeText={setDisplayNameInput}
           placeholder="Enter your name"
         />
 
@@ -555,7 +594,7 @@ const styles = StyleSheet.create({
   avatarInitials: {
     fontSize: typography.sizes.xl,
     fontWeight: '700',
-    color: colors.surface,
+    color: colors.textPrimary,
   },
   headerText: {
     flex: 1,
@@ -565,6 +604,11 @@ const styles = StyleSheet.create({
     fontSize: typography.sizes.lg,
     fontWeight: '700',
     color: colors.textPrimary,
+  },
+  emailText: {
+    fontSize: typography.sizes.xs,
+    color: colors.textTertiary,
+    marginTop: 2,
   },
   editIcon: {
     padding: spacing.xs,
@@ -581,6 +625,10 @@ const styles = StyleSheet.create({
   },
   statCard: {
     flex: 1,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: radii.lg,
+    overflow: 'hidden',
   },
   // Sections
   section: {
@@ -601,7 +649,7 @@ const styles = StyleSheet.create({
   sectionAction: {
     fontSize: typography.sizes.sm,
     fontWeight: '600',
-    color: colors.primary,
+    color: colors.primaryLight,
   },
   placeholderText: {
     fontSize: typography.sizes.sm,
@@ -615,6 +663,12 @@ const styles = StyleSheet.create({
   },
   skeletonRow: {
     marginBottom: spacing.sm,
+  },
+  streakHelper: {
+    fontSize: typography.sizes.xs,
+    color: colors.textTertiary,
+    marginTop: spacing.sm,
+    fontWeight: '500',
   },
   // Edit sheet
   sheetAvatarWrap: {
@@ -630,7 +684,7 @@ const styles = StyleSheet.create({
   sheetAvatarInitials: {
     fontSize: typography.sizes.xxl,
     fontWeight: '700',
-    color: colors.surface,
+    color: colors.textPrimary,
   },
   changePhotoText: {
     fontSize: typography.sizes.xs,
@@ -656,7 +710,7 @@ const styles = StyleSheet.create({
   signOutText: {
     fontSize: typography.sizes.md,
     fontWeight: '600',
-    color: '#FF5050',
+    color: colors.danger,
   },
   // Challenge sheet
   selectMode: {
@@ -676,7 +730,7 @@ const styles = StyleSheet.create({
   },
   inviteCode: {
     fontSize: 32,
-    fontFamily: 'JetBrainsMono',
+    fontFamily: 'JetBrainsMono_700Bold',
     letterSpacing: 8,
     color: colors.primary,
     marginBottom: spacing.lg,

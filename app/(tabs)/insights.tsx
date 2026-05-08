@@ -10,7 +10,8 @@ import { useMonthlyTotals } from '@/hooks/useSummaries';
 import { getLocalDateString, getISOWeekStart } from '@/lib/emissions';
 import { EmissionBarChart } from '@/components/charts/EmissionBarChart';
 import { VChip, VCard, VBadge, VSkeleton, VEmptyState } from '@/components/ui';
-import { colors, spacing, typography } from '@/lib/theme';
+import { colors, spacing, typography, radii } from '@/lib/theme';
+import { formatMonthlyDelta } from '@/lib/format';
 import type { EmissionCategory, EmissionEntryWithFactor } from '@/types/emission';
 
 type DateFilter = 'today' | 'week' | 'month';
@@ -136,15 +137,23 @@ export default function InsightsScreen() {
     filter === 'week' ? 'This week · kg CO₂e' :
     'This month · kg CO₂e';
 
-  // Format trend label for monthly comparison
-  const trendLabel =
-    monthly?.trendPercent !== null && monthly?.trendPercent !== undefined
-      ? `${monthly.trendPercent > 0 ? '+' : ''}${monthly.trendPercent.toFixed(1)}% vs last month`
-      : null;
-
-  const trendDirection: 'up' | 'down' | 'neutral' =
-    monthly?.trendPercent === null || monthly?.trendPercent === undefined ? 'neutral' :
-    monthly.trendPercent < 0 ? 'down' : 'up';
+  // Monthly delta — clean formatter (lower CO₂ = good)
+  const delta = formatMonthlyDelta(
+    monthly?.totalKg ?? 0,
+    monthly?.previousMonthTotalKg ?? 0,
+  );
+  const deltaBg =
+    delta.tone === 'good'
+      ? 'rgba(61,220,151,0.12)'
+      : delta.tone === 'bad'
+      ? 'rgba(255,92,92,0.12)'
+      : 'rgba(255,255,255,0.06)';
+  const deltaFg =
+    delta.tone === 'good'
+      ? colors.primaryLight
+      : delta.tone === 'bad'
+      ? colors.danger
+      : colors.textSecondary;
 
   return (
     <ScrollView
@@ -153,9 +162,15 @@ export default function InsightsScreen() {
       showsVerticalScrollIndicator={false}
     >
       <Text style={styles.heading}>Insights</Text>
+      <Text style={styles.subheading}>Your carbon, decoded.</Text>
 
-      {/* Date Filter Chips */}
-      <View style={styles.filterRow}>
+      {/* Date Filter Chips — horizontal scroll, fixed height */}
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        style={{ flexGrow: 0, height: 52, marginBottom: spacing.sm }}
+        contentContainerStyle={{ alignItems: 'center', paddingHorizontal: spacing.md, gap: spacing.sm }}
+      >
         {(['today', 'week', 'month'] as DateFilter[]).map((f) => (
           <VChip
             key={f}
@@ -164,7 +179,7 @@ export default function InsightsScreen() {
             onPress={() => setFilter(f)}
           />
         ))}
-      </View>
+      </ScrollView>
 
       {/* Bar Chart — respects active filter */}
       <Text style={styles.sectionTitle}>
@@ -185,45 +200,46 @@ export default function InsightsScreen() {
         </VCard>
       )}
 
-      {/* Monthly Totals — TRACK-07 */}
+      {/* Monthly Totals */}
       <Text style={styles.sectionTitle}>Monthly Summary</Text>
       {monthlyLoading ? (
-        <VSkeleton width="100%" height={80} style={{ marginBottom: spacing.md }} />
+        <VSkeleton width="100%" height={120} style={{ marginBottom: spacing.md }} />
       ) : (
-        <VCard elevation="sm" style={styles.monthlyCard}>
-          <View style={styles.monthlyRow}>
-            <View>
-              <Text style={styles.monthlyLabel}>This Month</Text>
-              <Text style={styles.monthlyValue}>
-                <Text style={{ fontFamily: 'JetBrainsMono' }}>
-                  {(monthly?.totalKg ?? 0).toFixed(1)}
-                </Text>
-                {' kg CO\u2082e'}
-              </Text>
-            </View>
-            {trendLabel ? (
-              <Text style={[styles.trendBadge,
-                { color: trendDirection === 'down' ? colors.success : colors.error }
-              ]}>
-                {trendDirection === 'down' ? '\u2193' : '\u2191'} {trendLabel}
-              </Text>
-            ) : null}
+        <VCard
+          elevation="lg"
+          style={[styles.monthlyCard, { borderWidth: 1, borderColor: colors.border }]}
+        >
+          <Text style={styles.monthlyLabelSmall}>THIS MONTH</Text>
+          <Text style={styles.monthlyBigNumber}>
+            {(monthly?.totalKg ?? 0).toFixed(1)}
+            <Text style={styles.monthlyUnit}> kg CO₂e</Text>
+          </Text>
+
+          <View style={[styles.deltaBadge, { backgroundColor: deltaBg }]}>
+            <Text style={[styles.deltaBadgeText, { color: deltaFg }]}>
+              {delta.label}
+            </Text>
           </View>
+
           <View style={styles.monthlyBreakdown}>
-            <Text style={styles.monthlyDetail}>
-              Food {(monthly?.foodKg ?? 0).toFixed(1)} kg
-            </Text>
-            <Text style={styles.monthlyDetail}>
-              Transport {(monthly?.transportKg ?? 0).toFixed(1)} kg
-            </Text>
-            <Text style={styles.monthlyDetail}>
-              Energy {(monthly?.energyKg ?? 0).toFixed(1)} kg
-            </Text>
+            {[
+              { label: 'Food', value: monthly?.foodKg ?? 0, color: colors.food },
+              { label: 'Transport', value: monthly?.transportKg ?? 0, color: colors.transport },
+              { label: 'Energy', value: monthly?.energyKg ?? 0, color: colors.energy },
+            ].map(({ label, value, color }) => (
+              <View key={label} style={styles.monthlyBreakdownItem}>
+                <View style={[styles.dot, { backgroundColor: color }]} />
+                <Text style={styles.monthlyDetailLabel}>{label}</Text>
+                <Text style={[styles.monthlyDetailValue, { color }]}>
+                  {value.toFixed(1)} kg
+                </Text>
+              </View>
+            ))}
           </View>
         </VCard>
       )}
 
-      {/* History List — TRACK-08, TRACK-09, TRACK-10, TRACK-11 */}
+      {/* History List */}
       <Text style={styles.sectionTitle}>
         {filter === 'today' ? "Today's Entries" :
          filter === 'week' ? "This Week's Entries" :
@@ -253,23 +269,93 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background },
   content: { padding: spacing.lg, paddingBottom: spacing.xxl },
   heading: {
-    fontSize: typography.sizes.xxl, fontWeight: '700',
-    color: colors.textPrimary, marginBottom: spacing.lg,
+    fontSize: typography.sizes.xxl,
+    fontWeight: '700',
+    color: colors.textPrimary,
     marginTop: spacing.lg,
   },
-  filterRow: { flexDirection: 'row', gap: spacing.sm, marginBottom: spacing.md, flexWrap: 'wrap' },
+  subheading: {
+    fontSize: 14,
+    color: colors.textSecondary,
+    marginBottom: spacing.lg,
+    marginTop: 2,
+  },
   sectionTitle: {
-    fontSize: typography.sizes.lg, fontWeight: '700',
-    color: colors.textPrimary, marginTop: spacing.md, marginBottom: spacing.sm,
+    fontSize: typography.sizes.lg,
+    fontWeight: '700',
+    color: colors.textPrimary,
+    marginTop: spacing.md,
+    marginBottom: spacing.sm,
   },
   chartCard: { marginBottom: spacing.md, alignItems: 'center' },
-  monthlyCard: { marginBottom: spacing.md },
-  monthlyRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
-  monthlyLabel: { fontSize: typography.sizes.sm, color: colors.textSecondary, marginBottom: 2 },
-  monthlyValue: { fontSize: typography.sizes.lg, color: colors.textPrimary },
-  trendBadge: { fontSize: typography.sizes.sm, fontWeight: '600', marginTop: 4 },
-  monthlyBreakdown: { flexDirection: 'row', justifyContent: 'space-between', marginTop: spacing.sm },
-  monthlyDetail: { fontSize: typography.sizes.xs, color: colors.textSecondary },
+
+  // Monthly card
+  monthlyCard: {
+    marginBottom: spacing.md,
+    padding: spacing.lg,
+  },
+  monthlyLabelSmall: {
+    fontSize: 10,
+    fontWeight: '700',
+    letterSpacing: 1.4,
+    textTransform: 'uppercase',
+    color: colors.textTertiary,
+    marginBottom: 6,
+  },
+  monthlyBigNumber: {
+    fontFamily: 'JetBrainsMono_700Bold',
+    fontSize: 32,
+    fontWeight: '800',
+    color: colors.textPrimary,
+    letterSpacing: -1,
+    lineHeight: 38,
+  },
+  monthlyUnit: {
+    fontFamily: 'Inter',
+    fontSize: 14,
+    fontWeight: '500',
+    color: colors.textSecondary,
+    letterSpacing: 0,
+  },
+  deltaBadge: {
+    alignSelf: 'flex-start',
+    borderRadius: radii.full,
+    paddingHorizontal: 12,
+    paddingVertical: 5,
+    marginTop: spacing.sm,
+  },
+  deltaBadgeText: {
+    fontSize: 12,
+    fontWeight: '600',
+    letterSpacing: 0.2,
+  },
+  monthlyBreakdown: {
+    flexDirection: 'column',
+    marginTop: spacing.lg,
+    gap: spacing.sm,
+  },
+  monthlyBreakdownItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+  },
+  dot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+  },
+  monthlyDetailLabel: {
+    flex: 1,
+    fontSize: typography.sizes.sm,
+    fontWeight: '500',
+    color: colors.textSecondary,
+  },
+  monthlyDetailValue: {
+    fontFamily: 'JetBrainsMono_700Bold',
+    fontSize: typography.sizes.sm,
+    fontWeight: '700',
+  },
+
   // Entry row styles
   entryRowWrapper: { marginBottom: spacing.sm, position: 'relative' },
   deleteButton: {
@@ -286,7 +372,7 @@ const styles = StyleSheet.create({
   deleteButtonInner: {
     flex: 1,
     width: '100%',
-    backgroundColor: colors.error,
+    backgroundColor: colors.danger,
     justifyContent: 'center',
     alignItems: 'center',
     borderRadius: 12,
@@ -302,7 +388,9 @@ const styles = StyleSheet.create({
   entryItem: { fontSize: typography.sizes.sm, fontWeight: '500', color: colors.textPrimary },
   entryDate: { fontSize: typography.sizes.xs, color: colors.textSecondary, marginTop: 2 },
   entryValue: {
-    fontFamily: 'JetBrainsMono', fontSize: typography.sizes.sm,
-    fontWeight: '600', color: colors.textPrimary,
+    fontFamily: 'JetBrainsMono_700Bold',
+    fontSize: typography.sizes.sm,
+    fontWeight: '600',
+    color: colors.textPrimary,
   },
 });

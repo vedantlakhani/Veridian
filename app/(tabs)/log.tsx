@@ -15,6 +15,7 @@ import Constants from 'expo-constants';
 const IS_EXPO_GO = Constants.appOwnership === 'expo';
 import { getLocalDateString } from '@/lib/emissions';
 import { colors, spacing, typography, radii } from '@/lib/theme';
+import { humanizeSubcategory } from '@/lib/format';
 import type { EmissionCategory, EmissionFactor } from '@/types/emission';
 
 type FilterTab = 'all' | EmissionCategory;
@@ -158,6 +159,7 @@ export default function LogScreen() {
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
+        style={{ height: 52, flexGrow: 0 }}
         contentContainerStyle={styles.tabsRow}
       >
         {TABS.map(tab => (
@@ -243,7 +245,7 @@ export default function LogScreen() {
               <View key={key} style={styles.group}>
                 <View style={styles.groupHeader}>
                   <Text style={styles.groupIcon}>{icon}</Text>
-                  <Text style={[styles.groupLabel, { color }]}>{subcategory}</Text>
+                  <Text style={[styles.groupLabel, { color }]}>{humanizeSubcategory(subcategory)}</Text>
                 </View>
                 {items.map(factor => (
                   <TouchableOpacity
@@ -258,11 +260,25 @@ export default function LogScreen() {
                       <Text style={styles.factorItem}>{factor.item}</Text>
                       <Text style={styles.factorUnit}>per {factor.unit}</Text>
                     </View>
-                    <Text style={[styles.factorCo2, { color }]}>
-                      {factor.kg_co2e < 1
-                        ? `${(factor.kg_co2e * 1000).toFixed(0)}g`
-                        : `${factor.kg_co2e.toFixed(2)}kg`}
-                    </Text>
+                    <View style={{ alignItems: 'flex-end', paddingRight: spacing.md }}>
+                      <Text style={{ fontFamily: 'JetBrainsMono_700Bold', fontSize: 15, fontWeight: '700', color }}>
+                        {factor.kg_co2e < 1
+                          ? `${(factor.kg_co2e * 1000).toFixed(0)}g`
+                          : `${factor.kg_co2e.toFixed(2)}kg`}
+                      </Text>
+                      <Text
+                        style={{
+                          fontSize: 9,
+                          color: colors.textTertiary,
+                          letterSpacing: 1.2,
+                          textTransform: 'uppercase',
+                          fontWeight: '600',
+                          marginTop: 2,
+                        }}
+                      >
+                        CO₂e
+                      </Text>
+                    </View>
                   </TouchableOpacity>
                 ))}
               </View>
@@ -389,26 +405,33 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
   },
   tabsRow: {
-    paddingHorizontal: spacing.lg,
-    paddingBottom: spacing.sm,
+    paddingHorizontal: spacing.md,
+    alignItems: 'center',
     gap: spacing.sm,
+    height: 52,
   },
   tab: {
-    paddingHorizontal: spacing.md,
-    paddingVertical: 7,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
     borderRadius: radii.full,
-    backgroundColor: colors.surface,
+    backgroundColor: 'rgba(255,255,255,0.04)',
+    borderWidth: 1,
+    borderColor: colors.border,
+    height: 36,
+    justifyContent: 'center',
   },
   tabActive: {
-    backgroundColor: colors.primary,
+    backgroundColor: 'rgba(0,168,98,0.16)',
+    borderColor: 'rgba(0,168,98,0.4)',
   },
   tabLabel: {
-    fontSize: typography.sizes.sm,
+    fontSize: 13,
     fontWeight: '600',
     color: colors.textSecondary,
+    letterSpacing: 0.2,
   },
   tabLabelActive: {
-    color: '#FFFFFF',
+    color: colors.primaryLight,
   },
   scroll: { flex: 1 },
   scrollContent: {
@@ -425,18 +448,22 @@ const styles = StyleSheet.create({
   },
   groupIcon: { fontSize: 13 },
   groupLabel: {
-    fontSize: typography.sizes.xs,
+    fontSize: 11,
     fontWeight: '700',
     textTransform: 'uppercase',
-    letterSpacing: 0.8,
+    letterSpacing: 1.6,
+    color: colors.textTertiary,
   },
   factorCard: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: colors.surface,
-    borderRadius: radii.md,
-    marginBottom: 6,
+    borderRadius: radii.lg,
+    marginBottom: 8,
     overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: colors.border,
+    minHeight: 72,
   },
   accentBar: {
     width: 4,
@@ -448,26 +475,21 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.md,
   },
   factorItem: {
-    fontSize: typography.sizes.md,
+    fontSize: 15,
     fontWeight: '600',
     color: colors.textPrimary,
+    letterSpacing: -0.2,
   },
   factorUnit: {
-    fontSize: typography.sizes.xs,
-    color: colors.textSecondary,
-    marginTop: 2,
-  },
-  factorCo2: {
-    fontFamily: 'JetBrainsMono_700Bold',
-    fontSize: typography.sizes.sm,
-    fontWeight: '700',
-    paddingRight: spacing.md,
+    fontSize: 11,
+    color: colors.textTertiary,
+    marginTop: 3,
   },
   todaySection: {
     marginTop: spacing.lg,
     paddingTop: spacing.md,
     borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: colors.surface,
+    borderTopColor: colors.border,
   },
   todayHeader: {
     flexDirection: 'row',
@@ -599,9 +621,9 @@ const sheet = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: spacing.lg,
     marginBottom: spacing.lg,
-    borderRadius: radii.lg,
+    borderRadius: radii.xl,
     borderWidth: 1,
-    backgroundColor: colors.surface,
+    backgroundColor: colors.surfaceElevated,
   },
   previewLabel: {
     fontSize: typography.sizes.xs,
@@ -658,9 +680,11 @@ const sheet = StyleSheet.create({
     textAlign: 'center',
   },
   logBtn: {
-    borderRadius: radii.lg,
+    borderRadius: radii.xl,
     paddingVertical: spacing.md,
     alignItems: 'center',
+    minHeight: 56,
+    justifyContent: 'center',
   },
   logBtnDisabled: { opacity: 0.45 },
   logBtnText: {
