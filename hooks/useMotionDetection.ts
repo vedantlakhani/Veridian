@@ -3,7 +3,11 @@ import * as Location from 'expo-location';
 import * as TaskManager from 'expo-task-manager';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { AppState } from 'react-native';
+import Constants from 'expo-constants';
 import { LOCATION_TASK_NAME, LOCATION_HISTORY_KEY, type StoredLocation } from '@/tasks/locationTask';
+
+// Background location tasks are not supported in Expo Go
+const IS_EXPO_GO = Constants.appOwnership === 'expo';
 
 const DISMISSED_KEY = '@veridian/dismissed_trips';
 const TRIP_GAP_MS = 5 * 60 * 1000;   // 5-min silence = new trip
@@ -129,30 +133,41 @@ export function useMotionDetection() {
   }, []);
 
   const requestPermissions = useCallback(async (): Promise<boolean> => {
-    const fg = await Location.requestForegroundPermissionsAsync();
-    if (fg.status !== 'granted') {
+    if (IS_EXPO_GO) {
+      // Background location is unsupported in Expo Go — inform caller
       setHasPermission(false);
       return false;
     }
 
-    const bg = await Location.requestBackgroundPermissionsAsync();
-    const granted = bg.status === 'granted';
-    setHasPermission(granted);
-
-    if (granted) {
-      const already = await TaskManager.isTaskRegisteredAsync(LOCATION_TASK_NAME);
-      if (!already) {
-        await Location.startLocationUpdatesAsync(LOCATION_TASK_NAME, {
-          accuracy: Location.Accuracy.Balanced,
-          distanceInterval: 100,        // fire every 100m moved
-          deferredUpdatesInterval: 60_000,
-          showsBackgroundLocationIndicator: false,
-          pausesUpdatesAutomatically: true,
-        });
+    try {
+      const fg = await Location.requestForegroundPermissionsAsync();
+      if (fg.status !== 'granted') {
+        setHasPermission(false);
+        return false;
       }
-    }
 
-    return granted;
+      const bg = await Location.requestBackgroundPermissionsAsync();
+      const granted = bg.status === 'granted';
+      setHasPermission(granted);
+
+      if (granted) {
+        const already = await TaskManager.isTaskRegisteredAsync(LOCATION_TASK_NAME);
+        if (!already) {
+          await Location.startLocationUpdatesAsync(LOCATION_TASK_NAME, {
+            accuracy: Location.Accuracy.Balanced,
+            distanceInterval: 100,
+            deferredUpdatesInterval: 60_000,
+            showsBackgroundLocationIndicator: false,
+            pausesUpdatesAutomatically: true,
+          });
+        }
+      }
+
+      return granted;
+    } catch {
+      setHasPermission(false);
+      return false;
+    }
   }, []);
 
   const dismiss = useCallback(

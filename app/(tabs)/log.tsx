@@ -10,6 +10,9 @@ import { useCreateEntry, useEmissionEntries } from '@/hooks/useEmissionEntries';
 import { useAllEmissionFactors } from '@/hooks/useAllEmissionFactors';
 import { useAuthStore } from '@/stores/authStore';
 import { useMotionDetection } from '@/hooks/useMotionDetection';
+import Constants from 'expo-constants';
+
+const IS_EXPO_GO = Constants.appOwnership === 'expo';
 import { getLocalDateString } from '@/lib/emissions';
 import { colors, spacing, typography, radii } from '@/lib/theme';
 import type { EmissionCategory, EmissionFactor } from '@/types/emission';
@@ -173,13 +176,21 @@ export default function LogScreen() {
 
       {/* ── Detected trips banner ── */}
       {hasPermission === null || hasPermission === false ? (
-        <TouchableOpacity style={detect.enableBanner} onPress={handleEnableDetection} activeOpacity={0.8}>
+        <TouchableOpacity
+          style={detect.enableBanner}
+          onPress={IS_EXPO_GO ? undefined : handleEnableDetection}
+          activeOpacity={IS_EXPO_GO ? 1 : 0.8}
+        >
           <Text style={detect.enableIcon}>📍</Text>
           <View style={{ flex: 1 }}>
             <Text style={detect.enableTitle}>Auto-detect trips</Text>
-            <Text style={detect.enableSub}>Tap to let Veridian detect your transport automatically</Text>
+            <Text style={detect.enableSub}>
+              {IS_EXPO_GO
+                ? 'Available in the full build — not supported in Expo Go'
+                : 'Tap to let Veridian detect your transport automatically'}
+            </Text>
           </View>
-          <Text style={detect.enableCaret}>›</Text>
+          {!IS_EXPO_GO && <Text style={detect.enableCaret}>›</Text>}
         </TouchableOpacity>
       ) : pendingTrips.length > 0 ? (
         <View style={detect.section}>
