@@ -98,7 +98,7 @@ function analyzeTrips(points: StoredLocation[]): DetectedTrip[] {
     const avgSpeedKmh = durationH > 0 ? distanceKm / durationH : 0;
     const mode = classifyMode(avgSpeedKmh);
 
-    if (!mode || mode === 'cycling') continue; // only surface car trips for now
+    if (!mode) continue; // walking/stationary — skip; cycling surfaces too (auto-log decides)
 
     trips.push({
       id: String(s[0].timestamp),
@@ -114,12 +114,66 @@ function analyzeTrips(points: StoredLocation[]): DetectedTrip[] {
   return trips;
 }
 
+// ─── Active trip detection ────────────────────────────────────────────────────
+
+interface ActiveTripState {
+  isInMotion: boolean;
+  currentTripKm: number;
+}
+
+const IDLE_ACTIVE_TRIP: ActiveTripState = { isInMotion: false, currentTripKm: 0 };
+const ACTIVE_RECENCY_MS = 15 * 60 * 1000; // most recent point must be within 15 min
+const ACTIVE_SPEED_KMH = 28;              // avg of last 2 segments must exceed this
+
+function detectActiveTrip(points: StoredLocation[]): ActiveTripState {
+  if (points.length < 3) return IDLE_ACTIVE_TRIP;
+
+  const sorted = [...points].sort((a, b) => a.timestamp - b.timestamp);
+  const last3 = sorted.slice(-3);
+
+  // Most recent point must be fresh
+  if (Date.now() - last3[2].timestamp > ACTIVE_RECENCY_MS) return IDLE_ACTIVE_TRIP;
+
+  // Average speed of the last 2 segments
+  let dist = 0;
+  let durMs = 0;
+  for (let i = 1; i < last3.length; i++) {
+    dist += haversineKm(
+      last3[i - 1].latitude, last3[i - 1].longitude,
+      last3[i].latitude, last3[i].longitude,
+    );
+    durMs += last3[i].timestamp - last3[i - 1].timestamp;
+  }
+  const durH = durMs / 3_600_000;
+  const avgSpeedKmh = durH > 0 ? dist / durH : 0;
+  if (avgSpeedKmh <= ACTIVE_SPEED_KMH) return IDLE_ACTIVE_TRIP;
+
+  // Cumulative distance since the last 5-min gap
+  let startIdx = 0;
+  for (let i = sorted.length - 1; i >= 1; i--) {
+    if (sorted[i].timestamp - sorted[i - 1].timestamp > TRIP_GAP_MS) {
+      startIdx = i;
+      break;
+    }
+  }
+  let tripKm = 0;
+  for (let i = startIdx + 1; i < sorted.length; i++) {
+    tripKm += haversineKm(
+      sorted[i - 1].latitude, sorted[i - 1].longitude,
+      sorted[i].latitude, sorted[i].longitude,
+    );
+  }
+
+  return { isInMotion: true, currentTripKm: Math.round(tripKm * 10) / 10 };
+}
+
 // ─── Hook ─────────────────────────────────────────────────────────────────────
 
 export function useMotionDetection() {
   const [hasPermission, setHasPermission] = useState<boolean | null>(null);
   const [allTrips, setAllTrips] = useState<DetectedTrip[]>([]);
   const [dismissed, setDismissed] = useState<Set<string>>(new Set());
+  const [activeTrip, setActiveTrip] = useState<ActiveTripState>(IDLE_ACTIVE_TRIP);
 
   const loadDismissed = useCallback(async () => {
     const raw = await AsyncStorage.getItem(DISMISSED_KEY);
@@ -129,8 +183,37 @@ export function useMotionDetection() {
   const refresh = useCallback(async () => {
     const raw = await AsyncStorage.getItem(LOCATION_HISTORY_KEY);
     if (!raw) return;
-    setAllTrips(analyzeTrips(JSON.parse(raw) as StoredLocation[]));
+    const points = JSON.parse(raw) as StoredLocation[];
+    setAllTrips(analyzeTrips(points));
+    setActiveTrip(detectActiveTrip(points));
   }, []);
+
+  // Writes a fake 12 km car track (45 km/h avg) to AsyncStorage for Expo Go testing.
+  // The trip ends 20 minutes ago so it surfaces as a completed pending trip,
+  // not an active one.
+  const simulateTrip = useCallback(async () => {
+    const endTime = Date.now() - 20 * 60 * 1000;
+    const intervalMs = 60_000;         // one point per minute
+    const numIntervals = 16;           // 16 min at 45 km/h ≈ 12 km
+    const kmPerInterval = 0.75;        // 45 km/h → 0.75 km per minute
+    const latPerInterval = kmPerInterval / 111; // ~111 km per degree latitude
+
+    const fake: StoredLocation[] = [];
+    for (let i = 0; i <= numIntervals; i++) {
+      fake.push({
+        latitude: 51.5074 + i * latPerInterval,
+        longitude: -0.1278,
+        speed: 12.5, // m/s ≈ 45 km/h
+        timestamp: endTime - (numIntervals - i) * intervalMs,
+      });
+    }
+
+    const raw = await AsyncStorage.getItem(LOCATION_HISTORY_KEY);
+    const existing: StoredLocation[] = raw ? (JSON.parse(raw) as StoredLocation[]) : [];
+    const merged = [...existing, ...fake].sort((a, b) => a.timestamp - b.timestamp);
+    await AsyncStorage.setItem(LOCATION_HISTORY_KEY, JSON.stringify(merged));
+    await refresh();
+  }, [refresh]);
 
   const requestPermissions = useCallback(async (): Promise<boolean> => {
     if (IS_EXPO_GO) {
@@ -170,14 +253,15 @@ export function useMotionDetection() {
     }
   }, []);
 
-  const dismiss = useCallback(
-    async (tripId: string) => {
-      const next = new Set([...dismissed, tripId]);
-      setDismissed(next);
-      await AsyncStorage.setItem(DISMISSED_KEY, JSON.stringify([...next]));
-    },
-    [dismissed],
-  );
+  const dismiss = useCallback(async (tripId: string) => {
+    // Read-modify-write against storage (not closure state) so rapid
+    // sequential dismissals — e.g. from auto-logging — never lose writes.
+    const raw = await AsyncStorage.getItem(DISMISSED_KEY);
+    const next = new Set(raw ? (JSON.parse(raw) as string[]) : []);
+    next.add(tripId);
+    setDismissed(next);
+    await AsyncStorage.setItem(DISMISSED_KEY, JSON.stringify([...next]));
+  }, []);
 
   // After user logs a trip, remove it from the list
   const markLogged = useCallback(
@@ -205,5 +289,8 @@ export function useMotionDetection() {
     dismiss,
     markLogged,
     refresh,
+    isInMotion: activeTrip.isInMotion,
+    currentTripKm: activeTrip.currentTripKm,
+    simulateTrip,
   };
 }

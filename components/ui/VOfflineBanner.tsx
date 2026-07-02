@@ -1,6 +1,5 @@
-import React, { useEffect } from 'react';
-import { Text, StyleSheet } from 'react-native';
-import { colors } from '@/lib/theme';
+import React, { useEffect, useState } from 'react';
+import { Text, StyleSheet, View } from 'react-native';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -8,46 +7,55 @@ import Animated, {
 } from 'react-native-reanimated';
 import { useNetInfo } from '@react-native-community/netinfo';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { VIcon } from './VIcon';
+import { colors, spacing, motion, typography } from '@/lib/theme';
 
-/**
- * Fixed-position banner that appears at the top of the screen when the
- * device is offline and auto-dismisses when connectivity returns.
- *
- * Design: Forest Green (colors.primary) background, white text.
- * Animation: Reanimated 3 withTiming fade + slide on connectivity change.
- * Interaction: pointerEvents="none" — never blocks touches on content below.
- */
-export function VOfflineBanner(): React.ReactElement | null {
+// ─────────────────────────────────────────────────────────────────────────────
+// VOfflineBanner — quiet neutral surface + wifi-off icon; measured-height
+// slide so it never jumps by a guessed constant.
+// ─────────────────────────────────────────────────────────────────────────────
+
+interface VOfflineBannerProps {
+  message?: string;
+}
+
+export function VOfflineBanner({
+  message = 'You are offline — entries will sync when connected',
+}: VOfflineBannerProps): React.ReactElement | null {
   const netInfo = useNetInfo();
   const insets = useSafeAreaInsets();
 
-  // All hooks must be called unconditionally before any early return
   const opacity = useSharedValue(0);
-  const translateY = useSharedValue(-40);
+  const translateY = useSharedValue(-48);
+  const [measuredHeight, setMeasuredHeight] = useState(48);
 
   const isOffline = netInfo.isConnected === false;
 
   useEffect(() => {
-    opacity.value = withTiming(isOffline ? 1 : 0, { duration: 300 });
-    translateY.value = withTiming(isOffline ? 0 : -40, { duration: 300 });
-  }, [isOffline, opacity, translateY]);
+    opacity.value = withTiming(isOffline ? 1 : 0, { duration: motion.timingBase });
+    translateY.value = withTiming(isOffline ? 0 : -measuredHeight, {
+      duration: motion.timingBase,
+    });
+  }, [isOffline, measuredHeight, opacity, translateY]);
 
   const animatedStyle = useAnimatedStyle(() => ({
     opacity: opacity.value,
     transform: [{ translateY: translateY.value }],
   }));
 
-  // When isConnected is null (initial/unknown state), do not render the banner
   if (netInfo.isConnected === null) return null;
 
   return (
     <Animated.View
       style={[styles.banner, { top: insets.top }, animatedStyle]}
       pointerEvents="none"
+      onLayout={(e) => setMeasuredHeight(e.nativeEvent.layout.height + insets.top)}
+      accessibilityLiveRegion="polite"
     >
-      <Text style={styles.text}>
-        You are offline — entries will sync when connected
-      </Text>
+      <View style={styles.row}>
+        <VIcon name="wifi-off" size={14} color={colors.warning} strokeWidth={2} />
+        <Text style={styles.text}>{message}</Text>
+      </View>
     </Animated.View>
   );
 }
@@ -58,15 +66,21 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     zIndex: 9999,
-    backgroundColor: colors.primary,
-    paddingVertical: 8,
-    paddingHorizontal: 16,
+    backgroundColor: colors.surfaceHigh,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.md,
+  },
+  row: {
+    flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
+    gap: spacing.sm,
   },
   text: {
-    color: colors.textPrimary,
-    fontSize: 13,
-    fontFamily: 'Inter',
+    color: colors.warning,
+    fontSize: typography.sizes.sm,
     textAlign: 'center',
   },
 });

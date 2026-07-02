@@ -31,6 +31,77 @@ export async function scheduleDailyReminder(hour: number, minute: number): Promi
   });
 }
 
+// ─── scheduleMealNotifications ────────────────────────────────────────────
+/**
+ * Schedules 4 daily notifications (breakfast, lunch, dinner, streak nudge).
+ * Cancels any existing ones first by identifier so the user's custom daily
+ * reminder (scheduled separately) is left untouched.
+ */
+const MEAL_NOTIFICATIONS: {
+  identifier: string;
+  title: string;
+  body: string;
+  hour: number;
+  minute: number;
+}[] = [
+  {
+    identifier: 'veridian-meal-breakfast',
+    title: 'Morning check-in 🌿',
+    body: "What's fuelling your day? Log breakfast in two taps.",
+    hour: 8,
+    minute: 30,
+  },
+  {
+    identifier: 'veridian-meal-lunch',
+    title: 'Midday moment 🥗',
+    body: 'Log lunch and keep your carbon story going.',
+    hour: 12,
+    minute: 30,
+  },
+  {
+    identifier: 'veridian-meal-dinner',
+    title: 'Evening wind-down 🍽️',
+    body: 'Dinner time — a quick log keeps your streak alive.',
+    hour: 19,
+    minute: 0,
+  },
+  {
+    identifier: 'veridian-streak-nudge',
+    title: "Don't break your streak 🔥",
+    body: 'Log just one thing before midnight to keep it going.',
+    hour: 21,
+    minute: 0,
+  },
+];
+
+export async function scheduleMealNotifications(): Promise<void> {
+  if (Platform.OS === 'android') {
+    await Notifications.setNotificationChannelAsync('default', {
+      name: 'Veridian Reminders',
+      importance: Notifications.AndroidImportance.HIGH,
+    });
+  }
+
+  // Cancel existing meal notifications by identifier (once, before scheduling all 4)
+  await Promise.all(
+    MEAL_NOTIFICATIONS.map((n) =>
+      Notifications.cancelScheduledNotificationAsync(n.identifier),
+    ),
+  );
+
+  for (const n of MEAL_NOTIFICATIONS) {
+    await Notifications.scheduleNotificationAsync({
+      identifier: n.identifier,
+      content: { title: n.title, body: n.body },
+      trigger: {
+        type: SchedulableTriggerInputTypes.DAILY,
+        hour: n.hour,
+        minute: n.minute,
+      },
+    });
+  }
+}
+
 // ─── notifyStreakMilestone ────────────────────────────────────────────────
 /**
  * Fires an immediate (trigger: null) notification celebrating a streak milestone.
@@ -87,7 +158,10 @@ async function scheduleIfEnabled(userId: string): Promise<void> {
 
   if (data?.daily_reminder_enabled && data.reminder_time) {
     const [h, m] = (data.reminder_time as string).split(':').map(Number);
+    // NOTE: scheduleDailyReminder cancels ALL scheduled notifications, so it
+    // must run BEFORE scheduleMealNotifications (which cancels by identifier).
     await scheduleDailyReminder(h, m);
+    await scheduleMealNotifications();
   }
 
   await registerPushToken(userId);

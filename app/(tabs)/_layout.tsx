@@ -1,58 +1,68 @@
 import { useEffect } from 'react';
 import { Tabs, useRouter } from 'expo-router';
-import { View } from 'react-native';
-import { colors } from '@/lib/theme';
+import { View, StyleSheet } from 'react-native';
+import { colors, budgetStateFor, budgetStateColors } from '@/lib/theme';
 import { useAuthStore } from '@/stores/authStore';
 import { useProfile } from '@/hooks/useProfile';
+import { useDailySummary } from '@/hooks/useSummaries';
 import { useOnboardingStore } from '@/stores/useOnboardingStore';
 import { useBaseline } from '@/hooks/useBaseline';
+import { VIcon, type VIconName } from '@/components/ui';
+import { DAILY_CARBON_BUDGET_KG } from '@/types/emission';
 
-function HomeIcon({ focused }: { focused: boolean }) {
-  const c = focused ? colors.primary : colors.textSecondary;
+// ─── Tab icon — VIcon + a small glowing dot whose color = budget state ───────
+function TabIcon({
+  name,
+  focused,
+  dotColor,
+}: {
+  name: VIconName;
+  focused: boolean;
+  dotColor: string;
+}) {
+  const c = focused ? colors.primaryLight : colors.textTertiary;
   return (
-    <View style={{ width: 24, height: 24, alignItems: 'center', justifyContent: 'flex-end' }}>
-      <View style={{ width: 0, height: 0, borderLeftWidth: 10, borderRightWidth: 10, borderBottomWidth: 8, borderLeftColor: 'transparent', borderRightColor: 'transparent', borderBottomColor: c, marginBottom: 1 }} />
-      <View style={{ width: 14, height: 10, backgroundColor: c, borderRadius: 1 }} />
+    <View style={tabStyles.iconWrap}>
+      <VIcon name={name} size={23} color={c} strokeWidth={focused ? 2 : 1.75} />
+      <View
+        style={[
+          tabStyles.dot,
+          focused
+            ? {
+                backgroundColor: dotColor,
+                shadowColor: dotColor,
+              }
+            : { backgroundColor: 'transparent' },
+        ]}
+      />
     </View>
   );
 }
 
-function LeafIcon({ focused }: { focused: boolean }) {
-  const c = focused ? colors.primary : colors.textSecondary;
-  return (
-    <View style={{ width: 24, height: 24, alignItems: 'center', justifyContent: 'center' }}>
-      <View style={{ width: 16, height: 20, backgroundColor: c, borderTopLeftRadius: 2, borderTopRightRadius: 14, borderBottomLeftRadius: 14, borderBottomRightRadius: 2, transform: [{ rotate: '15deg' }] }} />
-    </View>
-  );
-}
-
-function ChartIcon({ focused }: { focused: boolean }) {
-  const c = focused ? colors.primary : colors.textSecondary;
-  return (
-    <View style={{ width: 24, height: 24, flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'center', gap: 3 }}>
-      <View style={{ width: 5, height: 10, backgroundColor: c, borderRadius: 2 }} />
-      <View style={{ width: 5, height: 16, backgroundColor: c, borderRadius: 2 }} />
-      <View style={{ width: 5, height: 8, backgroundColor: c, borderRadius: 2 }} />
-    </View>
-  );
-}
-
-function PersonIcon({ focused }: { focused: boolean }) {
-  const c = focused ? colors.primary : colors.textSecondary;
-  return (
-    <View style={{ width: 24, height: 24, alignItems: 'center', justifyContent: 'flex-end' }}>
-      <View style={{ width: 9, height: 9, backgroundColor: c, borderRadius: 5, marginBottom: 2 }} />
-      <View style={{ width: 16, height: 8, backgroundColor: c, borderRadius: 8, borderBottomLeftRadius: 0, borderBottomRightRadius: 0 }} />
-    </View>
-  );
-}
+const tabStyles = StyleSheet.create({
+  iconWrap: { alignItems: 'center' },
+  dot: {
+    width: 4,
+    height: 4,
+    borderRadius: 2,
+    marginTop: 3,
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+  },
+});
 
 export default function TabLayout() {
   const router = useRouter();
   const { user } = useAuthStore();
   const { data: profile, isLoading: profileLoading, isFetching: profileFetching } = useProfile(user?.id);
+  const { data: daily } = useDailySummary(user?.id);
   const { pendingBaselineKg, clearPendingBaseline } = useOnboardingStore();
   const { saveBaseline } = useBaseline();
+
+  // The active tab's dot color follows today's budget state — the app's mood
+  const todayProgress = (daily?.total_kg_co2e ?? 0) / DAILY_CARBON_BUDGET_KG;
+  const dotColor = budgetStateColors[budgetStateFor(todayProgress)].accent;
 
   useEffect(() => {
     // Wait for any query activity to settle before making gate decisions
@@ -70,39 +80,58 @@ export default function TabLayout() {
     const needsCalculator =
       profile === null || (profile != null && profile.baseline_kg == null);
     if (needsCalculator) {
-      router.replace('/carbon-calculator' as any);
+      router.replace('/carbon-calculator' as never);
     }
   }, [profile, profileLoading, profileFetching, pendingBaselineKg, user?.id]);
 
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: colors.primary,
-        tabBarInactiveTintColor: colors.textSecondary,
+        tabBarActiveTintColor: colors.primaryLight,
+        tabBarInactiveTintColor: colors.textTertiary,
         tabBarStyle: {
-          backgroundColor: colors.surface,
-          borderTopWidth: 0,
-          height: 60,
+          backgroundColor: '#FFFFFF',
+          borderTopWidth: 1,
+          borderTopColor: colors.border,
+          height: 64,
           paddingBottom: 8,
+          paddingTop: 6,
+        },
+        tabBarLabelStyle: {
+          fontSize: 10,
+          fontWeight: '600',
+          letterSpacing: 0.2,
         },
         headerShown: false,
       }}
     >
       <Tabs.Screen
         name="index"
-        options={{ title: 'Home', tabBarIcon: ({ focused }) => <HomeIcon focused={focused} /> }}
+        options={{
+          title: 'Home',
+          tabBarIcon: ({ focused }) => <TabIcon name="home" focused={focused} dotColor={dotColor} />,
+        }}
       />
       <Tabs.Screen
         name="log"
-        options={{ title: 'Log', tabBarIcon: ({ focused }) => <LeafIcon focused={focused} /> }}
+        options={{
+          title: 'Log',
+          tabBarIcon: ({ focused }) => <TabIcon name="leaf" focused={focused} dotColor={dotColor} />,
+        }}
       />
       <Tabs.Screen
         name="insights"
-        options={{ title: 'Insights', tabBarIcon: ({ focused }) => <ChartIcon focused={focused} /> }}
+        options={{
+          title: 'Insights',
+          tabBarIcon: ({ focused }) => <TabIcon name="chart" focused={focused} dotColor={dotColor} />,
+        }}
       />
       <Tabs.Screen
         name="profile"
-        options={{ title: 'Profile', tabBarIcon: ({ focused }) => <PersonIcon focused={focused} /> }}
+        options={{
+          title: 'Profile',
+          tabBarIcon: ({ focused }) => <TabIcon name="person" focused={focused} dotColor={dotColor} />,
+        }}
       />
     </Tabs>
   );

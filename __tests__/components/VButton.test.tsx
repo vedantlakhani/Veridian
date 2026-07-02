@@ -16,9 +16,10 @@ describe('VButton', () => {
   });
 
   it('shows ActivityIndicator when loading=true', () => {
-    const { queryByText } = render(<VButton label="Loading" loading={true} />);
-    // Label text should not be visible when loading
-    expect(queryByText('Loading')).toBeNull();
+    const { UNSAFE_getByType } = render(<VButton label="Loading" loading={true} />);
+    // Spinner overlays the (hidden but mounted) label so the width never jumps
+    const { ActivityIndicator } = jest.requireActual<typeof import('react-native')>('react-native');
+    expect(UNSAFE_getByType(ActivityIndicator)).toBeTruthy();
   });
 
   it('is disabled when loading=true', () => {

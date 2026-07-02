@@ -1,13 +1,28 @@
+import type { ReactNode } from 'react';
+import { useEffect } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withSpring,
+  withTiming,
+} from 'react-native-reanimated';
 import { VButton } from './VButton';
-import { colors, typography, spacing } from '@/lib/theme';
+import { colors, typography, spacing, motion } from '@/lib/theme';
+
+// ─────────────────────────────────────────────────────────────────────────────
+// VEmptyState — gentle mount animation, ReactNode icon slot, spacing hierarchy.
+// ─────────────────────────────────────────────────────────────────────────────
 
 interface VEmptyStateProps {
   title: string;
   body: string;
   ctaLabel?: string;
   onCta?: () => void;
-  icon?: string;
+  /** VIcon / illustration node, or emoji string for compat */
+  icon?: ReactNode;
+  /** Fill available space (old flex:1 behavior) */
+  fill?: boolean;
 }
 
 export function VEmptyState({
@@ -15,13 +30,35 @@ export function VEmptyState({
   body,
   ctaLabel,
   onCta,
-  icon = '🌱',
+  icon,
+  fill = false,
 }: VEmptyStateProps) {
+  const scale = useSharedValue(0.92);
+  const opacity = useSharedValue(0);
+
+  useEffect(() => {
+    scale.value = withSpring(1, motion.springGentle);
+    opacity.value = withTiming(1, { duration: motion.timingBase });
+  }, [scale, opacity]);
+
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: scale.value }],
+    opacity: opacity.value,
+  }));
+
   return (
-    <View style={styles.container}>
-      <Text style={styles.icon} accessibilityRole="image" accessibilityLabel={title}>
-        {icon}
-      </Text>
+    <Animated.View style={[styles.container, fill && styles.fill, animatedStyle]}>
+      {icon ? (
+        <View style={styles.iconWrap}>
+          {typeof icon === 'string' ? (
+            <Text style={styles.iconText} accessibilityRole="image" accessibilityLabel={title}>
+              {icon}
+            </Text>
+          ) : (
+            icon
+          )}
+        </View>
+      ) : null}
       <Text style={styles.title}>{title}</Text>
       <Text style={styles.body}>{body}</Text>
       {ctaLabel && onCta ? (
@@ -29,30 +66,35 @@ export function VEmptyState({
           <VButton label={ctaLabel} onPress={onCta} />
         </View>
       ) : null}
-    </View>
+    </Animated.View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    padding: spacing.xxl,
-    gap: spacing.md,
+    padding: spacing.xl,
   },
-  icon: { fontSize: 56 },
+  fill: { flex: 1 },
+  iconWrap: {
+    marginBottom: spacing.lg,
+    opacity: 0.9,
+  },
+  iconText: { fontSize: 48 },
   title: {
-    fontSize: typography.sizes.xl,
+    fontSize: typography.sizes.lg,
     fontWeight: '700',
     color: colors.textPrimary,
     textAlign: 'center',
+    letterSpacing: typography.letterSpacing.snug,
+    marginBottom: spacing.xs,
   },
   body: {
     fontSize: typography.sizes.md,
     color: colors.textSecondary,
     textAlign: 'center',
-    lineHeight: 22,
+    lineHeight: 21,
   },
-  ctaWrapper: { marginTop: spacing.sm },
+  ctaWrapper: { marginTop: spacing.lg },
 });

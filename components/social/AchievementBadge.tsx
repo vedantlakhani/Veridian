@@ -1,11 +1,16 @@
-import React from 'react';
-import { View, Text } from 'react-native';
-import Svg, { Circle, G, Path } from 'react-native-svg';
-import { colors, spacing, typography } from '@/lib/theme';
+import React, { useEffect } from 'react';
+import { View, Text, StyleSheet } from 'react-native';
+import Svg, { Circle, G, Path, Defs, LinearGradient, Stop } from 'react-native-svg';
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withSpring,
+} from 'react-native-reanimated';
+import { colors, spacing, motion, shadows } from '@/lib/theme';
 import type { Achievement, AchievementCriteriaType } from '@/types/achievement';
 
-// ─── Badge Icon SVG Paths ────────────────────────────────────────────────────
-const BADGE_ICONS: Record<AchievementCriteriaType, string> = {
+// ─── Badge Icon SVG Paths (24×24 grid) ──────────────────────────────────────
+const BADGE_ICONS: Record<string, string> = {
   first_log:
     'M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z',
   streak_days:
@@ -16,62 +21,130 @@ const BADGE_ICONS: Record<AchievementCriteriaType, string> = {
     'M19 3H5C3.9 3 3 3.9 3 5V19C3 20.1 3.9 21 5 21H19C20.1 21 19 20.1 19 19V5C19 3.9 20.1 3 19 3ZM9 17H7V10H9V17ZM13 17H11V7H13V17ZM17 17H15V13H17V17Z',
 };
 
-// ─── Props ───────────────────────────────────────────────────────────────────
+// Fallback for unknown criteria — a simple medal star
+const FALLBACK_ICON =
+  'M12 2L14.4 8.4L21 9.2L16.2 13.6L17.6 20.4L12 17L6.4 20.4L7.8 13.6L3 9.2L9.6 8.4L12 2Z';
+
 interface AchievementBadgeProps {
   achievement: Achievement;
   earned: boolean;
   size?: number;
+  /** Spring pop for newly-earned badges */
+  justEarned?: boolean;
+  /** Progress hint for locked badges, e.g. "3 of 7 days" */
+  progressHint?: string;
 }
 
-// ─── AchievementBadge Component ──────────────────────────────────────────────
 export default function AchievementBadge({
   achievement,
   earned,
   size = 56,
+  justEarned = false,
+  progressHint,
 }: AchievementBadgeProps) {
-  const circleColor = earned ? colors.primaryContainer : colors.textTertiary;
-  const iconPath = BADGE_ICONS[achievement.criteria_type];
+  const iconPath =
+    BADGE_ICONS[achievement.criteria_type as AchievementCriteriaType] ?? FALLBACK_ICON;
+  const gradientId = `badge-${achievement.id}`;
+
+  const pop = useSharedValue(justEarned ? 0.3 : 1);
+
+  useEffect(() => {
+    if (justEarned) {
+      pop.value = withSpring(1, motion.springBouncy);
+    }
+  }, [justEarned, pop]);
+
+  const popStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: pop.value }],
+  }));
 
   return (
-    <View style={{ alignItems: 'center', marginRight: spacing.sm }}>
-      <Svg width={size} height={size} viewBox="0 0 56 56">
-        {/* Background circle */}
-        <Circle cx={28} cy={28} r={26} fill={circleColor} />
+    <View style={[styles.wrap, { marginRight: spacing.sm }]}>
+      <Animated.View style={[earned && styles.earnedGlow, popStyle]}>
+        <Svg width={size} height={size} viewBox="0 0 56 56">
+          <Defs>
+            <LinearGradient id={gradientId} x1="0" y1="0" x2="1" y2="1">
+              <Stop offset="0" stopColor={colors.primaryLight} />
+              <Stop offset="1" stopColor={colors.primaryDeep} />
+            </LinearGradient>
+          </Defs>
 
-        {/* Badge icon — centered 24×24 icon inside 56×56 circle */}
-        <G transform="translate(16, 16)">
-          <Path
-            d={iconPath}
-            fill={colors.surface}
-            opacity={earned ? 1 : 0.5}
+          {/* Background circle — gradient for earned, dim surface for locked */}
+          <Circle
+            cx={28}
+            cy={28}
+            r={26}
+            fill={earned ? `url(#${gradientId})` : colors.surfaceElevated}
+            stroke={earned ? colors.primaryLight : colors.border}
+            strokeWidth={1}
           />
-        </G>
 
-        {/* Lock overlay for locked badges */}
-        {!earned && (
-          <G transform="translate(16, 18) scale(0.8)">
+          {/* Badge icon — centered 24×24 inside the 56×56 circle */}
+          <G transform="translate(16, 16)">
             <Path
-              d="M18 8V6A6 6 0 000 12H2A4 4 0 014 8ZM20 10H4a2 2 0 00-2 2v8a2 2 0 002 2h16a2 2 0 002-2v-8a2 2 0 00-2-2zm-8 7a2 2 0 110-4 2 2 0 010 4z"
-              fill={colors.surface}
-              opacity={0.7}
+              d={iconPath}
+              fill={earned ? '#052015' : colors.textTertiary}
+              opacity={earned ? 1 : 0.45}
             />
           </G>
-        )}
-      </Svg>
 
-      {/* Badge name label */}
+          {/* Lock overlay for locked badges — scales with badge size */}
+          {!earned && (
+            <G transform="translate(20, 20) scale(0.67)">
+              <Path
+                d="M6 10 V7 A6 6 0 0 1 18 7 V10 M4 10 H20 A2 2 0 0 1 22 12 V21 A2 2 0 0 1 20 23 H4 A2 2 0 0 1 2 21 V12 A2 2 0 0 1 4 10 Z M12 15 A1.6 1.6 0 1 1 12 18.2 A1.6 1.6 0 1 1 12 15"
+                fill="none"
+                stroke={colors.textSecondary}
+                strokeWidth={2}
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                opacity={0.8}
+              />
+            </G>
+          )}
+        </Svg>
+      </Animated.View>
+
       <Text
         numberOfLines={1}
-        style={{
-          fontSize: 10,
-          color: earned ? colors.textPrimary : colors.textSecondary,
-          textAlign: 'center',
-          marginTop: 4,
-          maxWidth: size + spacing.md,
-        }}
+        style={[
+          styles.name,
+          { maxWidth: size + spacing.md },
+          earned ? styles.nameEarned : styles.nameLocked,
+        ]}
       >
         {achievement.name}
       </Text>
+      {!earned && progressHint ? (
+        <Text style={styles.hint} numberOfLines={1}>
+          {progressHint}
+        </Text>
+      ) : null}
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  wrap: { alignItems: 'center' },
+  earnedGlow: {
+    ...shadows.glowPrimary,
+    borderRadius: 28,
+  },
+  name: {
+    fontSize: 10,
+    textAlign: 'center',
+    marginTop: 4,
+  },
+  nameEarned: {
+    color: colors.textPrimary,
+    fontWeight: '600',
+  },
+  nameLocked: {
+    color: colors.textTertiary,
+  },
+  hint: {
+    fontSize: 9,
+    color: colors.textTertiary,
+    marginTop: 1,
+  },
+});

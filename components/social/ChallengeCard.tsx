@@ -1,5 +1,5 @@
-import { TouchableOpacity, View, Text, StyleSheet } from 'react-native';
-import { VCard, VBadge } from '@/components/ui';
+import { View, Text, StyleSheet } from 'react-native';
+import { VCard, VBadge, VIcon, VProgressBar } from '@/components/ui';
 import { colors, spacing, typography } from '@/lib/theme';
 import type { Challenge } from '@/types/challenge';
 
@@ -11,34 +11,54 @@ function formatDateRange(startDate: string, endDate: string): string {
   return `${start} – ${end}`;
 }
 
-// ─── Props ────────────────────────────────────────────────────────────────────
+/** 0..1 — how far through the challenge window we are */
+function timeProgress(startDate: string, endDate: string): number {
+  const start = new Date(startDate + 'T00:00:00').getTime();
+  const end = new Date(endDate + 'T23:59:59').getTime();
+  const now = Date.now();
+  if (end <= start) return 1;
+  return Math.max(0, Math.min(1, (now - start) / (end - start)));
+}
+
 interface ChallengeCardProps {
   challenge: Challenge;
   onPress: () => void;
 }
 
-// ─── Component ───────────────────────────────────────────────────────────────
 export default function ChallengeCard({ challenge, onPress }: ChallengeCardProps) {
   const dateRange = formatDateRange(challenge.start_date, challenge.end_date);
   const reductionLabel = `-${challenge.target_reduction_pct}%`;
+  const progress = timeProgress(challenge.start_date, challenge.end_date);
+  const daysLeft = Math.max(
+    0,
+    Math.ceil(
+      (new Date(challenge.end_date + 'T23:59:59').getTime() - Date.now()) / 86_400_000,
+    ),
+  );
 
   return (
-    <TouchableOpacity onPress={onPress} activeOpacity={0.7}>
-      <VCard elevation="sm" style={styles.card}>
-        <View style={styles.row}>
-          <View style={styles.info}>
-            <Text style={styles.title} numberOfLines={1}>
-              {challenge.title}
-            </Text>
-            <Text style={styles.dateRange}>{dateRange}</Text>
-          </View>
-          <View style={styles.right}>
-            <VBadge label={reductionLabel} variant="success" />
-            <Text style={styles.chevron}>›</Text>
-          </View>
+    <VCard elevation="sm" style={styles.card} onPress={onPress} haptic="light">
+      <View style={styles.row}>
+        <View style={styles.info}>
+          <Text style={styles.title} numberOfLines={1}>
+            {challenge.title}
+          </Text>
+          <Text style={styles.dateRange}>{dateRange}</Text>
         </View>
-      </VCard>
-    </TouchableOpacity>
+        <View style={styles.right}>
+          <VBadge label={reductionLabel} variant="success" />
+          <VIcon name="chevron-right" size={16} color={colors.textTertiary} />
+        </View>
+      </View>
+      <View style={styles.progressRow}>
+        <View style={styles.progressBar}>
+          <VProgressBar progress={progress} height={4} color={colors.primaryLight} />
+        </View>
+        <Text style={styles.daysLeft}>
+          {daysLeft > 0 ? `${daysLeft}d left` : 'Ended'}
+        </Text>
+      </View>
+    </VCard>
   );
 }
 
@@ -70,9 +90,19 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: spacing.sm,
   },
-  chevron: {
-    fontSize: typography.sizes.xl,
+  progressRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    marginTop: spacing.md,
+  },
+  progressBar: {
+    flex: 1,
+  },
+  daysLeft: {
+    fontFamily: typography.fontFamilyMono,
+    fontVariant: ['tabular-nums'],
+    fontSize: typography.sizes.xs,
     color: colors.textTertiary,
-    lineHeight: typography.sizes.xl * 1.2,
   },
 });

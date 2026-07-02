@@ -49,9 +49,11 @@ jest.mock('react-native-reanimated', () => {
     withDecay: jest.fn(),
     withRepeat: jest.fn((animation) => animation),
     withSequence: jest.fn(),
+    withDelay: jest.fn((_delay, animation) => animation),
     runOnJS: jest.fn((fn) => fn),
     runOnUI: jest.fn((fn) => fn),
     interpolate: jest.fn((val) => val),
+    interpolateColor: jest.fn((_val, _input, output) => output[0]),
     Extrapolation: { CLAMP: 'clamp', EXTEND: 'extend', IDENTITY: 'identity' },
     createAnimatedComponent: (Component) => Component,
     useAnimatedGestureHandler: jest.fn(),
@@ -105,6 +107,9 @@ jest.mock('react-native-svg', () => {
     Defs: View,
     LinearGradient: View,
     Stop: View,
+    Polyline: View,
+    Polygon: View,
+    Ellipse: View,
   };
 });
 

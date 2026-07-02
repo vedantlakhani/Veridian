@@ -95,7 +95,8 @@ export default function EditEntryScreen() {
       </Text>
 
       <VButton
-        label={updateEntry.isPending ? 'Saving...' : 'Save Changes'}
+        label="Save Changes"
+        loading={updateEntry.isPending}
         onPress={handleSave}
         disabled={!canSave}
         style={styles.saveButton}
@@ -127,7 +128,7 @@ const styles = StyleSheet.create({
     marginBottom: spacing.lg,
   },
   previewValue: {
-    fontFamily: 'JetBrainsMono', fontWeight: '600', color: colors.textPrimary,
+    fontFamily: typography.fontFamilyMono, fontWeight: '600', color: colors.textPrimary,
   },
   saveButton: { marginBottom: spacing.md },
   cancelButton: { alignItems: 'center', paddingVertical: spacing.sm },

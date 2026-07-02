@@ -33,8 +33,8 @@ const SCREEN_WIDTH = Dimensions.get('window').width;
 const GLOBAL_AVG_KG = 4700;   // 4.7 tCO₂e/year
 const PARIS_TARGET_KG = 2500; // 2.5 tCO₂e/year
 
-// Selected card background (light primary tint — theme has no primaryContainer token)
-const PRIMARY_CONTAINER = '#E8F5EE';
+// Selected card background — soft emerald glow on dark (was a light-theme tint)
+const PRIMARY_CONTAINER = colors.primaryGlowSoft;
 
 // ─── Question data ────────────────────────────────────────────────────────────
 

@@ -1,236 +1,628 @@
-import { ScrollView, View, Text, StyleSheet, TouchableOpacity } from 'react-native';
-import { useMemo } from 'react';
-import { ImageBackground } from 'expo-image';
+import { ScrollView, View, StyleSheet, Pressable } from 'react-native';
+import { useMemo, useEffect } from 'react';
 import { LinearGradient } from 'expo-linear-gradient';
+import { Image } from 'expo-image';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import Svg, { Circle } from 'react-native-svg';
+import { router } from 'expo-router';
 import { useQuery } from '@tanstack/react-query';
-import { useWeeklySummary } from '@/hooks/useSummaries';
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withTiming,
+  withRepeat,
+  withSequence,
+  withSpring,
+  interpolate,
+} from 'react-native-reanimated';
+import { useDailySummary, useWeeklySummary } from '@/hooks/useSummaries';
 import { useEmissionEntries } from '@/hooks/useEmissionEntries';
+import { useAllEmissionFactors } from '@/hooks/useAllEmissionFactors';
+import { useTopMoves } from '@/hooks/useTopMoves';
 import { useAuthStore } from '@/stores/authStore';
 import { useProfile } from '@/hooks/useProfile';
+import { useMotionDetection } from '@/hooks/useMotionDetection';
+import { useAutoLog } from '@/hooks/useAutoLog';
+import type { AutoLogEntry } from '@/hooks/useAutoLog';
+import { useStreak } from '@/hooks/useStreak';
 import { getLocalDateString } from '@/lib/emissions';
 import { supabase } from '@/lib/supabase';
 import {
-  VCard,
   VSkeleton,
-  VEmptyState,
   VAiInsightCard,
+  VText,
+  VIcon,
+  VCountUp,
+  VPressable,
+  VProgressRing,
+  VStaggerIn,
+  VTopMovesSection,
 } from '@/components/ui';
 import { DAILY_CARBON_BUDGET_KG } from '@/types/emission';
 import type { EmissionCategory } from '@/types/emission';
-import { colors, spacing, typography, radii } from '@/lib/theme';
+import {
+  colors,
+  spacing,
+  typography,
+  radii,
+  motion,
+  shadows,
+  budgetStateFor,
+  budgetStateColors,
+  type BudgetState,
+} from '@/lib/theme';
 import { useAiInsight } from '@/hooks/useAiInsight';
 import type { EmissionContext } from '@/hooks/useAiInsight';
-import {
-  resolveFirstName,
-  formatKgCompact,
-  timeGreeting,
-} from '@/lib/format';
+import { resolveFirstName, formatKgCompact, timeGreeting, timeAgo } from '@/lib/format';
 
-const HERO_IMAGES = [
-  require('@/assets/images/hero-forest.jpg'),
-  require('@/assets/images/hero-ocean.jpg'),
-  require('@/assets/images/hero-mountain.jpg'),
-  require('@/assets/images/hero-field.jpg'),
-  require('@/assets/images/hero-sky.jpg'),
-];
-
-const todayPhoto = HERO_IMAGES[new Date().getDay() % HERO_IMAGES.length];
-
-// ─── Budget Ring ──────────────────────────────────────────────────────────────
-const RING_SIZE = 200;
-const STROKE = 14;
-const RADIUS = (RING_SIZE - STROKE) / 2;
-const CIRCUMFERENCE = 2 * Math.PI * RADIUS;
-
-function BudgetRing({ progress }: { progress: number }) {
-  const clamped = Math.min(progress, 1);
-  const offset = CIRCUMFERENCE * (1 - clamped);
-  const ringColor =
-    clamped >= 1 ? colors.danger : clamped >= 0.5 ? colors.warning : colors.primaryLight;
-
-  return (
-    <Svg
-      width={RING_SIZE}
-      height={RING_SIZE}
-      style={{ transform: [{ rotate: '-90deg' }] }}
-    >
-      {/* Track */}
-      <Circle
-        cx={RING_SIZE / 2}
-        cy={RING_SIZE / 2}
-        r={RADIUS}
-        stroke="rgba(255,255,255,0.08)"
-        strokeWidth={STROKE}
-        fill="none"
-      />
-      {/* Progress arc */}
-      <Circle
-        cx={RING_SIZE / 2}
-        cy={RING_SIZE / 2}
-        r={RADIUS}
-        stroke={ringColor}
-        strokeWidth={STROKE}
-        fill="none"
-        strokeDasharray={CIRCUMFERENCE}
-        strokeDashoffset={offset}
-        strokeLinecap="round"
-      />
-    </Svg>
-  );
-}
-
-// ─── Category dot color helper ────────────────────────────────────────────────
+// ─── Category colors ──────────────────────────────────────────────────────────
 const CATEGORY_COLORS: Record<EmissionCategory, string> = {
   food: colors.food,
   transport: colors.transport,
   energy: colors.energy,
 };
 
+const CATEGORY_GLOWS: Record<EmissionCategory, string> = {
+  food: colors.foodGlow,
+  transport: colors.transportGlow,
+  energy: colors.energyGlow,
+};
+
+
+// ─── The Ring — single source of truth, flips to reveal the category split ───
+function BudgetRingHero({
+  todayKg,
+  state,
+  split,
+}: {
+  todayKg: number;
+  state: BudgetState;
+  split: { food: number; transport: number; energy: number };
+}) {
+  const flip = useSharedValue(0);
+  const progress = Math.min(todayKg / DAILY_CARBON_BUDGET_KG, 1);
+  const stateStyle = budgetStateColors[state];
+
+  const frontStyle = useAnimatedStyle(() => ({
+    opacity: interpolate(flip.value, [0, 0.5, 1], [1, 0, 0]),
+    transform: [
+      { perspective: 900 },
+      { rotateY: `${interpolate(flip.value, [0, 1], [0, 180])}deg` },
+    ],
+  }));
+  const backStyle = useAnimatedStyle(() => ({
+    opacity: interpolate(flip.value, [0, 0.5, 1], [0, 0, 1]),
+    transform: [
+      { perspective: 900 },
+      { rotateY: `${interpolate(flip.value, [0, 1], [180, 360])}deg` },
+    ],
+  }));
+
+  const toggleFlip = () => {
+    flip.value = withSpring(flip.value > 0.5 ? 0 : 1, motion.springGentle);
+  };
+
+  return (
+    <Pressable onPress={toggleFlip} accessibilityRole="button" accessibilityLabel="Budget ring — tap to see category split">
+      <View style={ringStyles.stack}>
+        {/* Front — the one big ring */}
+        <Animated.View style={[ringStyles.face, frontStyle]}>
+          <VProgressRing
+            progress={progress}
+            size={200}
+            strokeWidth={14}
+            gradient={stateStyle.ring}
+            animationDuration={900}
+          >
+            <View style={ringStyles.center}>
+              <VCountUp value={todayKg} decimals={1} duration={900} style={ringStyles.bigNumber} />
+              <VText variant="label" style={ringStyles.ringCaption}>
+                {`of ${DAILY_CARBON_BUDGET_KG} kg`}
+              </VText>
+            </View>
+          </VProgressRing>
+        </Animated.View>
+
+        {/* Back — today's category split as three mini arcs */}
+        <Animated.View style={[ringStyles.face, ringStyles.backFace, backStyle]}>
+          {(
+            [
+              { key: 'food' as const, label: 'Food', value: split.food },
+              { key: 'transport' as const, label: 'Move', value: split.transport },
+              { key: 'energy' as const, label: 'Power', value: split.energy },
+            ]
+          ).map(({ key, label, value }) => (
+            <View key={key} style={ringStyles.miniWrap}>
+              <VProgressRing
+                progress={todayKg > 0 ? value / todayKg : 0}
+                size={56}
+                strokeWidth={5}
+                color={CATEGORY_COLORS[key]}
+              >
+                <VText variant="mono" style={ringStyles.miniValue}>
+                  {value.toFixed(1)}
+                </VText>
+              </VProgressRing>
+              <VText variant="label" style={ringStyles.miniLabel}>
+                {label}
+              </VText>
+            </View>
+          ))}
+        </Animated.View>
+      </View>
+    </Pressable>
+  );
+}
+
+const ringStyles = StyleSheet.create({
+  stack: {
+    width: 200,
+    height: 200,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  face: {
+    position: 'absolute',
+    width: 200,
+    height: 200,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  backFace: {
+    flexDirection: 'row',
+    gap: spacing.sm,
+  },
+  center: { alignItems: 'center' },
+  bigNumber: {
+    fontSize: 44,
+    lineHeight: 50,
+    letterSpacing: -1,
+    color: colors.textPrimary,
+    textAlign: 'center',
+  },
+  ringCaption: {
+    marginTop: 2,
+    color: colors.textSecondary,
+  },
+  miniWrap: { alignItems: 'center', gap: spacing.xs },
+  miniValue: { fontSize: 11 },
+  miniLabel: { fontSize: 9 },
+});
+
+// ─── Week strip — 7 day dots colored by that day's budget state ───────────────
+function WeekStrip({ days }: { days: { date: string; state: BudgetState | 'empty'; isToday: boolean }[] }) {
+  return (
+    <VPressable
+      onPress={() => router.push('/(tabs)/insights')}
+      haptic="light"
+      style={weekStyles.row}
+      accessibilityRole="button"
+      accessibilityLabel="This week — open insights"
+    >
+      {days.map((d) => (
+        <WeekDot key={d.date} state={d.state} isToday={d.isToday} label={d.date} />
+      ))}
+    </VPressable>
+  );
+}
+
+function WeekDot({
+  state,
+  isToday,
+  label,
+}: {
+  state: BudgetState | 'empty';
+  isToday: boolean;
+  label: string;
+}) {
+  const pulse = useSharedValue(1);
+
+  useEffect(() => {
+    if (isToday) {
+      pulse.value = withRepeat(
+        withSequence(
+          withTiming(1.25, { duration: 900, easing: motion.easeHeartbeat }),
+          withTiming(1, { duration: 900, easing: motion.easeHeartbeat }),
+        ),
+        -1,
+        false,
+      );
+    }
+  }, [isToday, pulse]);
+
+  const pulseStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: pulse.value }],
+  }));
+
+  const dotColor =
+    state === 'empty' ? colors.trackOnDark : budgetStateColors[state].accent;
+  const dayLetter = new Date(label + 'T00:00:00')
+    .toLocaleDateString('en-US', { weekday: 'narrow' });
+
+  return (
+    <View style={weekStyles.dayCol}>
+      <Animated.View
+        style={[
+          weekStyles.dot,
+          { backgroundColor: dotColor },
+          isToday && weekStyles.dotToday,
+          pulseStyle,
+        ]}
+      />
+      <VText variant="label" style={weekStyles.dayLetter}>
+        {dayLetter}
+      </VText>
+    </View>
+  );
+}
+
+const weekStyles = StyleSheet.create({
+  row: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: spacing.lg,
+    marginTop: spacing.md,
+  },
+  dayCol: { alignItems: 'center', gap: spacing.xs },
+  dot: {
+    width: 8,
+    height: 8,
+    borderRadius: radii.full,
+  },
+  dotToday: {
+    width: 10,
+    height: 10,
+    borderRadius: radii.full,
+  },
+  dayLetter: { fontSize: 9 },
+});
+
+// ─── Live trip card — proof of life while a drive is being detected ──────────
+function ActiveTripCard({ currentTripKm }: { currentTripKm: number }) {
+  const cardOpacity = useSharedValue(0);
+  const pulseScale = useSharedValue(1);
+  const pulseOpacity = useSharedValue(1);
+
+  useEffect(() => {
+    cardOpacity.value = withTiming(1, { duration: motion.timingBase });
+    pulseScale.value = withRepeat(
+      withSequence(
+        withTiming(1.35, { duration: 750, easing: motion.easeHeartbeat }),
+        withTiming(1, { duration: 750, easing: motion.easeHeartbeat }),
+      ),
+      -1,
+      false,
+    );
+    pulseOpacity.value = withRepeat(
+      withSequence(
+        withTiming(0.25, { duration: 750, easing: motion.easeHeartbeat }),
+        withTiming(1, { duration: 750, easing: motion.easeHeartbeat }),
+      ),
+      -1,
+      false,
+    );
+  }, [cardOpacity, pulseScale, pulseOpacity]);
+
+  const cardStyle = useAnimatedStyle(() => ({ opacity: cardOpacity.value }));
+  const pulseStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: pulseScale.value }],
+    opacity: pulseOpacity.value,
+  }));
+
+  return (
+    <Animated.View style={[tripStyles.card, cardStyle]}>
+      <VIcon name="car" size={24} color={colors.transport} />
+      <View style={{ flex: 1 }}>
+        <View style={tripStyles.titleRow}>
+          <VText variant="heading" style={tripStyles.title}>
+            Trip in progress
+          </VText>
+          <Animated.View style={[tripStyles.liveDot, pulseStyle]} />
+        </View>
+        <View style={tripStyles.kmRow}>
+          <VCountUp value={currentTripKm} decimals={1} duration={500} style={tripStyles.km} />
+          <VText variant="caption" style={tripStyles.subtitle}>
+            km · Veridian will log this when you stop
+          </VText>
+        </View>
+      </View>
+    </Animated.View>
+  );
+}
+
+const tripStyles = StyleSheet.create({
+  card: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
+    backgroundColor: colors.surface,
+    borderRadius: radii.lg,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderLeftWidth: 3,
+    borderLeftColor: colors.transport,
+    padding: spacing.md,
+    marginHorizontal: spacing.md,
+    marginBottom: spacing.md,
+    overflow: 'hidden',
+    ...shadows.card,
+  },
+  titleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+  },
+  title: { fontSize: 15 },
+  liveDot: {
+    width: 8,
+    height: 8,
+    borderRadius: radii.full,
+    backgroundColor: colors.transport,
+  },
+  kmRow: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    gap: spacing.xs,
+    marginTop: 2,
+  },
+  km: {
+    fontSize: 18,
+    color: colors.transport,
+  },
+  subtitle: { fontSize: 12 },
+});
+
+// ─── Auto-log feed row ("Tracked for you") ────────────────────────────────────
+function AutoLogRow({ entry }: { entry: AutoLogEntry }) {
+  const cycling = entry.mode === 'cycling';
+
+  return (
+    <View
+      style={[
+        autoStyles.card,
+        cycling
+          ? { borderColor: `${colors.primaryLight}4D`, borderLeftColor: colors.primaryLight }
+          : { borderColor: colors.border, borderLeftColor: colors.transport },
+      ]}
+    >
+      {cycling && (
+        <View
+          style={[StyleSheet.absoluteFillObject, { backgroundColor: colors.primaryGlowSoft }]}
+          pointerEvents="none"
+        />
+      )}
+      <VIcon
+        name={cycling ? 'bike' : 'car'}
+        size={20}
+        color={cycling ? colors.primaryLight : colors.transport}
+      />
+      <View style={{ flex: 1 }}>
+        <VText
+          variant="body"
+          style={[autoStyles.title, cycling && { color: colors.primaryLight }]}
+          numberOfLines={1}
+        >
+          {entry.distanceKm.toFixed(1)} km {cycling ? 'cycled' : 'drive'}
+        </VText>
+        <VText variant="caption" style={autoStyles.subtitle} numberOfLines={1}>
+          {cycling
+            ? `You saved ${entry.savedKg.toFixed(1)} kg vs driving`
+            : timeAgo(entry.loggedAt)}
+        </VText>
+      </View>
+      <VText
+        variant="mono"
+        style={[autoStyles.value, { color: cycling ? colors.primaryLight : colors.transport }]}
+      >
+        {cycling ? `−${entry.savedKg.toFixed(1)} kg` : `${entry.kgCo2e.toFixed(2)} kg`}
+      </VText>
+    </View>
+  );
+}
+
+const autoStyles = StyleSheet.create({
+  card: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    backgroundColor: colors.surface,
+    ...shadows.card,
+    borderWidth: 1,
+    borderRadius: radii.md,
+    borderLeftWidth: 3,
+    padding: 12,
+    marginHorizontal: spacing.md,
+    marginBottom: spacing.sm,
+    overflow: 'hidden',
+  },
+  title: { fontWeight: '500', lineHeight: 18 },
+  subtitle: { fontSize: 12, marginTop: 1 },
+  value: { fontSize: 13 },
+});
+
+// ─── Home ─────────────────────────────────────────────────────────────────────
 export default function HomeScreen() {
   const { user } = useAuthStore();
   const today = getLocalDateString();
   const { data: profile } = useProfile(user?.id);
-  const { data: weekly, isLoading: weeklyLoading } = useWeeklySummary(user?.id);
+  const { data: daily } = useDailySummary(user?.id);
+  const { data: weekly } = useWeeklySummary(user?.id);
   const { data: recentEntries = [], isLoading: entriesLoading } = useEmissionEntries(user?.id);
 
-  // ── Streak: consecutive logged days from daily_summaries ──
-  const { data: streakData } = useQuery({
-    queryKey: ['streak', user?.id],
+  // Passive intelligence: live trip status + auto-logged activity feed
+  const { isInMotion, currentTripKm } = useMotionDetection();
+  const { recentAutoLogs } = useAutoLog(user?.id);
+
+  // Shared streak hook — no more duplicated logic with Profile
+  const { streak } = useStreak(user?.id);
+
+  // Top Moves — pure client-side ranking over already-fetched data
+  const { data: allFactors } = useAllEmissionFactors();
+  const weeklyTotalKg = weekly?.total_kg_co2e ?? null;
+  const moves = useTopMoves(recentEntries, allFactors, weeklyTotalKg);
+
+  // Last 7 days of daily summaries — powers the week strip and pace coach
+  const { data: weekDays } = useQuery({
+    queryKey: ['week_strip', user?.id, today],
     queryFn: async () => {
+      const from = new Date();
+      from.setDate(from.getDate() - 6);
+      const fromStr = getLocalDateString(from);
       const { data, error } = await supabase
         .from('daily_summaries')
-        .select('date')
+        .select('date, total_kg_co2e')
         .eq('user_id', user!.id)
-        .order('date', { ascending: false })
-        .limit(60);
+        .gte('date', fromStr)
+        .order('date', { ascending: true });
       if (error) throw error;
-      return data as { date: string }[];
+      return data as { date: string; total_kg_co2e: number }[];
     },
     enabled: !!user?.id,
   });
 
-  const streak = useMemo(() => {
-    if (!streakData || streakData.length === 0) return 0;
-    const todayDate = new Date();
-    todayDate.setHours(0, 0, 0, 0);
-    let s = 0;
-    const check = new Date(todayDate);
-    for (const row of streakData) {
-      const d = new Date(row.date);
-      d.setHours(0, 0, 0, 0);
-      if (d.getTime() === check.getTime()) {
-        s++;
-        check.setDate(check.getDate() - 1);
-      } else {
-        break;
-      }
-    }
-    return s;
-  }, [streakData]);
-
-  const todayTotal = recentEntries
-    .filter(e => getLocalDateString(new Date(e.logged_at)) === today)
-    .reduce((sum, e) => sum + e.kg_co2e_total, 0);
-
-  const progress = Math.min(todayTotal / DAILY_CARBON_BUDGET_KG, 1);
-  const ringColor =
-    progress >= 1 ? colors.danger : progress >= 0.5 ? colors.warning : colors.primaryLight;
-
-  const firstName = resolveFirstName(profile?.display_name, user?.email);
-  const greeting = `${timeGreeting()}, ${firstName}.`;
-
-  // Status sentence (no hashtag)
-  let statusLabel: string;
-  if (todayTotal === 0) {
-    statusLabel = 'Getting started';
-  } else if (progress < 0.5) {
-    statusLabel = 'On track';
-  } else if (progress < 1) {
-    statusLabel = 'Getting close';
-  } else {
-    statusLabel = 'Over budget';
-  }
-
+  const todayTotal = daily?.total_kg_co2e ?? 0;
+  const progress = todayTotal / DAILY_CARBON_BUDGET_KG;
+  const state = budgetStateFor(progress);
   const remaining = DAILY_CARBON_BUDGET_KG - todayTotal;
 
-  const emissionContext: EmissionContext | null =
-    weekly && recentEntries.length > 0
-      ? {
-          weeklyTotalKg: weekly.total_kg_co2e,
-          foodKg: weekly.breakdown?.food ?? 0,
-          transportKg: weekly.breakdown?.transport ?? 0,
-          energyKg: weekly.breakdown?.energy ?? 0,
-          topItems: [...recentEntries]
-            .sort((a, b) => b.kg_co2e_total - a.kg_co2e_total)
-            .slice(0, 3)
-            .map(e => ({
-              item: e.emission_factors.item,
-              category: e.emission_factors.category,
-              totalKg: e.kg_co2e_total,
-            })),
-        }
-      : null;
+  const split = {
+    food: daily?.food_kg ?? 0,
+    transport: daily?.transport_kg ?? 0,
+    energy: daily?.energy_kg ?? 0,
+  };
 
-  const { data: insight, isLoading: insightLoading, error: insightError } = useAiInsight(
-    user?.id,
-    emissionContext,
-  );
+  // Week strip — one slot per day, today last
+  const weekStrip = useMemo(() => {
+    const byDate = new Map((weekDays ?? []).map((d) => [d.date, d.total_kg_co2e]));
+    const out: { date: string; state: BudgetState | 'empty'; isToday: boolean }[] = [];
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date();
+      d.setDate(d.getDate() - i);
+      const key = getLocalDateString(d);
+      const kg = byDate.get(key);
+      out.push({
+        date: key,
+        state: kg === undefined ? 'empty' : budgetStateFor(kg / DAILY_CARBON_BUDGET_KG),
+        isToday: key === today,
+      });
+    }
+    return out;
+  }, [weekDays, today]);
+
+  // Pace-aware coach voice — derived from daily summaries, no AI call needed
+  const coach = useMemo(() => {
+    const pastDays = (weekDays ?? []).filter((d) => d.date !== today);
+    const avg =
+      pastDays.length > 0
+        ? pastDays.reduce((s, d) => s + d.total_kg_co2e, 0) / pastDays.length
+        : null;
+
+    if (todayTotal === 0) {
+      return { line: 'A fresh day — nothing logged yet.', color: colors.textSecondary };
+    }
+    if (state === 'over') {
+      return { line: 'Over budget today. Tomorrow resets.', color: colors.danger };
+    }
+    if (avg !== null && pastDays.length >= 2) {
+      const best = Math.min(...pastDays.map((d) => d.total_kg_co2e));
+      if (todayTotal < best) {
+        return { line: 'On pace for your best day this week.', color: colors.primaryLight };
+      }
+      if (todayTotal < avg) {
+        return {
+          line: `Trending under your ${formatKgCompact(avg)} daily average.`,
+          color: colors.primaryLight,
+        };
+      }
+    }
+    if (state === 'watch') {
+      return {
+        line: `${formatKgCompact(Math.max(remaining, 0))} left — log mindfully.`,
+        color: colors.warning,
+      };
+    }
+    return {
+      line: `${formatKgCompact(Math.max(remaining, 0))} remaining in your budget.`,
+      color: colors.primaryLight,
+    };
+  }, [weekDays, today, todayTotal, state, remaining]);
+
+  const firstName = resolveFirstName(profile?.display_name, user?.email);
+  const greeting = `${timeGreeting()}, ${firstName}`;
+
+  // When Top Moves are available, skip the AI Edge Function entirely (saves the Claude call).
+  // Pass null context so useAiInsight's `enabled` gate stays false.
+  const emissionContext: EmissionContext | null =
+    moves.length > 0
+      ? null
+      : weekly && recentEntries.length > 0
+        ? {
+            weeklyTotalKg: weekly.total_kg_co2e,
+            foodKg: weekly.breakdown?.food ?? 0,
+            transportKg: weekly.breakdown?.transport ?? 0,
+            energyKg: weekly.breakdown?.energy ?? 0,
+            topItems: [...recentEntries]
+              .sort((a, b) => b.kg_co2e_total - a.kg_co2e_total)
+              .slice(0, 3)
+              .map((e) => ({
+                item: e.emission_factors.item,
+                category: e.emission_factors.category,
+                totalKg: e.kg_co2e_total,
+              })),
+          }
+        : null;
+
+  const {
+    data: insight,
+    isLoading: insightLoading,
+    error: insightError,
+    refetch: refetchInsight,
+  } = useAiInsight(user?.id, emissionContext);
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.background }}>
-
-      {/* ── Hero: full-bleed photo + ring ── */}
-      <View style={styles.heroContainer}>
-        <ImageBackground
-          source={todayPhoto}
-          style={StyleSheet.absoluteFillObject}
+      {/* ── Hero: nature photo + ring ── */}
+      <View style={styles.heroOuter}>
+        <Image
+          source={require('@/assets/images/hero-forest.jpg')}
+          style={styles.heroPhoto}
           contentFit="cover"
         />
-        {/* Refined dark scrim */}
         <LinearGradient
-          colors={['rgba(11,15,13,0.75)', 'rgba(11,15,13,0.1)', 'rgba(11,15,13,0.7)']}
-          locations={[0, 0.4, 1]}
-          style={StyleSheet.absoluteFillObject}
+          colors={['rgba(245,247,243,0.18)', 'rgba(245,247,243,0.82)', 'rgba(245,247,243,1.0)']}
+          locations={[0, 0.58, 1]}
+          style={StyleSheet.absoluteFill}
+          pointerEvents="none"
         />
-        {/* Bottom fade into app background */}
-        <LinearGradient
-          colors={['transparent', colors.background]}
-          locations={[0.7, 1]}
-          style={StyleSheet.absoluteFillObject}
-        />
-
-        <SafeAreaView style={styles.heroContent} edges={['top']}>
-          {/* ── Top row: greeting + streak pill ── */}
+        <SafeAreaView style={styles.heroContainer} edges={['top']}>
+          <View style={styles.heroContent}>
+          {/* Greeting + streak flame chip */}
           <View style={styles.topRow}>
-            <Text style={styles.greeting} numberOfLines={1}>{greeting}</Text>
+            <VText variant="heading" style={styles.greeting} numberOfLines={1}>
+              {greeting}
+            </VText>
             {streak > 0 && (
-              <View style={styles.streakPill}>
-                <Text style={styles.streakPillText}>{`🔥 ${streak} day streak`}</Text>
+              <View style={[styles.streakPill, streak >= 3 && styles.streakPillHot]}>
+                <VIcon name="flame" size={13} color={colors.warning} strokeWidth={2} />
+                <VText variant="mono" style={styles.streakPillText}>
+                  {streak}
+                </VText>
               </View>
             )}
           </View>
 
-          {/* Ring — centered */}
+          {/* The Ring — single source of truth */}
           <View style={styles.ringWrapper}>
-            <BudgetRing progress={progress} />
-            {/* Inner text overlay — kg today, not percent */}
-            <View style={styles.ringCenter}>
-              <Text style={styles.ringNumber}>
-                {todayTotal.toFixed(1)}
-              </Text>
-              <Text style={styles.ringSubLabel}>KG TODAY</Text>
-            </View>
+            <BudgetRingHero todayKg={todayTotal} state={state} split={split} />
           </View>
 
-          {/* Status sentence — colored, no hashtag */}
-          <Text style={[styles.statusLabel, { color: ringColor }]}>
-            {statusLabel}
-          </Text>
-          <Text style={styles.todayKg}>
-            {`${formatKgCompact(todayTotal)} of ${DAILY_CARBON_BUDGET_KG} kg budget`}
-          </Text>
+          {/* Coach voice */}
+          <VText variant="body" style={[styles.coachLine, { color: coach.color }]}>
+            {coach.line}
+          </VText>
+
+          {/* Week strip */}
+          <WeekStrip days={weekStrip} />
+        </View>
         </SafeAreaView>
       </View>
 
@@ -240,95 +632,109 @@ export default function HomeScreen() {
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
-        {/* Data card — overlaps hero with negative top margin */}
-        <VCard elevation="lg" style={styles.dataCard}>
-          <View style={styles.dataRow}>
-            <View style={styles.dataCol}>
-              <Text style={styles.dataNumber}>{todayTotal.toFixed(1)}</Text>
-              <Text style={styles.dataLabel}>KG TODAY</Text>
-            </View>
-            <View style={styles.dataDivider} />
-            <View style={styles.dataCol}>
-              <Text style={styles.dataNumber}>
-                {(weekly?.total_kg_co2e ?? 0).toFixed(1)}
-              </Text>
-              <Text style={styles.dataLabel}>THIS WEEK</Text>
-            </View>
-            <View style={styles.dataDivider} />
-            <View style={styles.dataCol}>
-              <Text
-                style={[
-                  styles.dataNumber,
-                  { color: remaining < 0 ? colors.danger : colors.primaryLight },
-                ]}
-              >
-                {(remaining > 0 ? remaining : 0).toFixed(1)}
-              </Text>
-              <Text style={styles.dataLabel}>REMAINING</Text>
-            </View>
+        {/* Live trip — the app's most magical proof-of-life */}
+        {isInMotion && <ActiveTripCard currentTripKm={currentTripKm} />}
+
+        {/* Tracked for you */}
+        {recentAutoLogs.length > 0 && (
+          <View style={styles.trackedSection}>
+            <VText variant="label" style={styles.sectionLabel}>
+              Tracked for you
+            </VText>
+            <VText variant="caption" style={styles.sectionSub}>
+              {"Veridian logged this so you didn't have to."}
+            </VText>
+            {recentAutoLogs.slice(0, 3).map((autoEntry) => (
+              <AutoLogRow key={autoEntry.tripId} entry={autoEntry} />
+            ))}
           </View>
+        )}
 
-          {/* Category bars */}
-          {!weeklyLoading && (
-            <View style={styles.barsSection}>
-              <ProgressBar
-                label="Food"
-                value={weekly?.breakdown?.food ?? 0}
-                max={DAILY_CARBON_BUDGET_KG * 7}
-                color={colors.food}
-              />
-              <ProgressBar
-                label="Transport"
-                value={weekly?.breakdown?.transport ?? 0}
-                max={DAILY_CARBON_BUDGET_KG * 7}
-                color={colors.transport}
-              />
-              <ProgressBar
-                label="Energy"
-                value={weekly?.breakdown?.energy ?? 0}
-                max={DAILY_CARBON_BUDGET_KG * 7}
-                color={colors.energy}
-              />
-            </View>
-          )}
-        </VCard>
+        {/* Top Moves (ranked personal impact) or AI Insight fallback */}
+        {moves.length > 0 ? (
+          <VTopMovesSection moves={moves} />
+        ) : (
+          <View style={styles.insightWrap}>
+            <VAiInsightCard
+              insight={insight}
+              isLoading={insightLoading}
+              error={insightError}
+              onRetry={() => void refetchInsight()}
+            />
+          </View>
+        )}
 
-        {/* AI Insight */}
-        <VAiInsightCard insight={insight} isLoading={insightLoading} error={insightError} />
-
-        {/* Recent entries section */}
+        {/* Recent */}
         <View style={styles.recentHeader}>
-          <Text style={styles.recentTitle}>RECENT</Text>
-          <TouchableOpacity hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-            <Text style={styles.recentLink}>View all →</Text>
-          </TouchableOpacity>
+          <VText variant="label" style={styles.sectionLabel}>
+            Recent
+          </VText>
+          <VPressable
+            onPress={() => router.push('/(tabs)/insights')}
+            haptic="light"
+            hitSlop={8}
+            accessibilityRole="button"
+            accessibilityLabel="View all entries"
+          >
+            <View style={styles.viewAllRow}>
+              <VText variant="caption" style={styles.recentLink}>
+                View all
+              </VText>
+              <VIcon name="chevron-right" size={12} color={colors.primaryLight} strokeWidth={2.25} />
+            </View>
+          </VPressable>
         </View>
 
         {entriesLoading ? (
-          <>
-            <View style={{ marginBottom: spacing.sm }}><VSkeleton width="100%" height={56} /></View>
-            <View style={{ marginBottom: spacing.sm }}><VSkeleton width="100%" height={56} /></View>
-          </>
+          <View style={{ paddingHorizontal: spacing.md, gap: spacing.sm }}>
+            <VSkeleton width="100%" height={56} />
+            <VSkeleton width="100%" height={56} />
+          </View>
         ) : recentEntries.length === 0 ? (
-          <VEmptyState title="No entries yet" body="Tap Log to record your first emission" />
+          <View style={styles.emptyCard}>
+            <VText variant="heading" style={styles.emptyTitle}>
+              Nothing logged yet.
+            </VText>
+            <VText variant="caption" style={styles.emptyBody}>
+              Start with the most common things — a meal, your commute, or home energy.
+            </VText>
+            <VPressable
+              onPress={() => router.push('/(tabs)/log')}
+              haptic="light"
+              hitSlop={8}
+              style={styles.emptyCta}
+            >
+              <VText variant="caption" style={styles.emptyCtaText}>
+                Quick Log
+              </VText>
+              <VIcon name="arrow-right" size={12} color={colors.primaryLight} strokeWidth={2.25} />
+            </VPressable>
+          </View>
         ) : (
-          recentEntries.slice(0, 5).map((entry) => {
+          recentEntries.slice(0, 5).map((entry, i) => {
             const cat = entry.emission_factors.category as EmissionCategory;
             const dotColor = CATEGORY_COLORS[cat] ?? colors.primary;
+            const glowColor = CATEGORY_GLOWS[cat] ?? colors.primaryGlowSoft;
             return (
-              <View key={entry.id} style={styles.entryCard}>
-                <View style={styles.entryRow}>
-                  <View style={styles.entryLeft}>
-                    <View style={[styles.entryDot, { backgroundColor: dotColor }]} />
-                    <Text style={styles.entryItem} numberOfLines={1}>
-                      {entry.emission_factors.item}
-                    </Text>
+              <VStaggerIn key={entry.id} index={i}>
+                <View style={[styles.entryCard, { borderLeftColor: dotColor }]}>
+                  <View
+                    style={[StyleSheet.absoluteFillObject, { backgroundColor: glowColor }]}
+                    pointerEvents="none"
+                  />
+                  <View style={styles.entryRow}>
+                    <View style={styles.entryLeft}>
+                      <View style={[styles.entryDot, { backgroundColor: dotColor }]} />
+                      <VText variant="body" style={styles.entryItem} numberOfLines={1}>
+                        {entry.emission_factors.item}
+                      </VText>
+                    </View>
+                    <VText variant="mono" style={styles.entryValue}>
+                      {entry.kg_co2e_total.toFixed(2)} kg
+                    </VText>
                   </View>
-                  <Text style={styles.entryValue}>
-                    {entry.kg_co2e_total.toFixed(2)} kg
-                  </Text>
                 </View>
-              </View>
+              </VStaggerIn>
             );
           })
         )}
@@ -337,81 +743,25 @@ export default function HomeScreen() {
   );
 }
 
-function ProgressBar({
-  label,
-  value,
-  max,
-  color,
-}: {
-  label: string;
-  value: number;
-  max: number;
-  color: string;
-}) {
-  const pct = Math.min(value / max, 1);
-  return (
-    <View style={barStyles.row}>
-      <Text style={barStyles.label}>{label}</Text>
-      <View style={barStyles.track}>
-        <View
-          style={[
-            barStyles.fill,
-            { width: `${pct * 100}%` as `${number}%`, backgroundColor: color },
-          ]}
-        />
-      </View>
-      <Text style={barStyles.value}>{formatKgCompact(value)}</Text>
-    </View>
-  );
-}
-
-const barStyles = StyleSheet.create({
-  row: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: spacing.sm,
-    gap: spacing.sm,
-  },
-  label: {
-    fontSize: 12,
-    color: colors.textSecondary,
-    width: 76,
-    fontWeight: '500',
-  },
-  track: {
-    flex: 1,
-    height: 4,
-    backgroundColor: 'rgba(255,255,255,0.06)',
-    borderRadius: 2,
-    overflow: 'hidden',
-  },
-  fill: {
-    height: 4,
-    borderRadius: 2,
-  },
-  value: {
-    fontSize: 12,
-    color: colors.textSecondary,
-    minWidth: 56,
-    textAlign: 'right',
-    fontFamily: 'JetBrainsMono_700Bold',
-    fontWeight: '500',
-  },
-});
-
 const styles = StyleSheet.create({
+  heroOuter: {
+    overflow: 'hidden',
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+  },
+  heroPhoto: {
+    ...StyleSheet.absoluteFillObject,
+    opacity: 0.22,
+  },
   heroContainer: {
-    height: 420,
-    position: 'relative',
+    backgroundColor: 'transparent',
   },
   heroContent: {
-    flex: 1,
     alignItems: 'center',
     paddingHorizontal: spacing.lg,
-    paddingBottom: spacing.lg,
+    paddingTop: spacing.md,
+    paddingBottom: spacing.md,
   },
-
-  // Top row: greeting + streak
   topRow: {
     width: '100%',
     flexDirection: 'row',
@@ -420,153 +770,123 @@ const styles = StyleSheet.create({
     marginBottom: spacing.sm,
   },
   greeting: {
-    fontSize: 14,
-    fontWeight: '500',
-    color: 'rgba(242,245,243,0.85)',
+    fontSize: 17,
+    color: colors.textPrimary,
     flexShrink: 1,
   },
   streakPill: {
-    backgroundColor: 'rgba(255,181,71,0.15)',
-    borderRadius: 999,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: 'rgba(255,181,71,0.12)',
+    borderRadius: radii.full,
     paddingHorizontal: 10,
     paddingVertical: 4,
     marginLeft: spacing.sm,
   },
+  streakPillHot: {
+    backgroundColor: 'rgba(255,181,71,0.2)',
+    shadowColor: colors.warning,
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.35,
+    shadowRadius: 10,
+    elevation: 6,
+  },
   streakPillText: {
-    fontSize: 11,
-    fontWeight: '700',
+    fontSize: 12,
     color: colors.warning,
-    letterSpacing: 0.2,
   },
-
-  // Ring
   ringWrapper: {
-    flex: 1,
     alignItems: 'center',
-    justifyContent: 'center',
-    position: 'relative',
+    paddingTop: spacing.xl,
+    paddingBottom: spacing.lg,
   },
-  ringCenter: {
-    position: 'absolute',
-    alignItems: 'center',
-  },
-  ringNumber: {
-    fontFamily: 'JetBrainsMono_700Bold',
-    fontSize: 36,
-    fontWeight: '800',
-    color: colors.textPrimary,
-    letterSpacing: -1,
-    textShadowColor: 'rgba(0,0,0,0.6)',
-    textShadowOffset: { width: 0, height: 2 },
-    textShadowRadius: 6,
-  },
-  ringSubLabel: {
-    fontSize: 10,
-    fontWeight: '700',
-    color: 'rgba(242,245,243,0.5)',
-    letterSpacing: 1.6,
-    textTransform: 'uppercase',
-    marginTop: 4,
-  },
-
-  // Status under ring
-  statusLabel: {
+  coachLine: {
     fontSize: 15,
     fontWeight: '600',
-    textShadowColor: 'rgba(0,0,0,0.6)',
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 8,
-    marginTop: spacing.sm,
-    marginBottom: 2,
+    textAlign: 'center',
+    marginTop: spacing.xs,
   },
-  todayKg: {
-    fontSize: 12,
-    color: 'rgba(242,245,243,0.65)',
-    fontWeight: '500',
-  },
-
-  // Scroll content
   scrollContent: {
-    paddingTop: 0,
+    paddingTop: spacing.xs,
     paddingBottom: spacing.xxl,
   },
-
-  // Data card overlaps hero
-  dataCard: {
-    marginHorizontal: spacing.md,
-    marginTop: -24,
+  trackedSection: {
     marginBottom: spacing.md,
-    paddingVertical: spacing.lg,
-    borderWidth: 1,
-    borderColor: colors.border,
   },
-  dataRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: spacing.lg,
+  sectionLabel: {
+    paddingHorizontal: spacing.md,
   },
-  dataCol: {
-    flex: 1,
-    alignItems: 'center',
+  sectionSub: {
+    fontSize: 11,
+    paddingHorizontal: spacing.md,
+    marginTop: 2,
+    marginBottom: spacing.sm,
   },
-  dataDivider: {
-    width: StyleSheet.hairlineWidth,
-    height: '60%',
-    backgroundColor: colors.border,
+  insightWrap: {
+    paddingHorizontal: spacing.md,
   },
-  dataNumber: {
-    fontFamily: 'JetBrainsMono_700Bold',
-    fontSize: 24,
-    fontWeight: '700',
-    color: colors.textPrimary,
-    letterSpacing: -0.4,
-    lineHeight: 30,
-  },
-  dataLabel: {
-    fontSize: 10,
-    fontWeight: '700',
-    letterSpacing: 1.4,
-    textTransform: 'uppercase',
-    color: colors.textTertiary,
-    marginTop: 4,
-  },
-  barsSection: {
-    borderTopWidth: 1,
-    borderTopColor: colors.border,
-    paddingTop: spacing.md,
-  },
-
-  // Recent entries section
   recentHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: spacing.md,
-    marginTop: spacing.md,
+    marginTop: spacing.xs,
     marginBottom: spacing.sm,
   },
-  recentTitle: {
-    fontSize: 10,
-    fontWeight: '700',
-    letterSpacing: 1.4,
-    textTransform: 'uppercase',
-    color: colors.textTertiary,
+  viewAllRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 2,
   },
   recentLink: {
-    fontSize: 12,
     fontWeight: '600',
     color: colors.primaryLight,
   },
-
-  entryCard: {
+  emptyCard: {
     backgroundColor: colors.surface,
     borderRadius: radii.lg,
     borderWidth: 1,
     borderColor: colors.border,
     marginHorizontal: spacing.md,
-    marginBottom: 8,
-    paddingHorizontal: 16,
+    padding: spacing.md,
+    ...shadows.card,
+  },
+  emptyTitle: {
+    fontSize: typography.sizes.md,
+  },
+  emptyBody: {
+    marginTop: 4,
+    lineHeight: 18,
+  },
+  emptyCta: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+    alignSelf: 'flex-start',
+    marginTop: spacing.sm,
+    paddingVertical: 6,
+    paddingHorizontal: spacing.md,
+    borderRadius: radii.full,
+    borderWidth: 1,
+    borderColor: colors.borderStrong,
+  },
+  emptyCtaText: {
+    fontWeight: '600',
+    color: colors.primaryLight,
+  },
+  entryCard: {
+    backgroundColor: colors.surface,
+    borderRadius: radii.lg,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderLeftWidth: 3,
+    marginHorizontal: spacing.md,
+    marginBottom: spacing.sm,
+    paddingHorizontal: spacing.md,
     paddingVertical: 12,
+    overflow: 'hidden',
+    ...shadows.card,
   },
   entryRow: {
     flexDirection: 'row',
@@ -585,15 +905,11 @@ const styles = StyleSheet.create({
     borderRadius: 4,
   },
   entryItem: {
-    fontSize: typography.sizes.md,
     fontWeight: '500',
-    color: colors.textPrimary,
     flex: 1,
+    lineHeight: 18,
   },
   entryValue: {
-    fontFamily: 'JetBrainsMono_700Bold',
     fontSize: typography.sizes.md,
-    fontWeight: '700',
-    color: colors.textPrimary,
   },
 });

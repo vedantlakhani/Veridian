@@ -1,53 +1,96 @@
-import { TouchableOpacity, Text, StyleSheet } from 'react-native';
-import { colors, typography, radii, spacing } from '@/lib/theme';
+import { useEffect } from 'react';
+import { Text, StyleSheet } from 'react-native';
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withTiming,
+  interpolateColor,
+} from 'react-native-reanimated';
+import { VPressable } from './VPressable';
+import { VIcon, type VIconName } from './VIcon';
+import { colors, typography, radii, spacing, motion } from '@/lib/theme';
+
+// ─────────────────────────────────────────────────────────────────────────────
+// VChip — animated selection (background + border interpolate), press scale,
+// optional icon, `grow` for equal-width rows.
+// ─────────────────────────────────────────────────────────────────────────────
 
 interface VChipProps {
   label: string;
   selected?: boolean;
   onPress?: () => void;
   disabled?: boolean;
+  icon?: VIconName;
+  iconColor?: string;
+  /** Equal-width behavior in a row */
+  grow?: boolean;
 }
 
-export function VChip({ label, selected = false, onPress, disabled = false }: VChipProps) {
+export function VChip({
+  label,
+  selected = false,
+  onPress,
+  disabled = false,
+  icon,
+  iconColor,
+  grow = false,
+}: VChipProps) {
+  const selection = useSharedValue(selected ? 1 : 0);
+
+  useEffect(() => {
+    selection.value = withTiming(selected ? 1 : 0, { duration: motion.timingFast });
+  }, [selected, selection]);
+
+  const animatedStyle = useAnimatedStyle(() => ({
+    backgroundColor: interpolateColor(
+      selection.value,
+      [0, 1],
+      [colors.surfaceElevated, colors.primaryGlow],
+    ),
+    borderColor: interpolateColor(
+      selection.value,
+      [0, 1],
+      ['rgba(255,255,255,0.06)', colors.primaryLight],
+    ),
+  }));
+
+  const contentColor = selected ? colors.primaryLight : colors.textSecondary;
+
   return (
-    <TouchableOpacity
-      style={[
-        styles.chip,
-        selected ? styles.chipSelected : styles.chipDefault,
-        disabled && styles.chipDisabled,
-      ]}
+    <VPressable
       onPress={onPress}
       disabled={disabled}
-      activeOpacity={0.7}
+      haptic="light"
+      style={grow ? styles.grow : styles.selfStart}
+      accessibilityRole="button"
+      accessibilityState={{ selected, disabled }}
     >
-      <Text style={[styles.label, selected ? styles.labelSelected : styles.labelDefault]}>
-        {label}
-      </Text>
-    </TouchableOpacity>
+      <Animated.View style={[styles.chip, disabled && styles.chipDisabled, animatedStyle]}>
+        {icon ? <VIcon name={icon} size={14} color={iconColor ?? contentColor} strokeWidth={2} /> : null}
+        <Text style={[styles.label, { color: contentColor }]} numberOfLines={1}>
+          {label}
+        </Text>
+      </Animated.View>
+    </VPressable>
   );
 }
 
 const styles = StyleSheet.create({
+  selfStart: { alignSelf: 'flex-start' },
+  grow: { flex: 1 },
   chip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: spacing.xs,
     paddingHorizontal: spacing.md,
-    paddingVertical: spacing.xs + 2,
+    paddingVertical: spacing.sm,
     borderRadius: radii.full,
     borderWidth: 1.5,
-    alignSelf: 'flex-start',
-  },
-  chipDefault: {
-    backgroundColor: colors.surface,
-    borderColor: colors.border,
-  },
-  chipSelected: {
-    backgroundColor: colors.primary,
-    borderColor: colors.primary,
   },
   chipDisabled: { opacity: 0.5 },
   label: {
     fontSize: typography.sizes.sm,
     fontWeight: '600',
   },
-  labelDefault: { color: colors.textSecondary },
-  labelSelected: { color: '#FFFFFF' },
 });
