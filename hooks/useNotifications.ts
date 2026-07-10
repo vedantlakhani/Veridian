@@ -131,7 +131,15 @@ export async function registerPushToken(userId: string): Promise<void> {
     Constants?.expoConfig?.extra?.eas?.projectId ??
     (Constants?.easConfig as { projectId?: string } | undefined)?.projectId;
   if (!projectId) return;
-  const token = (await Notifications.getExpoPushTokenAsync({ projectId })).data;
+  let token: string;
+  try {
+    token = (await Notifications.getExpoPushTokenAsync({ projectId })).data;
+  } catch {
+    // Push tokens require the "aps-environment" entitlement, which free
+    // personal-team dev builds can't have. No-op until a paid Apple
+    // Developer account is used (EAS Build / production).
+    return;
+  }
   await supabase.from('push_tokens').upsert(
     { user_id: userId, token, platform: Platform.OS },
     { onConflict: 'user_id' }

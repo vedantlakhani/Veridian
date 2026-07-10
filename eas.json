@@ -18,11 +18,11 @@
       "autoIncrement": true,
       "ios": {
         "distribution": "store",
-        "credentialsSource": "auto"
+        "credentialsSource": "remote"
       },
       "android": {
-        "buildType": "aab",
-        "credentialsSource": "auto"
+        "buildType": "app-bundle",
+        "credentialsSource": "remote"
       }
     }
   },

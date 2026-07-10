@@ -11,11 +11,14 @@
     "ios": {
       "supportsTablet": false,
       "bundleIdentifier": "com.vedantlakhani.veridian",
-      "usesAppleSignIn": true,
+      "usesAppleSignIn": false,
       "infoPlist": {
         "NSLocationWhenInUseUsageDescription": "Veridian uses your location to detect transport trips and estimate their carbon footprint.",
         "NSLocationAlwaysAndWhenInUseUsageDescription": "Veridian detects your transport trips in the background so you never have to log a commute manually.",
-        "UIBackgroundModes": ["location", "fetch"]
+        "UIBackgroundModes": [
+          "location",
+          "fetch"
+        ]
       }
     },
     "android": {
@@ -31,7 +34,9 @@
       "permissions": [
         "ACCESS_COARSE_LOCATION",
         "ACCESS_FINE_LOCATION",
-        "ACCESS_BACKGROUND_LOCATION"
+        "ACCESS_BACKGROUND_LOCATION",
+        "android.permission.ACCESS_COARSE_LOCATION",
+        "android.permission.ACCESS_FINE_LOCATION"
       ]
     },
     "web": {
@@ -62,7 +67,22 @@
           "imageWidth": 200,
           "resizeMode": "contain"
         }
-      ]
-    ]
+      ],
+      [
+        "expo-build-properties",
+        {
+          "ios": {
+            "useFrameworks": "static"
+          }
+        }
+      ],
+      "expo-web-browser"
+    ],
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "ce652d07-c05d-4df4-9e1c-d47797d472de"
+      }
+    }
   }
 }

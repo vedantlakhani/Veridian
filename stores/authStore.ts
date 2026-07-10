@@ -4,13 +4,21 @@ import { Platform } from 'react-native';
 import { supabase } from '@/lib/supabase';
 
 // Google Sign-In: native module — only works in EAS Build / local dev build, NOT Expo Go
+const googleWebClientId = process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID;
+const hasRealGoogleClientId = !!googleWebClientId && !googleWebClientId.startsWith('placeholder-');
+
 let GoogleSignin: typeof import('@react-native-google-signin/google-signin').GoogleSignin | null = null;
 try {
   GoogleSignin = require('@react-native-google-signin/google-signin').GoogleSignin;
-  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-  GoogleSignin!.configure({
-    webClientId: process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID,
-  });
+  if (hasRealGoogleClientId) {
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    GoogleSignin!.configure({ webClientId: googleWebClientId });
+  } else {
+    // No real client ID configured yet — leave the module unconfigured so
+    // signInWithGoogle() can surface a clear error instead of the native
+    // module throwing at import time.
+    GoogleSignin = null;
+  }
 } catch {
   // Module not available in Expo Go — Google Sign-In will be disabled at runtime
   GoogleSignin = null;
@@ -84,7 +92,7 @@ export const useAuthStore = create<AuthState>((set) => ({
   signInWithGoogle: async () => {
     set({ authError: null });
     if (!GoogleSignin) {
-      set({ authError: 'Google Sign-In requires a development build (not Expo Go). Use "npx expo run:ios" to test.' });
+      set({ authError: 'Google Sign-In is not configured yet — add a real EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID in .env.' });
       return;
     }
     try {
