@@ -52,6 +52,7 @@ export interface DailyCategoryTotals {
   food: number;
   transport: number;
   energy: number;
+  shopping: number;
   total: number;
 }
 
@@ -63,7 +64,7 @@ export interface DailyCategoryTotals {
 export function computeDailyCategoryTotals(
   entries: EmissionEntryWithFactor[]
 ): DailyCategoryTotals {
-  const totals: DailyCategoryTotals = { food: 0, transport: 0, energy: 0, total: 0 };
+  const totals: DailyCategoryTotals = { food: 0, transport: 0, energy: 0, shopping: 0, total: 0 };
   for (const entry of entries) {
     const category = entry.emission_factors.category;
     totals[category] = (totals[category] ?? 0) + entry.kg_co2e_total;
@@ -88,6 +89,7 @@ export function buildDailySummaryPayload(
     food_kg: totals.food,
     transport_kg: totals.transport,
     energy_kg: totals.energy,
+    shopping_kg: totals.shopping,
     updated_at: new Date().toISOString(),
   };
 }
@@ -109,6 +111,7 @@ export function buildWeeklySummaryPayload(
       food: totals.food,
       transport: totals.transport,
       energy: totals.energy,
+      shopping: totals.shopping,
     },
     updated_at: new Date().toISOString(),
   };

@@ -3,7 +3,7 @@ import * as SQLite from 'expo-sqlite';
 import NetInfo from '@react-native-community/netinfo';
 import { useQueryClient } from '@tanstack/react-query';
 import type { CreateEntryInput } from '@/hooks/useEmissionEntries';
-import { ENTRY_KEYS } from '@/hooks/useEmissionEntries';
+import { ENTRY_KEYS, TRIP_KEYS } from '@/lib/queryKeys';
 
 // UUID generation — crypto.randomUUID() available in RN 0.73+ / Hermes (this project: RN 0.81.5)
 function generateId(): string {
@@ -33,9 +33,29 @@ async function getDb(): Promise<SQLite.SQLiteDatabase> {
 /**
  * Inserts one entry into the local SQLite offline_queue table.
  * Called instead of the Supabase mutation when the device is offline.
+ *
+ * Idempotent per trip: a payload carrying a tripId is skipped when an
+ * un-synced row for the same trip is already queued — the in-memory guards in
+ * useTrips reset on app restart, so without this check an offline relaunch
+ * would enqueue (and later flush) the same trip's entry twice.
  */
 export async function enqueueEntry(payload: CreateEntryInput): Promise<void> {
   const db = await getDb();
+
+  if (payload.tripId) {
+    const rows = await db.getAllAsync<{ payload: string }>(
+      'SELECT payload FROM offline_queue WHERE synced_at IS NULL'
+    );
+    const alreadyQueued = rows.some((row) => {
+      try {
+        return (JSON.parse(row.payload) as CreateEntryInput).tripId === payload.tripId;
+      } catch {
+        return false;
+      }
+    });
+    if (alreadyQueued) return;
+  }
+
   await db.runAsync(
     'INSERT INTO offline_queue (id, payload, created_at) VALUES (?, ?, ?)',
     [generateId(), JSON.stringify(payload), Date.now()]
@@ -62,8 +82,18 @@ export async function flushQueue(
         'UPDATE offline_queue SET synced_at = ? WHERE id = ?',
         [Date.now(), row.id]
       );
-    } catch {
-      // Leave row un-synced — will retry on next reconnect
+    } catch (error) {
+      // 23505 = the unique emission_entries(trip_id) index rejected a
+      // duplicate — the entry already exists (a live write beat the queue),
+      // so the row is complete, not failed. Anything else stays un-synced
+      // and retries on the next reconnect.
+      const code = (error as { code?: unknown })?.code;
+      if (code === '23505') {
+        await db.runAsync(
+          'UPDATE offline_queue SET synced_at = ? WHERE id = ?',
+          [Date.now(), row.id]
+        );
+      }
     }
   }
 }
@@ -102,6 +132,12 @@ export function useOfflineQueue(
       if (state.isConnected && state.isInternetReachable) {
         void flushQueue(mutateRef.current).then(() => {
           queryClient.invalidateQueries({ queryKey: ENTRY_KEYS.all });
+          // A flushed entry may have landed on any day (loggedAt is
+          // preserved) and may be a sensor-sourced trip entry — refresh
+          // summaries and trips too, not just the raw entries list.
+          queryClient.invalidateQueries({ queryKey: ['daily_summary'] });
+          queryClient.invalidateQueries({ queryKey: ['weekly_summary'] });
+          queryClient.invalidateQueries({ queryKey: TRIP_KEYS.all });
         });
       }
     });

@@ -26,6 +26,7 @@ const CATEGORY_COLORS: Record<EmissionCategory, string> = {
   food: colors.food,
   transport: colors.transport,
   energy: colors.energy,
+  shopping: colors.shopping,
 };
 
 interface VTopMoveCardProps {

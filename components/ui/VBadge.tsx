@@ -7,7 +7,7 @@ import { colors, typography, radii, spacing } from '@/lib/theme';
 // dedicated warning background, optional 30%-opacity border.
 // ─────────────────────────────────────────────────────────────────────────────
 
-type BadgeVariant = 'food' | 'transport' | 'energy' | 'success' | 'warning' | 'error' | 'neutral';
+type BadgeVariant = 'food' | 'transport' | 'energy' | 'shopping' | 'success' | 'warning' | 'error' | 'neutral';
 type BadgeSize = 'sm' | 'md';
 
 interface VBadgeProps {
@@ -25,13 +25,14 @@ const variantColors: Record<BadgeVariant, { bg: string; text: string }> = {
   food:      { bg: colors.foodBg, text: colors.food },
   transport: { bg: colors.transportBg, text: colors.transport },
   energy:    { bg: colors.energyBg, text: colors.energy },
+  shopping:  { bg: colors.shoppingBg, text: colors.shopping },
   success:   { bg: colors.successBg, text: colors.success },
   warning:   { bg: colors.warningBg, text: colors.warning },
   error:     { bg: colors.errorLight, text: colors.error },
   neutral:   { bg: colors.divider, text: colors.textSecondary },
 };
 
-const CATEGORY_VARIANTS: BadgeVariant[] = ['food', 'transport', 'energy'];
+const CATEGORY_VARIANTS: BadgeVariant[] = ['food', 'transport', 'energy', 'shopping'];
 
 export function VBadge({
   label,

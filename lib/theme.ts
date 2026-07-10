@@ -27,11 +27,13 @@ export const colors = {
   food:            '#C0392B',
   transport:       '#1A6FA8',
   energy:          '#C47D16',
+  shopping:        '#7C5295',
 
   // Category bg tints
   foodGlow:        'rgba(192,57,43,0.07)',
   transportGlow:   'rgba(26,111,168,0.07)',
   energyGlow:      'rgba(196,125,22,0.07)',
+  shoppingGlow:    'rgba(124,82,149,0.07)',
 
   // Budget-state system (light mode)
   glowCalm:        'rgba(27,107,66,0.07)',
@@ -61,6 +63,7 @@ export const colors = {
   foodBg:           '#FEF2F0',
   transportBg:      '#EFF6FF',
   energyBg:         '#FFFBEB',
+  shoppingBg:       '#F5F0F9',
   successBg:        '#F0FBF4',
   divider:          'rgba(0,0,0,0.08)',
   mist:             '#F5F7F3',

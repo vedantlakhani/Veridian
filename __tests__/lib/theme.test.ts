@@ -11,16 +11,18 @@ import {
 } from '@/lib/theme';
 
 describe('theme', () => {
-  it('exports colors with emerald primary', () => {
-    expect(colors.primary).toBe('#00A862');
-    expect(colors.primaryLight).toBe('#3DDC97');
+  // Palette pins updated for the light-mode redesign (commit a4c42e3) — the
+  // original dark-mode expectations were never updated with it.
+  it('exports colors with forest-green primary', () => {
+    expect(colors.primary).toBe('#1B6B42');
+    expect(colors.primaryLight).toBe('#1B6B42');
   });
 
-  it('exports near-black green-tinted background ramp', () => {
-    expect(colors.background).toBe('#060A08');
-    expect(colors.surface).toBe('#0D1210');
-    expect(colors.surfaceElevated).toBe('#141B17');
-    expect(colors.surfaceHigh).toBe('#1C2620');
+  it('exports light green-tinted background ramp', () => {
+    expect(colors.background).toBe('#F5F7F3');
+    expect(colors.surface).toBe('#FFFFFF');
+    expect(colors.surfaceElevated).toBe('#ECEEED');
+    expect(colors.surfaceHigh).toBe('#FFFFFF');
   });
 
   it('exports spacing scale', () => {
@@ -41,7 +43,7 @@ describe('theme', () => {
     expect(shadows.sm).toBeDefined();
     expect(shadows.md).toBeDefined();
     expect(shadows.lg).toBeDefined();
-    expect(shadows.glowPrimary.shadowColor).toBe('#00A862');
+    expect(shadows.glowPrimary.shadowColor).toBe(colors.primary);
   });
 
   it('exports gradients and motion systems', () => {

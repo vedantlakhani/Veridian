@@ -1,4 +1,9 @@
-export type EmissionCategory = 'food' | 'transport' | 'energy';
+export type EmissionCategory = 'food' | 'transport' | 'energy' | 'shopping';
+
+export type EntrySource = 'manual' | 'sensor' | 'transaction' | 'receipt';
+export type EntryStatus = 'pending' | 'auto_confirmed' | 'user_confirmed' | 'dismissed';
+export type TripMode = 'walk' | 'cycling' | 'car' | 'bus' | 'train' | 'unknown';
+export type TripStatus = 'needs_confirmation' | 'auto_confirmed' | 'confirmed' | 'dismissed';
 
 export interface EmissionFactor {
   id: string;
@@ -21,11 +26,34 @@ export interface EmissionEntry {
   logged_at: string;
   notes: string | null;
   created_at: string;
+  source: EntrySource;
+  confidence: number | null;
+  status: EntryStatus;
+  trip_id: string | null;
+  metadata: Record<string, unknown> | null;
 }
 
 // Denormalized for display — joins entry with its factor
 export interface EmissionEntryWithFactor extends EmissionEntry {
   emission_factors: EmissionFactor;
+}
+
+// Mirrors the detected_trips table — durable server-side trip records a
+// smarter classifier can re-read and re-verdict (see NORTH_STAR.md §7).
+export interface DetectedTrip {
+  id: string;
+  user_id: string;
+  client_trip_key: string;
+  started_at: string;
+  ended_at: string;
+  distance_km: number;
+  avg_speed_kmh: number | null;
+  mode: TripMode;
+  confidence: number;
+  status: TripStatus;
+  features: Record<string, unknown> | null;
+  created_at: string;
+  updated_at: string;
 }
 
 export interface DailySummary {
@@ -36,6 +64,7 @@ export interface DailySummary {
   food_kg: number;
   transport_kg: number;
   energy_kg: number;
+  shopping_kg: number;
   created_at: string;
   updated_at: string;
 }
@@ -44,6 +73,7 @@ export interface WeeklyBreakdown {
   food: number;
   transport: number;
   energy: number;
+  shopping: number;
 }
 
 export interface WeeklySummary {

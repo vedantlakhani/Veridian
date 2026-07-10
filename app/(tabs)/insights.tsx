@@ -57,12 +57,14 @@ const CATEGORY_COLORS: Record<EmissionCategory, string> = {
   food: colors.food,
   transport: colors.transport,
   energy: colors.energy,
+  shopping: colors.shopping,
 };
 
 const CATEGORY_LABELS: Record<EmissionCategory, string> = {
   food: 'Food',
   transport: 'Transport',
   energy: 'Energy',
+  shopping: 'Shopping',
 };
 
 // ─── Section title ────────────────────────────────────────────────────────────
@@ -90,7 +92,7 @@ function StoryCard({
   // Composition sentence — "Transport drove 62% of your week"
   const story = useMemo(() => {
     if (periodTotal === 0) return 'Log an entry to start your story.';
-    const totals: Record<EmissionCategory, number> = { food: 0, transport: 0, energy: 0 };
+    const totals: Record<EmissionCategory, number> = { food: 0, transport: 0, energy: 0, shopping: 0 };
     const dayTotals = new Map<string, number>();
     for (const e of entries) {
       const cat = e.emission_factors.category as EmissionCategory;
@@ -360,7 +362,7 @@ export default function InsightsScreen() {
 
   // ── Composition segments ──
   const composition = useMemo(() => {
-    const totals: Record<EmissionCategory, number> = { food: 0, transport: 0, energy: 0 };
+    const totals: Record<EmissionCategory, number> = { food: 0, transport: 0, energy: 0, shopping: 0 };
     for (const e of entries) {
       const cat = e.emission_factors.category as EmissionCategory;
       totals[cat] += e.kg_co2e_total;

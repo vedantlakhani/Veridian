@@ -20,9 +20,8 @@ import { useAllEmissionFactors } from '@/hooks/useAllEmissionFactors';
 import { useTopMoves } from '@/hooks/useTopMoves';
 import { useAuthStore } from '@/stores/authStore';
 import { useProfile } from '@/hooks/useProfile';
-import { useMotionDetection } from '@/hooks/useMotionDetection';
-import { useAutoLog } from '@/hooks/useAutoLog';
-import type { AutoLogEntry } from '@/hooks/useAutoLog';
+import { useTripsContext } from '@/contexts/TripsContext';
+import type { AutoLogEntry } from '@/hooks/useTrips';
 import { useStreak } from '@/hooks/useStreak';
 import { getLocalDateString } from '@/lib/emissions';
 import { supabase } from '@/lib/supabase';
@@ -36,6 +35,7 @@ import {
   VProgressRing,
   VStaggerIn,
   VTopMovesSection,
+  type VIconName,
 } from '@/components/ui';
 import { DAILY_CARBON_BUDGET_KG } from '@/types/emission';
 import type { EmissionCategory } from '@/types/emission';
@@ -59,12 +59,14 @@ const CATEGORY_COLORS: Record<EmissionCategory, string> = {
   food: colors.food,
   transport: colors.transport,
   energy: colors.energy,
+  shopping: colors.shopping,
 };
 
 const CATEGORY_GLOWS: Record<EmissionCategory, string> = {
   food: colors.foodGlow,
   transport: colors.transportGlow,
   energy: colors.energyGlow,
+  shopping: colors.shoppingGlow,
 };
 
 
@@ -372,48 +374,58 @@ const tripStyles = StyleSheet.create({
 });
 
 // ─── Auto-log feed row ("Tracked for you") ────────────────────────────────────
+const AUTO_LOG_ROW_META: Record<AutoLogEntry['mode'], { icon: VIconName; verb: string }> = {
+  car: { icon: 'car', verb: 'drive' },
+  walk: { icon: 'walk', verb: 'walked' },
+  cycling: { icon: 'bike', verb: 'cycled' },
+  bus: { icon: 'car', verb: 'trip' },
+  train: { icon: 'car', verb: 'trip' },
+  unknown: { icon: 'car', verb: 'trip' },
+};
+
 function AutoLogRow({ entry }: { entry: AutoLogEntry }) {
-  const cycling = entry.mode === 'cycling';
+  const zeroEmission = entry.mode !== 'car';
+  const meta = AUTO_LOG_ROW_META[entry.mode];
 
   return (
     <View
       style={[
         autoStyles.card,
-        cycling
+        zeroEmission
           ? { borderColor: `${colors.primaryLight}4D`, borderLeftColor: colors.primaryLight }
           : { borderColor: colors.border, borderLeftColor: colors.transport },
       ]}
     >
-      {cycling && (
+      {zeroEmission && (
         <View
           style={[StyleSheet.absoluteFillObject, { backgroundColor: colors.primaryGlowSoft }]}
           pointerEvents="none"
         />
       )}
       <VIcon
-        name={cycling ? 'bike' : 'car'}
+        name={meta.icon}
         size={20}
-        color={cycling ? colors.primaryLight : colors.transport}
+        color={zeroEmission ? colors.primaryLight : colors.transport}
       />
       <View style={{ flex: 1 }}>
         <VText
           variant="body"
-          style={[autoStyles.title, cycling && { color: colors.primaryLight }]}
+          style={[autoStyles.title, zeroEmission && { color: colors.primaryLight }]}
           numberOfLines={1}
         >
-          {entry.distanceKm.toFixed(1)} km {cycling ? 'cycled' : 'drive'}
+          {entry.distanceKm.toFixed(1)} km {meta.verb}
         </VText>
         <VText variant="caption" style={autoStyles.subtitle} numberOfLines={1}>
-          {cycling
+          {zeroEmission
             ? `You saved ${entry.savedKg.toFixed(1)} kg vs driving`
             : timeAgo(entry.loggedAt)}
         </VText>
       </View>
       <VText
         variant="mono"
-        style={[autoStyles.value, { color: cycling ? colors.primaryLight : colors.transport }]}
+        style={[autoStyles.value, { color: zeroEmission ? colors.primaryLight : colors.transport }]}
       >
-        {cycling ? `−${entry.savedKg.toFixed(1)} kg` : `${entry.kgCo2e.toFixed(2)} kg`}
+        {zeroEmission ? `−${entry.savedKg.toFixed(1)} kg` : `${entry.kgCo2e.toFixed(2)} kg`}
       </VText>
     </View>
   );
@@ -449,8 +461,8 @@ export default function HomeScreen() {
   const { data: recentEntries = [], isLoading: entriesLoading } = useEmissionEntries(user?.id);
 
   // Passive intelligence: live trip status + auto-logged activity feed
-  const { isInMotion, currentTripKm } = useMotionDetection();
-  const { recentAutoLogs } = useAutoLog(user?.id);
+  // (single pipeline mounted by TripsProvider in app/_layout.tsx)
+  const { isInMotion, currentTripKm, recentAutoLogs } = useTripsContext();
 
   // Shared streak hook — no more duplicated logic with Profile
   const { streak } = useStreak(user?.id);

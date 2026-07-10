@@ -12,6 +12,7 @@ import { queryClient } from '@/lib/queryClient';
 import { useEmissionRealtime } from '@/hooks/useEmissionRealtime';
 import { useOfflineQueue } from '@/hooks/useOfflineQueue';
 import { useCreateEntry } from '@/hooks/useEmissionEntries';
+import { TripsProvider } from '@/contexts/TripsContext';
 import { VOfflineBanner } from '@/components/ui';
 import { useNotifications } from '@/hooks/useNotifications';
 
@@ -28,18 +29,20 @@ function AppNavigator() {
   // PLSH-04: Font loading occurs in child layouts (parallel with auth init) — no blocking sequential await
 
   return (
-    <Stack screenOptions={{ headerShown: false }}>
-      <Stack.Protected guard={!onboardingComplete}>
-        <Stack.Screen name="(onboarding)" />
-      </Stack.Protected>
-      <Stack.Protected guard={!!session}>
-        <Stack.Screen name="(tabs)" />
-        <Stack.Screen name="carbon-calculator" />
-      </Stack.Protected>
-      <Stack.Protected guard={!session}>
-        <Stack.Screen name="(auth)" />
-      </Stack.Protected>
-    </Stack>
+    <TripsProvider userId={user?.id}>
+      <Stack screenOptions={{ headerShown: false }}>
+        <Stack.Protected guard={!onboardingComplete}>
+          <Stack.Screen name="(onboarding)" />
+        </Stack.Protected>
+        <Stack.Protected guard={!!session}>
+          <Stack.Screen name="(tabs)" />
+          <Stack.Screen name="carbon-calculator" />
+        </Stack.Protected>
+        <Stack.Protected guard={!session}>
+          <Stack.Screen name="(auth)" />
+        </Stack.Protected>
+      </Stack>
+    </TripsProvider>
   );
 }
 

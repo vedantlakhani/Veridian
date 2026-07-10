@@ -9,7 +9,8 @@ import {
 } from '@/lib/emissions';
 import { checkAndUnlockAchievements } from '@/hooks/useAchievements';
 import { notifyStreakMilestone } from '@/hooks/useNotifications';
-import type { EmissionEntryWithFactor, EmissionFactor } from '@/types/emission';
+import { ENTRY_KEYS, TRIP_KEYS } from '@/lib/queryKeys';
+import type { EmissionEntryWithFactor, EmissionFactor, EntrySource, EntryStatus } from '@/types/emission';
 
 // ─── computeStreak ────────────────────────────────────────────────────────
 /**
@@ -36,17 +37,23 @@ function computeStreak(rows: { date: string }[]): number {
 }
 
 // ─── Query Keys ────────────────────────────────────────────────────────────
-export const ENTRY_KEYS = {
-  all: ['emission_entries'] as const,
-  list: (userId: string, dateFrom?: string, dateTo?: string) =>
-    ['emission_entries', userId, dateFrom, dateTo] as const,
-};
+// Defined in lib/queryKeys.ts (shared with the offline queue and trips
+// pipeline without hook-to-hook imports); re-exported here for existing importers.
+export { ENTRY_KEYS };
 
 // ─── Input Types ───────────────────────────────────────────────────────────
 export interface CreateEntryInput {
   userId: string;
   factor: EmissionFactor;
   quantity: number;
+  /** Defaults to 'manual' — preserves current behavior for the Log tab flow */
+  source?: EntrySource;
+  confidence?: number;
+  /** Defaults to 'user_confirmed' — preserves current behavior for the Log tab flow */
+  status?: EntryStatus;
+  tripId?: string;
+  /** ISO string override for backdated/retroactive entries. Defaults to now(). */
+  loggedAt?: string;
 }
 
 export interface UpdateEntryInput {
@@ -103,7 +110,7 @@ export function useCreateEntry() {
   return useMutation({
     mutationFn: async (input: CreateEntryInput) => {
       const kgCo2eTotal = calcEmission(input.factor.kg_co2e, input.quantity);
-      const loggedAt = new Date().toISOString();
+      const loggedAt = input.loggedAt ?? new Date().toISOString();
 
       const { data, error } = await supabase
         .from('emission_entries')
@@ -113,16 +120,22 @@ export function useCreateEntry() {
           quantity: input.quantity,
           kg_co2e_total: kgCo2eTotal,
           logged_at: loggedAt,
+          source: input.source ?? 'manual',
+          status: input.status ?? 'user_confirmed',
+          confidence: input.confidence ?? null,
+          trip_id: input.tripId ?? null,
         })
         .select('*, emission_factors(*)')
         .single();
 
       if (error) throw error;
 
-      // Recompute summaries for today (after insert)
-      const today = getLocalDateString();
-      const weekStart = getISOWeekStart(new Date());
-      await upsertDailySummary(input.userId, today);
+      // Recompute summaries for the entry's actual date — NOT necessarily today,
+      // so backdated/retroactive entries (sensor/receipt sources) update the
+      // correct day's summary instead of always touching today's.
+      const affectedDate = getLocalDateString(new Date(loggedAt));
+      const weekStart = getISOWeekStart(new Date(loggedAt));
+      await upsertDailySummary(input.userId, affectedDate);
       await upsertWeeklySummary(input.userId, weekStart);
 
       return data as EmissionEntryWithFactor;
@@ -201,12 +214,24 @@ export function useDeleteEntry() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (input: { id: string; userId: string; loggedAt: string }) => {
-      const { error } = await supabase
+      const { data: deleted, error } = await supabase
         .from('emission_entries')
         .delete()
-        .eq('id', input.id);
+        .eq('id', input.id)
+        .select('trip_id')
+        .maybeSingle();
 
       if (error) throw error;
+
+      // A deleted sensor entry must not resurrect: the trips pipeline
+      // recreates entries for auto_confirmed trips that have no linked entry,
+      // so deleting the entry also closes out its trip.
+      if (deleted?.trip_id) {
+        await supabase
+          .from('detected_trips')
+          .update({ status: 'dismissed', updated_at: new Date().toISOString() })
+          .eq('id', deleted.trip_id);
+      }
 
       // Recompute summaries for the affected date after deletion
       const affectedDate = getLocalDateString(new Date(input.loggedAt));
@@ -218,6 +243,7 @@ export function useDeleteEntry() {
       queryClient.invalidateQueries({ queryKey: ENTRY_KEYS.all });
       queryClient.invalidateQueries({ queryKey: ['daily_summary'] });
       queryClient.invalidateQueries({ queryKey: ['weekly_summary'] });
+      queryClient.invalidateQueries({ queryKey: TRIP_KEYS.all });
     },
   });
 }

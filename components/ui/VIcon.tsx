@@ -14,6 +14,7 @@ export type VIconName =
   | 'fork'
   | 'car'
   | 'bike'
+  | 'walk'
   | 'bolt'
   | 'flame'
   | 'check'
@@ -107,6 +108,12 @@ export function VIcon({
           <Path d="M10 9 L13 16 H6" {...common} />
           <Line x1={14} y1={6.5} x2={16.5} y2={6.5} {...common} />
           <Line x1={15} y1={6.5} x2={15} y2={9} {...common} />
+        </>
+      )}
+      {name === 'walk' && (
+        <>
+          <Circle cx={13} cy={4.5} r={1.8} fill={color} stroke="none" />
+          <Path d="M13 7 L10.5 11 L7 13 M13 7 L15 10.5 L18 12 M10.5 11 L13.5 12.5 L12 17.5 L9 21 M13.5 12.5 L16 16 L15.5 20.5" {...common} />
         </>
       )}
       {name === 'bolt' && (

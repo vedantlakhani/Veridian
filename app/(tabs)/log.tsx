@@ -33,14 +33,16 @@ import {
   type VIconName,
 } from '@/components/ui';
 import { useCreateEntry, useEmissionEntries, useDeleteEntry } from '@/hooks/useEmissionEntries';
+import { useDurableCreateEntry } from '@/hooks/useDurableCreateEntry';
 import { useAllEmissionFactors } from '@/hooks/useAllEmissionFactors';
 import { useAuthStore } from '@/stores/authStore';
-import { useMotionDetection } from '@/hooks/useMotionDetection';
+import { useTripsContext } from '@/contexts/TripsContext';
+import { CAR_KG_PER_KM } from '@/lib/tripEngine';
 import { getLocalDateString } from '@/lib/emissions';
 import { colors, spacing, typography, radii, motion, gradients, shadows } from '@/lib/theme';
 import { humanizeSubcategory } from '@/lib/format';
 import { DAILY_CARBON_BUDGET_KG } from '@/types/emission';
-import type { EmissionCategory, EmissionFactor } from '@/types/emission';
+import type { EmissionCategory, EmissionFactor, DetectedTrip, TripMode } from '@/types/emission';
 
 const IS_EXPO_GO = Constants.appOwnership === 'expo';
 
@@ -52,15 +54,31 @@ const CATEGORY_META: Record<
   food: { label: 'Food', color: colors.food, glow: colors.foodGlow, bg: colors.foodBg, icon: 'fork' },
   transport: { label: 'Transport', color: colors.transport, glow: colors.transportGlow, bg: colors.transportBg, icon: 'car' },
   energy: { label: 'Energy', color: colors.energy, glow: colors.energyGlow, bg: colors.energyBg, icon: 'bolt' },
+  shopping: { label: 'Shopping', color: colors.shopping, glow: colors.shoppingGlow, bg: colors.shoppingBg, icon: 'sparkle' },
 };
 
-const CATEGORIES: EmissionCategory[] = ['food', 'transport', 'energy'];
+// Display order for category chips; the picker only shows categories that
+// actually have factors (see availableCategories below), so 'shopping'
+// appears automatically once Sprint D seeds spend-based factors.
+const CATEGORY_ORDER: EmissionCategory[] = ['food', 'transport', 'energy', 'shopping'];
+
+// Detected-trips card metadata per mode — bus/train/unknown fall back to the
+// car treatment until Sprint B's activity fusion can distinguish them.
+const TRIP_MODE_META: Record<TripMode, { icon: VIconName; verb: string }> = {
+  car: { icon: 'car', verb: 'drive' },
+  walk: { icon: 'walk', verb: 'walked' },
+  cycling: { icon: 'bike', verb: 'cycled' },
+  bus: { icon: 'car', verb: 'trip' },
+  train: { icon: 'car', verb: 'trip' },
+  unknown: { icon: 'car', verb: 'trip' },
+};
 
 // Context-aware quick-pick quantities per category
 const QUICK_PICKS: Record<EmissionCategory, number[]> = {
   food: [0.25, 0.5, 1, 2],
   transport: [5, 10, 25, 50],
   energy: [1, 5, 10, 20],
+  shopping: [1, 5, 10, 20],
 };
 
 // ─── Quick Slot model — the one-tap logging mechanic ─────────────────────────
@@ -215,6 +233,7 @@ export default function LogScreen() {
   const { user } = useAuthStore();
   const insets = useSafeAreaInsets();
   const createEntry = useCreateEntry();
+  const durableCreateEntry = useDurableCreateEntry();
   const deleteEntry = useDeleteEntry();
 
   const [activeCategory, setActiveCategory] = useState<EmissionCategory | null>(null);
@@ -227,8 +246,16 @@ export default function LogScreen() {
   const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const { data: factors = [], isLoading: factorsLoading } = useAllEmissionFactors();
-  const { pendingTrips, dismiss, markLogged, requestPermissions, hasPermission, simulateTrip } =
-    useMotionDetection();
+  // Single pipeline mounted by TripsProvider in app/_layout.tsx
+  const { needsConfirmation, confirmTrip, dismissTrip, requestPermissions, hasPermission, simulateTrip } =
+    useTripsContext();
+
+  // Only categories with seeded factors are pickable — keeps 'shopping' hidden
+  // until its spend-based factors land (Sprint D) without hardcoding the list.
+  const availableCategories = useMemo(
+    () => CATEGORY_ORDER.filter((cat) => factors.some((f) => f.category === cat)),
+    [factors],
+  );
 
   const today = getLocalDateString();
   const { data: todayEntries = [] } = useEmissionEntries(user?.id, today, today);
@@ -344,17 +371,18 @@ export default function LogScreen() {
     setLogSuccess(false);
   };
 
-  // ── One-tap quick slot log ──
-  const handleQuickLog = (slot: QuickSlot) => {
-    if (!user?.id || createEntry.isPending) return;
-    createEntry.mutate(
-      { userId: user.id, factor: slot.factor, quantity: slot.quantity },
-      {
-        onSuccess: () => {
-          void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-        },
-      },
-    );
+  // ── One-tap quick slot log — durable: offline/network failures enqueue
+  // silently (VOfflineBanner already tells the user they're offline) and
+  // still play the success haptic; a genuine server rejection stays silent,
+  // matching the prior behavior for this flow. ──
+  const handleQuickLog = async (slot: QuickSlot) => {
+    if (!user?.id || durableCreateEntry.isPending) return;
+    try {
+      await durableCreateEntry.createDurable({ userId: user.id, factor: slot.factor, quantity: slot.quantity });
+      void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    } catch {
+      // Genuine server rejection — no user-facing error for quick-log taps
+    }
   };
 
   // ── The log ritual — checkmark morph, success haptic, particle burst ──
@@ -399,20 +427,21 @@ export default function LogScreen() {
     [factors],
   );
 
-  const handleLogTrip = (tripId: string, distanceKm: number) => {
-    if (!user?.id || !carFactor) {
-      Alert.alert('Cannot log', 'Transport emission factor not found — add one in the database.');
-      return;
+  const handleConfirmTrip = async (trip: DetectedTrip) => {
+    try {
+      await confirmTrip(trip);
+      void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    } catch {
+      Alert.alert('Could not confirm', 'Something went wrong confirming this trip. Try again.');
     }
-    createEntry.mutate(
-      { userId: user.id, factor: carFactor, quantity: distanceKm },
-      {
-        onSuccess: () => {
-          void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-          void markLogged(tripId);
-        },
-      },
-    );
+  };
+
+  const handleDismissTrip = async (trip: DetectedTrip) => {
+    try {
+      await dismissTrip(trip);
+    } catch {
+      // Best-effort — the card stays visible so the user can retry the swipe/tap.
+    }
   };
 
   const handleEnableDetection = async () => {
@@ -466,7 +495,7 @@ export default function LogScreen() {
                 slot={slot}
                 onLog={handleQuickLog}
                 onAdjust={(s) => openSheet(s.factor, String(s.quantity))}
-                disabled={createEntry.isPending}
+                disabled={durableCreateEntry.isPending}
               />
             ))}
           </ScrollView>
@@ -476,43 +505,43 @@ export default function LogScreen() {
         </VText>
 
         {/* ── Pending detected trips — one-tap confirm cards ── */}
-        {pendingTrips.length > 0 && (
+        {needsConfirmation.length > 0 && (
           <View style={styles.tripsSection}>
             <VText variant="label" style={{ marginBottom: spacing.xs }}>
               Detected trips
             </VText>
-            {pendingTrips.map((trip) => {
-              const isCycling = trip.mode === 'cycling';
-              const estimatedKg = (trip.distanceKm * trip.kgPerKm).toFixed(2);
+            {needsConfirmation.map((trip) => {
+              const meta = TRIP_MODE_META[trip.mode];
+              const zeroEmission = trip.mode === 'walk' || trip.mode === 'cycling';
+              const estimatedKg = trip.distance_km * (carFactor?.kg_co2e ?? CAR_KG_PER_KM);
               return (
                 <View key={trip.id} style={styles.tripCard}>
                   <VIcon
-                    name={isCycling ? 'bike' : 'car'}
+                    name={meta.icon}
                     size={20}
-                    color={isCycling ? colors.primaryLight : colors.transport}
+                    color={zeroEmission ? colors.primaryLight : colors.transport}
                   />
                   <View style={{ flex: 1 }}>
                     <VText variant="body" style={styles.tripDistance}>
-                      {trip.distanceKm} km {isCycling ? 'cycled' : 'drive'}
+                      {trip.distance_km} km {meta.verb}
                     </VText>
                     <VText variant="caption" style={styles.tripSub}>
-                      {trip.avgSpeedKmh} km/h avg · {estimatedKg} kg
+                      {trip.avg_speed_kmh ?? 0} km/h avg ·{' '}
+                      {zeroEmission ? 'zero emissions' : `${estimatedKg.toFixed(2)} kg`}
                     </VText>
                   </View>
-                  {!isCycling && (
-                    <VPressable
-                      style={styles.tripConfirm}
-                      onPress={() => handleLogTrip(trip.id, trip.distanceKm)}
-                      haptic="medium"
-                      accessibilityRole="button"
-                      accessibilityLabel="Confirm trip"
-                    >
-                      <VIcon name="check" size={14} color="#FFFFFF" strokeWidth={2.5} />
-                      <Text style={styles.tripConfirmText}>Confirm</Text>
-                    </VPressable>
-                  )}
                   <VPressable
-                    onPress={() => void dismiss(trip.id)}
+                    style={styles.tripConfirm}
+                    onPress={() => void handleConfirmTrip(trip)}
+                    haptic="medium"
+                    accessibilityRole="button"
+                    accessibilityLabel={zeroEmission ? 'Celebrate trip' : 'Confirm trip'}
+                  >
+                    <VIcon name="check" size={14} color="#FFFFFF" strokeWidth={2.5} />
+                    <Text style={styles.tripConfirmText}>{zeroEmission ? 'Nice!' : 'Confirm'}</Text>
+                  </VPressable>
+                  <VPressable
+                    onPress={() => void handleDismissTrip(trip)}
                     haptic="light"
                     hitSlop={8}
                     accessibilityRole="button"
@@ -528,7 +557,7 @@ export default function LogScreen() {
 
         {/* ── Category segmented row ── */}
         <View style={styles.categoryRow}>
-          {CATEGORIES.map((cat) => {
+          {availableCategories.map((cat) => {
             const meta = CATEGORY_META[cat];
             const active = activeCategory === cat;
             return (
