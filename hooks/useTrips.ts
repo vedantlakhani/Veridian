@@ -1,13 +1,13 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import * as Location from 'expo-location';
-import * as TaskManager from 'expo-task-manager';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { AppState } from 'react-native';
 import Constants from 'expo-constants';
 import * as Notifications from 'expo-notifications';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
-import { LOCATION_TASK_NAME, LOCATION_HISTORY_KEY, type StoredLocation } from '@/tasks/locationTask';
+import { LOCATION_HISTORY_KEY, type StoredLocation } from '@/tasks/locationTask';
+import { ensureBackgroundTrackingRegistered } from '@/lib/backgroundTracking';
 import {
   analyzeTrips,
   detectActiveTrip,
@@ -632,26 +632,7 @@ export function useTrips(userId: string | undefined) {
       setHasPermission(granted);
 
       if (granted) {
-        const already = await TaskManager.isTaskRegisteredAsync(LOCATION_TASK_NAME);
-        if (!already) {
-          await Location.startLocationUpdatesAsync(LOCATION_TASK_NAME, {
-            accuracy: Location.Accuracy.Balanced,
-            distanceInterval: 100,
-            deferredUpdatesInterval: 60_000,
-            showsBackgroundLocationIndicator: false,
-            pausesUpdatesAutomatically: true,
-          });
-        }
-        // CLVisit endpoints need "Always" location — start monitoring once so
-        // automotive segments can be distance-estimated by routing between them.
-        if (VeridianMotion.isAvailable() && !visitMonitoringRef.current) {
-          visitMonitoringRef.current = true;
-          try {
-            await VeridianMotion.startVisitMonitoring();
-          } catch {
-            // Best-effort — visit-based distance simply falls back to estimate.
-          }
-        }
+        await ensureBackgroundTrackingRegistered(visitMonitoringRef);
       }
 
       // Best-effort Motion & Fitness prompt AFTER location, so a denial here
@@ -671,6 +652,43 @@ export function useTrips(userId: string | undefined) {
       setHasPermission(false);
       return false;
     }
+  }, []);
+
+  // ── Reflect the current location authorization on mount ──
+  // Mirrors the motionPermission hydrate effect above: without this, a user
+  // whose OS-level location permission was already granted before this app
+  // session (previous install, granted via some other flow, already
+  // "Always" from before) would have hasPermission stuck at null forever —
+  // requestPermissions() only ever runs from the user tapping the banner,
+  // and the Log screen's banner only renders on `hasPermission === false`,
+  // never on `null`. Matches requestPermissions()'s own success condition:
+  // hasPermission is true only when background ("Always") is granted. Also
+  // performs requestPermissions()'s success-path side effect — registering
+  // background tracking — via the shared helper, so a device that already
+  // has permission doesn't silently skip startLocationUpdatesAsync.
+  useEffect(() => {
+    if (IS_EXPO_GO) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const fg = await Location.getForegroundPermissionsAsync();
+        if (fg.status !== 'granted') {
+          if (!cancelled) setHasPermission(false);
+          return;
+        }
+        const bg = await Location.getBackgroundPermissionsAsync();
+        const granted = bg.status === 'granted';
+        if (!cancelled) setHasPermission(granted);
+        if (granted) {
+          await ensureBackgroundTrackingRegistered(visitMonitoringRef);
+        }
+      } catch {
+        if (!cancelled) setHasPermission(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   // ── confirmTrip / dismissTrip — the Log screen's confirm card actions ──
