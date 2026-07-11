@@ -18,6 +18,7 @@
 
 import type { EmissionCategory, TripMode } from '@/types/emission';
 import { humanizeSubcategory } from '@/lib/format';
+import type { VIconName } from '@/components/ui/VIcon';
 
 // ─── Feed item shapes ─────────────────────────────────────────────────────────
 // Declared here structurally (not imported from useTrips/useEmissionEntries) so
@@ -172,6 +173,37 @@ export function buildImpactChip(item: FeedItem): ImpactChip {
     return { label: `saved ${formatKgChip(item.savedKg)}`, positive: true };
   }
   return { label: formatKgChip(item.kgCo2e), positive: false };
+}
+
+// ─── Public: feed row icon ──────────────────────────────────────────────────
+// A transport *entry* only carries a generic `category: 'transport'` — unlike
+// a zero-emission detected trip, it has no `mode`. Without inspecting the
+// underlying factor, every transport entry (a cycling/e-bike factor included)
+// rendered the car glyph. VIcon (components/ui/VIcon.tsx) has no dedicated
+// bus/train glyph, so those — and anything else transport — fall back to 'car'.
+
+const BIKE_HINT = /bike|cycl|e-bike/i;
+const WALK_HINT = /walk|foot/i;
+
+/** Which VIconName a feed row should show. */
+export function pickFeedIcon(item: FeedItem): VIconName {
+  if (item.kind === 'trip') {
+    return item.mode === 'cycling' ? 'bike' : 'walk';
+  }
+  switch (item.category) {
+    case 'food':
+      return 'fork';
+    case 'energy':
+      return 'bolt';
+    case 'shopping':
+      return 'sparkle';
+    case 'transport': {
+      const hay = `${item.item} ${item.subcategory}`;
+      if (BIKE_HINT.test(hay)) return 'bike';
+      if (WALK_HINT.test(hay)) return 'walk';
+      return 'car'; // bus/train/rail/transit/car — no closer VIcon glyph exists
+    }
+  }
 }
 
 // ─── Public: the review-card sentence ──────────────────────────────────────────

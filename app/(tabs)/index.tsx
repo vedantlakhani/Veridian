@@ -18,7 +18,7 @@ import Animated, {
   FadeOut,
   LinearTransition,
 } from 'react-native-reanimated';
-import { useDailySummary, useWeeklySummary } from '@/hooks/useSummaries';
+import { useWeeklySummary } from '@/hooks/useSummaries';
 import { useEmissionEntries } from '@/hooks/useEmissionEntries';
 import { useAllEmissionFactors } from '@/hooks/useAllEmissionFactors';
 import { useTopMoves } from '@/hooks/useTopMoves';
@@ -26,7 +26,7 @@ import { useAuthStore } from '@/stores/authStore';
 import { useProfile } from '@/hooks/useProfile';
 import { useTripsContext } from '@/contexts/TripsContext';
 import { useStreak } from '@/hooks/useStreak';
-import { getLocalDateString } from '@/lib/emissions';
+import { getLocalDateString, computeDailyCategoryTotals } from '@/lib/emissions';
 import { CAR_KG_PER_KM } from '@/lib/tripEngine';
 import { supabase } from '@/lib/supabase';
 import {
@@ -66,6 +66,7 @@ import {
   buildTripConfirmSentence,
   formatClockTime,
   formatKgChip,
+  pickFeedIcon,
   type FeedItem,
 } from '@/lib/feedCopy';
 
@@ -398,21 +399,9 @@ const tripStyles = StyleSheet.create({
 type FeedRowItem = FeedItem & { id: string };
 
 function feedIcon(item: FeedItem): { name: VIconName; color: string } {
-  if (item.kind === 'trip') {
-    return item.mode === 'cycling'
-      ? { name: 'bike', color: colors.primaryLight }
-      : { name: 'walk', color: colors.primaryLight };
-  }
-  switch (item.category) {
-    case 'food':
-      return { name: 'fork', color: colors.food };
-    case 'energy':
-      return { name: 'bolt', color: colors.energy };
-    case 'shopping':
-      return { name: 'sparkle', color: colors.shopping };
-    default:
-      return { name: 'car', color: colors.transport };
-  }
+  const name = pickFeedIcon(item);
+  const color = item.kind === 'trip' ? colors.primaryLight : CATEGORY_COLORS[item.category];
+  return { name, color };
 }
 
 function ImpactPill({ label, positive }: { label: string; positive: boolean }) {
@@ -699,7 +688,6 @@ export default function HomeScreen() {
   const { user } = useAuthStore();
   const today = getLocalDateString();
   const { data: profile } = useProfile(user?.id);
-  const { data: daily } = useDailySummary(user?.id);
   const { data: weekly } = useWeeklySummary(user?.id);
 
   // Broad entries power Top Moves + the AI fallback (windowing happens inside
@@ -738,14 +726,19 @@ export default function HomeScreen() {
     enabled: !!user?.id,
   });
 
-  const todayTotal = daily?.total_kg_co2e ?? 0;
+  // Ring + flip-side split — computed live from today's already-fetched entries
+  // (the same query the feed reads), NOT the daily_summaries aggregate: that row
+  // is upserted asynchronously after each entry write and can lag, leaving the
+  // ring at "0.0" while the feed already shows an entry's chip.
+  const todayTotals = useMemo(() => computeDailyCategoryTotals(todayEntries), [todayEntries]);
+  const todayTotal = todayTotals.total;
   const progress = todayTotal / DAILY_CARBON_BUDGET_KG;
   const state = budgetStateFor(progress);
 
   const split = {
-    food: daily?.food_kg ?? 0,
-    transport: daily?.transport_kg ?? 0,
-    energy: daily?.energy_kg ?? 0,
+    food: todayTotals.food,
+    transport: todayTotals.transport,
+    energy: todayTotals.energy,
   };
 
   // ── The "Today" feed — today's emission entries + today's zero-emission

@@ -4,6 +4,7 @@ import {
   buildTripConfirmSentence,
   formatClockTime,
   formatKgChip,
+  pickFeedIcon,
   relativeDayLabel,
   type FeedEntryInput,
   type FeedTripInput,
@@ -133,6 +134,47 @@ describe('buildImpactChip', () => {
     expect(formatKgChip(0.9)).toBe('0.9 kg');
     expect(formatKgChip(0.05)).toBe('<0.1 kg');
     expect(formatKgChip(0)).toBe('0.0 kg');
+  });
+});
+
+// ─── pickFeedIcon ──────────────────────────────────────────────────────────────
+
+describe('pickFeedIcon', () => {
+  it('maps a cycling transport entry to bike, not car', () => {
+    expect(
+      pickFeedIcon(entry({ category: 'transport', subcategory: 'BICYCLE', item: 'Bicycle', unit: 'km', quantity: 5 })),
+    ).toBe('bike');
+  });
+
+  it('maps an e-bike transport entry to bike', () => {
+    expect(
+      pickFeedIcon(entry({ category: 'transport', subcategory: 'E_BIKE', item: 'E-Bike', unit: 'km', quantity: 5 })),
+    ).toBe('bike');
+  });
+
+  it('maps a walking transport entry to walk', () => {
+    expect(
+      pickFeedIcon(entry({ category: 'transport', subcategory: 'FOOT', item: 'Walking', unit: 'km', quantity: 2 })),
+    ).toBe('walk');
+  });
+
+  it('falls back to car for bus/train transport entries — no closer VIcon glyph exists', () => {
+    expect(
+      pickFeedIcon(entry({ category: 'transport', subcategory: 'BUS_LOCAL', item: 'Local Bus', unit: 'km', quantity: 5 })),
+    ).toBe('car');
+    expect(
+      pickFeedIcon(entry({ category: 'transport', subcategory: 'CAR_PETROL', item: 'Petrol Car', unit: 'km', quantity: 5 })),
+    ).toBe('car');
+  });
+
+  it('keeps non-transport categories on their existing category icons', () => {
+    expect(pickFeedIcon(entry({ category: 'food', item: 'Beef', subcategory: 'RED_MEAT' }))).toBe('fork');
+    expect(pickFeedIcon(entry({ category: 'energy', item: 'Electricity', subcategory: 'ELECTRICITY' }))).toBe('bolt');
+  });
+
+  it('keeps mode-based icons for zero-emission trip rows', () => {
+    expect(pickFeedIcon(trip({ mode: 'cycling' }))).toBe('bike');
+    expect(pickFeedIcon(trip({ mode: 'walk' }))).toBe('walk');
   });
 });
 
