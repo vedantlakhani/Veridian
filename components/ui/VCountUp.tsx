@@ -1,18 +1,25 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { TextInput, StyleSheet, type TextStyle, type StyleProp } from 'react-native';
-import Animated, {
+import {
   useSharedValue,
-  useAnimatedProps,
+  useAnimatedReaction,
   withTiming,
+  runOnJS,
 } from 'react-native-reanimated';
 import { colors, typography, motion } from '@/lib/theme';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // VCountUp — animated number. Numbers in Veridian never snap; they travel.
-// Uses the AnimatedTextInput.animatedProps pattern (UI-thread text updates).
+//
+// Renders through plain React state (via useAnimatedReaction + runOnJS)
+// rather than pushing the interpolated value straight to TextInput's native
+// `value` prop through animatedProps. TextInput on the New Architecture
+// tracks its own "most recent event count" for controlled updates and can
+// silently ignore prop pushes that bypass a normal React commit — which
+// left this number frozen at its initial value while UI-thread-only
+// consumers (e.g. VProgressRing's SVG arc) animated correctly. Bridging
+// back to state guarantees the render always reflects the animated target.
 // ─────────────────────────────────────────────────────────────────────────────
-
-const AnimatedTextInput = Animated.createAnimatedComponent(TextInput);
 
 interface VCountUpProps {
   value: number;
@@ -30,20 +37,24 @@ export function VCountUp({
   style,
 }: VCountUpProps) {
   const animated = useSharedValue(0);
+  const [display, setDisplay] = useState(() => `${(0).toFixed(decimals)}${suffix}`);
 
   useEffect(() => {
     animated.value = withTiming(value, { duration, easing: motion.easeOut });
   }, [value, duration, animated]);
 
-  const animatedProps = useAnimatedProps(() => ({
-    value: `${animated.value.toFixed(decimals)}${suffix}`,
-  }));
+  useAnimatedReaction(
+    () => animated.value,
+    (current) => {
+      runOnJS(setDisplay)(`${current.toFixed(decimals)}${suffix}`);
+    },
+    [decimals, suffix],
+  );
 
   return (
-    <AnimatedTextInput
+    <TextInput
       editable={false}
-      defaultValue={`${(0).toFixed(decimals)}${suffix}`}
-      animatedProps={animatedProps}
+      value={display}
       style={[styles.text, style]}
       accessibilityLabel={`${value.toFixed(decimals)}${suffix}`}
     />

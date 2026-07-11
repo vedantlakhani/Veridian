@@ -43,6 +43,14 @@ jest.mock('react-native-reanimated', () => {
     },
     useAnimatedStyle: (fn) => fn(),
     useAnimatedProps: jest.fn((fn) => fn()),
+    // Runs after every commit (no dep array) so it observes shared-value
+    // mutations made by sibling useEffects earlier in the same flush —
+    // approximating Reanimated's UI-thread reactivity for tests.
+    useAnimatedReaction: (prepare, react) => {
+      require('react').useEffect(() => {
+        react(prepare());
+      });
+    },
     useSharedValue: (val) => ({ value: val }),
     withTiming: jest.fn((val) => val),
     withSpring: jest.fn((val) => val),
