@@ -737,18 +737,20 @@ export default function LogScreen() {
                 <VIcon name="chevron-right" size={16} color={colors.textSecondary} />
               )}
             </VPressable>
-            {IS_EXPO_GO && (
-              <VPressable
-                style={styles.simulateBtn}
-                onPress={() => void simulateTrip()}
-                haptic="light"
-              >
-                <VText variant="caption" style={styles.simulateBtnText}>
-                  Simulate trip (12 km · 45 km/h)
-                </VText>
-              </VPressable>
-            )}
           </View>
+        )}
+        {/* Simulate is a dev-only pipeline test — dev builds on the Simulator
+            have no real GPS/CoreMotion either, so it shows in any __DEV__ run */}
+        {(IS_EXPO_GO || __DEV__) && (
+          <VPressable
+            style={styles.simulateBtn}
+            onPress={() => void simulateTrip()}
+            haptic="light"
+          >
+            <VText variant="caption" style={styles.simulateBtnText}>
+              Simulate trip (12 km · 45 km/h)
+            </VText>
+          </VPressable>
         )}
       </ScrollView>
 
