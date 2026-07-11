@@ -1,10 +1,11 @@
 import { ScrollView, View, StyleSheet, Pressable } from 'react-native';
-import { useMemo, useEffect } from 'react';
+import { useMemo, useEffect, useRef, useState } from 'react';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Image } from 'expo-image';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { useQuery } from '@tanstack/react-query';
+import * as Haptics from 'expo-haptics';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -13,6 +14,9 @@ import Animated, {
   withSequence,
   withSpring,
   interpolate,
+  FadeIn,
+  FadeOut,
+  LinearTransition,
 } from 'react-native-reanimated';
 import { useDailySummary, useWeeklySummary } from '@/hooks/useSummaries';
 import { useEmissionEntries } from '@/hooks/useEmissionEntries';
@@ -21,9 +25,9 @@ import { useTopMoves } from '@/hooks/useTopMoves';
 import { useAuthStore } from '@/stores/authStore';
 import { useProfile } from '@/hooks/useProfile';
 import { useTripsContext } from '@/contexts/TripsContext';
-import type { AutoLogEntry } from '@/hooks/useTrips';
 import { useStreak } from '@/hooks/useStreak';
 import { getLocalDateString } from '@/lib/emissions';
+import { CAR_KG_PER_KM } from '@/lib/tripEngine';
 import { supabase } from '@/lib/supabase';
 import {
   VSkeleton,
@@ -35,10 +39,13 @@ import {
   VProgressRing,
   VStaggerIn,
   VTopMovesSection,
+  VBottomSheet,
+  VEmptyState,
+  VChip,
   type VIconName,
 } from '@/components/ui';
 import { DAILY_CARBON_BUDGET_KG } from '@/types/emission';
-import type { EmissionCategory } from '@/types/emission';
+import type { EmissionCategory, DetectedTrip, TripMode } from '@/types/emission';
 import {
   colors,
   spacing,
@@ -52,7 +59,22 @@ import {
 } from '@/lib/theme';
 import { useAiInsight } from '@/hooks/useAiInsight';
 import type { EmissionContext } from '@/hooks/useAiInsight';
-import { resolveFirstName, formatKgCompact, timeGreeting, timeAgo } from '@/lib/format';
+import { resolveFirstName, timeGreeting } from '@/lib/format';
+import {
+  buildFeedSentence,
+  buildImpactChip,
+  buildTripConfirmSentence,
+  formatClockTime,
+  formatKgChip,
+  type FeedItem,
+} from '@/lib/feedCopy';
+
+// hooks/useTrips.ts returns the full (up to AUTO_CONFIRMED_SCAN_LIMIT)
+// auto_confirmed list, unsliced, so a car trip can never evict a same-day
+// walk/cycling trip before this screen gets to filter by mode/day. This is
+// the display cap instead, applied AFTER that filter — same visual density
+// the feed had when the hook itself capped at 5.
+const MAX_FEED_TRIPS = 5;
 
 // ─── Category colors ──────────────────────────────────────────────────────────
 const CATEGORY_COLORS: Record<EmissionCategory, string> = {
@@ -62,15 +84,15 @@ const CATEGORY_COLORS: Record<EmissionCategory, string> = {
   shopping: colors.shopping,
 };
 
-const CATEGORY_GLOWS: Record<EmissionCategory, string> = {
-  food: colors.foodGlow,
-  transport: colors.transportGlow,
-  energy: colors.energyGlow,
-  shopping: colors.shoppingGlow,
+// One quiet, efficacy-first line under the ring — never red-as-shame; the "over"
+// copy points forward, not down (NORTH_STAR.md §8.4 anti-guilt).
+const EFFICACY_COPY: Record<BudgetState, string> = {
+  calm: 'Plenty of headroom today',
+  watch: 'Tracking a touch high — one light choice keeps you in band',
+  over: "Over today's band — tomorrow's a fresh start",
 };
 
-
-// ─── The Ring — single source of truth, flips to reveal the category split ───
+// ─── The Ring — hero anchor; flips to reveal today's category split ──────────
 function BudgetRingHero({
   todayKg,
   state,
@@ -104,14 +126,14 @@ function BudgetRingHero({
   };
 
   return (
-    <Pressable onPress={toggleFlip} accessibilityRole="button" accessibilityLabel="Budget ring — tap to see category split">
+    <Pressable onPress={toggleFlip} accessibilityRole="button" accessibilityLabel="Today's footprint — tap to see the category split">
       <View style={ringStyles.stack}>
         {/* Front — the one big ring */}
         <Animated.View style={[ringStyles.face, frontStyle]}>
           <VProgressRing
             progress={progress}
-            size={200}
-            strokeWidth={14}
+            size={224}
+            strokeWidth={15}
             gradient={stateStyle.ring}
             animationDuration={900}
           >
@@ -136,7 +158,7 @@ function BudgetRingHero({
             <View key={key} style={ringStyles.miniWrap}>
               <VProgressRing
                 progress={todayKg > 0 ? value / todayKg : 0}
-                size={56}
+                size={60}
                 strokeWidth={5}
                 color={CATEGORY_COLORS[key]}
               >
@@ -157,15 +179,15 @@ function BudgetRingHero({
 
 const ringStyles = StyleSheet.create({
   stack: {
-    width: 200,
-    height: 200,
+    width: 224,
+    height: 224,
     alignItems: 'center',
     justifyContent: 'center',
   },
   face: {
     position: 'absolute',
-    width: 200,
-    height: 200,
+    width: 224,
+    height: 224,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -175,8 +197,8 @@ const ringStyles = StyleSheet.create({
   },
   center: { alignItems: 'center' },
   bigNumber: {
-    fontSize: 44,
-    lineHeight: 50,
+    fontSize: 52,
+    lineHeight: 58,
     letterSpacing: -1,
     color: colors.textPrimary,
     textAlign: 'center',
@@ -262,7 +284,6 @@ const weekStyles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'center',
     gap: spacing.lg,
-    marginTop: spacing.md,
   },
   dayCol: { alignItems: 'center', gap: spacing.xs },
   dot: {
@@ -373,82 +394,304 @@ const tripStyles = StyleSheet.create({
   subtitle: { fontSize: 12 },
 });
 
-// ─── Auto-log feed row ("Tracked for you") ────────────────────────────────────
-const AUTO_LOG_ROW_META: Record<AutoLogEntry['mode'], { icon: VIconName; verb: string }> = {
-  car: { icon: 'car', verb: 'drive' },
-  walk: { icon: 'walk', verb: 'walked' },
-  cycling: { icon: 'bike', verb: 'cycled' },
-  bus: { icon: 'car', verb: 'trip' },
-  train: { icon: 'car', verb: 'trip' },
-  unknown: { icon: 'car', verb: 'trip' },
-};
+// ─── Feed row — icon · plain-language sentence · impact chip ───────────────────
+type FeedRowItem = FeedItem & { id: string };
 
-function AutoLogRow({ entry }: { entry: AutoLogEntry }) {
-  const zeroEmission = entry.mode !== 'car';
-  const meta = AUTO_LOG_ROW_META[entry.mode];
+function feedIcon(item: FeedItem): { name: VIconName; color: string } {
+  if (item.kind === 'trip') {
+    return item.mode === 'cycling'
+      ? { name: 'bike', color: colors.primaryLight }
+      : { name: 'walk', color: colors.primaryLight };
+  }
+  switch (item.category) {
+    case 'food':
+      return { name: 'fork', color: colors.food };
+    case 'energy':
+      return { name: 'bolt', color: colors.energy };
+    case 'shopping':
+      return { name: 'sparkle', color: colors.shopping };
+    default:
+      return { name: 'car', color: colors.transport };
+  }
+}
 
-  return (
-    <View
-      style={[
-        autoStyles.card,
-        zeroEmission
-          ? { borderColor: `${colors.primaryLight}4D`, borderLeftColor: colors.primaryLight }
-          : { borderColor: colors.border, borderLeftColor: colors.transport },
-      ]}
-    >
-      {zeroEmission && (
-        <View
-          style={[StyleSheet.absoluteFillObject, { backgroundColor: colors.primaryGlowSoft }]}
-          pointerEvents="none"
-        />
-      )}
-      <VIcon
-        name={meta.icon}
-        size={20}
-        color={zeroEmission ? colors.primaryLight : colors.transport}
-      />
-      <View style={{ flex: 1 }}>
-        <VText
-          variant="body"
-          style={[autoStyles.title, zeroEmission && { color: colors.primaryLight }]}
-          numberOfLines={1}
-        >
-          {entry.distanceKm.toFixed(1)} km {meta.verb}
-        </VText>
-        <VText variant="caption" style={autoStyles.subtitle} numberOfLines={1}>
-          {zeroEmission
-            ? `You saved ${entry.savedKg.toFixed(1)} kg vs driving`
-            : timeAgo(entry.loggedAt)}
+function ImpactPill({ label, positive }: { label: string; positive: boolean }) {
+  if (positive) {
+    return (
+      <View style={feedStyles.savedChip}>
+        <VText variant="caption" style={feedStyles.savedChipText}>
+          {label}
         </VText>
       </View>
-      <VText
-        variant="mono"
-        style={[autoStyles.value, { color: zeroEmission ? colors.primaryLight : colors.transport }]}
-      >
-        {zeroEmission ? `−${entry.savedKg.toFixed(1)} kg` : `${entry.kgCo2e.toFixed(2)} kg`}
-      </VText>
-    </View>
+    );
+  }
+  return (
+    <VText variant="mono" style={feedStyles.kgText}>
+      {label}
+    </VText>
   );
 }
 
-const autoStyles = StyleSheet.create({
-  card: {
+function FeedRow({ item, index }: { item: FeedRowItem; index: number }) {
+  const { name, color } = feedIcon(item);
+  const sentence = buildFeedSentence(item);
+  const chip = buildImpactChip(item);
+
+  return (
+    <VStaggerIn index={index}>
+      <View style={[feedStyles.row, chip.positive && feedStyles.rowPositive]}>
+        {chip.positive && (
+          <View
+            style={[StyleSheet.absoluteFillObject, { backgroundColor: colors.primaryGlowSoft }]}
+            pointerEvents="none"
+          />
+        )}
+        <View style={[feedStyles.iconWrap, { backgroundColor: `${color}14` }]}>
+          <VIcon name={name} size={18} color={color} />
+        </View>
+        <View style={{ flex: 1 }}>
+          <VText variant="body" style={feedStyles.sentence} numberOfLines={2}>
+            {sentence}
+          </VText>
+          <VText variant="caption" style={feedStyles.time}>
+            {formatClockTime(item.at)}
+          </VText>
+        </View>
+        <ImpactPill label={chip.label} positive={chip.positive} />
+      </View>
+    </VStaggerIn>
+  );
+}
+
+const feedStyles = StyleSheet.create({
+  row: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.sm,
     backgroundColor: colors.surface,
-    ...shadows.card,
-    borderWidth: 1,
     borderRadius: radii.md,
-    borderLeftWidth: 3,
-    padding: 12,
+    borderWidth: 1,
+    borderColor: colors.border,
+    paddingHorizontal: spacing.md,
+    paddingVertical: 12,
     marginHorizontal: spacing.md,
     marginBottom: spacing.sm,
     overflow: 'hidden',
+    ...shadows.card,
   },
-  title: { fontWeight: '500', lineHeight: 18 },
-  subtitle: { fontSize: 12, marginTop: 1 },
-  value: { fontSize: 13 },
+  rowPositive: {
+    borderColor: `${colors.primaryLight}33`,
+  },
+  iconWrap: {
+    width: 34,
+    height: 34,
+    borderRadius: radii.full,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  sentence: {
+    fontWeight: '500',
+    lineHeight: 19,
+  },
+  time: {
+    fontSize: 12,
+    marginTop: 1,
+  },
+  kgText: {
+    fontSize: typography.sizes.md,
+    color: colors.textSecondary,
+  },
+  savedChip: {
+    backgroundColor: colors.successGlow,
+    borderRadius: radii.full,
+    paddingHorizontal: spacing.sm + 2,
+    paddingVertical: 4,
+  },
+  savedChipText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: colors.primary,
+  },
+});
+
+// ─── Confirm review — one card at a time inside a bottom sheet ────────────────
+const REVIEW_MODES: { mode: TripMode; label: string; icon?: VIconName }[] = [
+  { mode: 'car', label: 'Car', icon: 'car' },
+  { mode: 'bus', label: 'Bus' },
+  { mode: 'train', label: 'Train' },
+  { mode: 'cycling', label: 'Bike', icon: 'bike' },
+  { mode: 'walk', label: 'Walk', icon: 'walk' },
+];
+
+function ConfirmCard({
+  trip,
+  index,
+  total,
+  onConfirm,
+  onDismiss,
+}: {
+  trip: DetectedTrip;
+  index: number;
+  total: number;
+  onConfirm: (trip: DetectedTrip, mode?: TripMode) => void;
+  onDismiss: (trip: DetectedTrip) => void;
+}) {
+  const zero = trip.mode === 'walk' || trip.mode === 'cycling';
+  const sentence = buildTripConfirmSentence({
+    mode: trip.mode,
+    distanceKm: trip.distance_km,
+    startedAt: new Date(trip.started_at),
+  });
+  const estimate = trip.distance_km * CAR_KG_PER_KM;
+
+  return (
+    <Animated.View
+      key={trip.id}
+      entering={FadeIn.duration(220)}
+      exiting={FadeOut.duration(140)}
+      layout={LinearTransition.springify()}
+      style={reviewStyles.card}
+    >
+      <VText variant="label" style={reviewStyles.counter}>
+        {`${index + 1} of ${total}`}
+      </VText>
+      <VText variant="heading" style={reviewStyles.sentence}>
+        {sentence}
+      </VText>
+      <VText variant="caption" style={reviewStyles.hint}>
+        {zero
+          ? `Zero emissions — you saved ${formatKgChip(estimate)} vs driving.`
+          : `Roughly ${formatKgChip(estimate)} if we log it as a drive.`}
+      </VText>
+
+      <VPressable
+        onPress={() => onConfirm(trip)}
+        haptic="light"
+        style={reviewStyles.primary}
+        accessibilityRole="button"
+        accessibilityLabel={`Confirm: ${sentence}`}
+      >
+        <VIcon name="check" size={18} color="#FFFFFF" strokeWidth={2.5} />
+        <VText style={reviewStyles.primaryText}>{zero ? 'Yes — nice one' : "Yes, that's right"}</VText>
+      </VPressable>
+
+      <VText variant="label" style={reviewStyles.orLabel}>
+        Or set the mode
+      </VText>
+      <View style={reviewStyles.chipRow}>
+        {REVIEW_MODES.map((m) => (
+          <VChip
+            key={m.mode}
+            label={m.label}
+            icon={m.icon}
+            selected={m.mode === trip.mode}
+            onPress={() => onConfirm(trip, m.mode)}
+          />
+        ))}
+      </View>
+
+      <VPressable
+        onPress={() => onDismiss(trip)}
+        haptic="light"
+        hitSlop={8}
+        style={reviewStyles.notTrip}
+        accessibilityRole="button"
+        accessibilityLabel="Not a trip — dismiss"
+      >
+        <VText variant="caption" style={reviewStyles.notTripText}>
+          Not a trip
+        </VText>
+      </VPressable>
+    </Animated.View>
+  );
+}
+
+function ReviewAllDone() {
+  return (
+    <Animated.View entering={FadeIn.duration(220)} style={reviewStyles.done}>
+      <View style={reviewStyles.doneCircle}>
+        <VIcon name="check" size={30} color={colors.primary} strokeWidth={2.5} />
+      </View>
+      <VText variant="heading" style={reviewStyles.doneTitle}>
+        All caught up
+      </VText>
+      <VText variant="caption" style={reviewStyles.doneBody}>
+        Thanks — that keeps your footprint honest.
+      </VText>
+    </Animated.View>
+  );
+}
+
+const reviewStyles = StyleSheet.create({
+  card: {
+    alignItems: 'center',
+    paddingBottom: spacing.sm,
+  },
+  counter: {
+    color: colors.textTertiary,
+    marginBottom: spacing.sm,
+  },
+  sentence: {
+    fontSize: 18,
+    textAlign: 'center',
+    lineHeight: 24,
+  },
+  hint: {
+    textAlign: 'center',
+    marginTop: spacing.xs,
+    marginBottom: spacing.lg,
+  },
+  primary: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: spacing.sm,
+    alignSelf: 'stretch',
+    backgroundColor: colors.primary,
+    borderRadius: radii.xl,
+    paddingVertical: spacing.md,
+    minHeight: 54,
+    ...shadows.glowPrimary,
+  },
+  primaryText: {
+    fontSize: typography.sizes.lg,
+    fontWeight: '700',
+    color: '#FFFFFF',
+  },
+  orLabel: {
+    marginTop: spacing.lg,
+    marginBottom: spacing.sm,
+    color: colors.textTertiary,
+  },
+  chipRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'center',
+    gap: spacing.sm,
+  },
+  notTrip: {
+    marginTop: spacing.lg,
+    paddingVertical: spacing.xs,
+  },
+  notTripText: {
+    color: colors.textTertiary,
+    textDecorationLine: 'underline',
+  },
+  done: {
+    alignItems: 'center',
+    paddingVertical: spacing.lg,
+  },
+  doneCircle: {
+    width: 64,
+    height: 64,
+    borderRadius: radii.full,
+    backgroundColor: colors.successGlow,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: spacing.md,
+  },
+  doneTitle: { fontSize: typography.sizes.lg },
+  doneBody: { marginTop: spacing.xs, textAlign: 'center' },
 });
 
 // ─── Home ─────────────────────────────────────────────────────────────────────
@@ -458,21 +701,25 @@ export default function HomeScreen() {
   const { data: profile } = useProfile(user?.id);
   const { data: daily } = useDailySummary(user?.id);
   const { data: weekly } = useWeeklySummary(user?.id);
-  const { data: recentEntries = [], isLoading: entriesLoading } = useEmissionEntries(user?.id);
 
-  // Passive intelligence: live trip status + auto-logged activity feed
-  // (single pipeline mounted by TripsProvider in app/_layout.tsx)
-  const { isInMotion, currentTripKm, recentAutoLogs } = useTripsContext();
+  // Broad entries power Top Moves + the AI fallback (windowing happens inside
+  // those); today-scoped entries power the "Today" feed.
+  const { data: allEntries = [] } = useEmissionEntries(user?.id);
+  const { data: todayEntries = [], isLoading: todayLoading } = useEmissionEntries(user?.id, today, today);
 
-  // Shared streak hook — no more duplicated logic with Profile
+  // Passive intelligence: live trip status, the daily review queue, and the
+  // auto-logged activity feed (single pipeline mounted by TripsProvider).
+  const { isInMotion, currentTripKm, recentAutoLogs, needsConfirmation, confirmTrip, dismissTrip } =
+    useTripsContext();
+
   const { streak } = useStreak(user?.id);
 
   // Top Moves — pure client-side ranking over already-fetched data
   const { data: allFactors } = useAllEmissionFactors();
   const weeklyTotalKg = weekly?.total_kg_co2e ?? null;
-  const moves = useTopMoves(recentEntries, allFactors, weeklyTotalKg);
+  const moves = useTopMoves(allEntries, allFactors, weeklyTotalKg);
 
-  // Last 7 days of daily summaries — powers the week strip and pace coach
+  // Last 7 days of daily summaries — powers the week strip
   const { data: weekDays } = useQuery({
     queryKey: ['week_strip', user?.id, today],
     queryFn: async () => {
@@ -494,13 +741,48 @@ export default function HomeScreen() {
   const todayTotal = daily?.total_kg_co2e ?? 0;
   const progress = todayTotal / DAILY_CARBON_BUDGET_KG;
   const state = budgetStateFor(progress);
-  const remaining = DAILY_CARBON_BUDGET_KG - todayTotal;
 
   const split = {
     food: daily?.food_kg ?? 0,
     transport: daily?.transport_kg ?? 0,
     energy: daily?.energy_kg ?? 0,
   };
+
+  // ── The "Today" feed — today's emission entries + today's zero-emission
+  // auto-confirmed trips (walk/cycling), merged reverse-chron. Car trips already
+  // surface as their linked sensor entries, so only the celebration trips are
+  // pulled from recentAutoLogs to avoid double-counting. ──
+  const feedItems = useMemo<FeedRowItem[]>(() => {
+    const items: FeedRowItem[] = [];
+    for (const e of todayEntries) {
+      items.push({
+        id: `entry:${e.id}`,
+        kind: 'entry',
+        item: e.emission_factors.item,
+        subcategory: e.emission_factors.subcategory,
+        category: e.emission_factors.category,
+        unit: e.emission_factors.unit,
+        quantity: e.quantity,
+        kgCo2e: e.kg_co2e_total,
+        at: new Date(e.logged_at),
+      });
+    }
+    const todayTripLogs = recentAutoLogs
+      .filter((a) => (a.mode === 'walk' || a.mode === 'cycling') && getLocalDateString(a.loggedAt) === today)
+      .slice(0, MAX_FEED_TRIPS);
+    for (const a of todayTripLogs) {
+      items.push({
+        id: `trip:${a.tripId}`,
+        kind: 'trip',
+        mode: a.mode,
+        distanceKm: a.distanceKm,
+        savedKg: a.savedKg,
+        at: a.loggedAt,
+      });
+    }
+    items.sort((x, y) => y.at.getTime() - x.at.getTime());
+    return items;
+  }, [todayEntries, recentAutoLogs, today]);
 
   // Week strip — one slot per day, today last
   const weekStrip = useMemo(() => {
@@ -520,59 +802,71 @@ export default function HomeScreen() {
     return out;
   }, [weekDays, today]);
 
-  // Pace-aware coach voice — derived from daily summaries, no AI call needed
-  const coach = useMemo(() => {
-    const pastDays = (weekDays ?? []).filter((d) => d.date !== today);
-    const avg =
-      pastDays.length > 0
-        ? pastDays.reduce((s, d) => s + d.total_kg_co2e, 0) / pastDays.length
-        : null;
-
-    if (todayTotal === 0) {
-      return { line: 'A fresh day — nothing logged yet.', color: colors.textSecondary };
-    }
-    if (state === 'over') {
-      return { line: 'Over budget today. Tomorrow resets.', color: colors.danger };
-    }
-    if (avg !== null && pastDays.length >= 2) {
-      const best = Math.min(...pastDays.map((d) => d.total_kg_co2e));
-      if (todayTotal < best) {
-        return { line: 'On pace for your best day this week.', color: colors.primaryLight };
-      }
-      if (todayTotal < avg) {
-        return {
-          line: `Trending under your ${formatKgCompact(avg)} daily average.`,
-          color: colors.primaryLight,
-        };
-      }
-    }
-    if (state === 'watch') {
-      return {
-        line: `${formatKgCompact(Math.max(remaining, 0))} left — log mindfully.`,
-        color: colors.warning,
-      };
-    }
-    return {
-      line: `${formatKgCompact(Math.max(remaining, 0))} remaining in your budget.`,
-      color: colors.primaryLight,
-    };
-  }, [weekDays, today, todayTotal, state, remaining]);
-
   const firstName = resolveFirstName(profile?.display_name, user?.email);
   const greeting = `${timeGreeting()}, ${firstName}`;
 
-  // When Top Moves are available, skip the AI Edge Function entirely (saves the Claude call).
-  // Pass null context so useAiInsight's `enabled` gate stays false.
+  // ── Daily review — page one confirm card at a time. The queue is snapshotted
+  // on open so live query invalidations don't reshuffle the index mid-review. ──
+  const [reviewOpen, setReviewOpen] = useState(false);
+  const [reviewQueue, setReviewQueue] = useState<DetectedTrip[]>([]);
+  const [reviewIndex, setReviewIndex] = useState(0);
+  const [reviewDone, setReviewDone] = useState(false);
+  const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (closeTimer.current) clearTimeout(closeTimer.current);
+    };
+  }, []);
+
+  const openReview = () => {
+    setReviewQueue(needsConfirmation);
+    setReviewIndex(0);
+    setReviewDone(false);
+    setReviewOpen(true);
+  };
+
+  const advanceReview = () => {
+    setReviewIndex((i) => {
+      const next = i + 1;
+      if (next >= reviewQueue.length) {
+        void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        setReviewDone(true);
+        if (closeTimer.current) clearTimeout(closeTimer.current);
+        closeTimer.current = setTimeout(() => setReviewOpen(false), 1100);
+        return i;
+      }
+      return next;
+    });
+  };
+
+  const handleReviewConfirm = (trip: DetectedTrip, mode?: TripMode) => {
+    void confirmTrip(trip, mode).catch(() => {
+      // Best-effort: a failed confirm leaves the trip in needs_confirmation, so
+      // the review card reappears next time. We still advance to stay snappy.
+    });
+    advanceReview();
+  };
+
+  const handleReviewDismiss = (trip: DetectedTrip) => {
+    void dismissTrip(trip).catch(() => {});
+    advanceReview();
+  };
+
+  const currentTrip = reviewQueue[reviewIndex];
+
+  // When Top Moves are available, skip the AI Edge Function entirely (saves the
+  // Claude call). Pass null context so useAiInsight's `enabled` gate stays false.
   const emissionContext: EmissionContext | null =
     moves.length > 0
       ? null
-      : weekly && recentEntries.length > 0
+      : weekly && allEntries.length > 0
         ? {
             weeklyTotalKg: weekly.total_kg_co2e,
             foodKg: weekly.breakdown?.food ?? 0,
             transportKg: weekly.breakdown?.transport ?? 0,
             energyKg: weekly.breakdown?.energy ?? 0,
-            topItems: [...recentEntries]
+            topItems: [...allEntries]
               .sort((a, b) => b.kg_co2e_total - a.kg_co2e_total)
               .slice(0, 3)
               .map((e) => ({
@@ -592,7 +886,7 @@ export default function HomeScreen() {
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.background }}>
-      {/* ── Hero: nature photo + ring ── */}
+      {/* ── Hero: nature photo + the ring anchor ── */}
       <View style={styles.heroOuter}>
         <Image
           source={require('@/assets/images/hero-forest.jpg')}
@@ -607,34 +901,37 @@ export default function HomeScreen() {
         />
         <SafeAreaView style={styles.heroContainer} edges={['top']}>
           <View style={styles.heroContent}>
-          {/* Greeting + streak flame chip */}
-          <View style={styles.topRow}>
-            <VText variant="heading" style={styles.greeting} numberOfLines={1}>
-              {greeting}
+            {/* Greeting + streak flame chip */}
+            <View style={styles.topRow}>
+              <VText variant="heading" style={styles.greeting} numberOfLines={1}>
+                {greeting}
+              </VText>
+              {streak > 0 && (
+                <View
+                  style={[styles.streakPill, streak >= 3 && styles.streakPillHot]}
+                  accessibilityLabel={`${streak} day streak`}
+                >
+                  <VIcon name="flame" size={13} color={colors.warning} strokeWidth={2} />
+                  <VText variant="mono" style={styles.streakPillText}>
+                    {streak}
+                  </VText>
+                </View>
+              )}
+            </View>
+
+            {/* The Ring — hero anchor */}
+            <View style={styles.ringWrapper}>
+              <BudgetRingHero todayKg={todayTotal} state={state} split={split} />
+            </View>
+
+            {/* One quiet, efficacy-first line */}
+            <VText
+              variant="body"
+              style={[styles.efficacyLine, { color: budgetStateColors[state].accent }]}
+            >
+              {EFFICACY_COPY[state]}
             </VText>
-            {streak > 0 && (
-              <View style={[styles.streakPill, streak >= 3 && styles.streakPillHot]}>
-                <VIcon name="flame" size={13} color={colors.warning} strokeWidth={2} />
-                <VText variant="mono" style={styles.streakPillText}>
-                  {streak}
-                </VText>
-              </View>
-            )}
           </View>
-
-          {/* The Ring — single source of truth */}
-          <View style={styles.ringWrapper}>
-            <BudgetRingHero todayKg={todayTotal} state={state} split={split} />
-          </View>
-
-          {/* Coach voice */}
-          <VText variant="body" style={[styles.coachLine, { color: coach.color }]}>
-            {coach.line}
-          </VText>
-
-          {/* Week strip */}
-          <WeekStrip days={weekStrip} />
-        </View>
         </SafeAreaView>
       </View>
 
@@ -647,26 +944,62 @@ export default function HomeScreen() {
         {/* Live trip — the app's most magical proof-of-life */}
         {isInMotion && <ActiveTripCard currentTripKm={currentTripKm} />}
 
-        {/* Tracked for you */}
-        {recentAutoLogs.length > 0 && (
-          <View style={styles.trackedSection}>
-            <VText variant="label" style={styles.sectionLabel}>
-              Tracked for you
-            </VText>
-            <VText variant="caption" style={styles.sectionSub}>
-              {"Veridian logged this so you didn't have to."}
-            </VText>
-            {recentAutoLogs.slice(0, 3).map((autoEntry) => (
-              <AutoLogRow key={autoEntry.tripId} entry={autoEntry} />
-            ))}
+        {/* Daily review entry point */}
+        {needsConfirmation.length > 0 && (
+          <VPressable
+            onPress={openReview}
+            haptic="light"
+            style={styles.reviewCard}
+            accessibilityRole="button"
+            accessibilityLabel={`${needsConfirmation.length} ${
+              needsConfirmation.length === 1 ? 'moment' : 'moments'
+            } to confirm, takes about 10 seconds`}
+          >
+            <View style={styles.reviewIcon}>
+              <VIcon name="sparkle" size={18} color={colors.primary} />
+            </View>
+            <View style={{ flex: 1 }}>
+              <VText variant="body" style={styles.reviewTitle}>
+                {`${needsConfirmation.length} ${
+                  needsConfirmation.length === 1 ? 'moment' : 'moments'
+                } to confirm`}
+              </VText>
+              <VText variant="caption" style={styles.reviewSub}>
+                Takes about 10 seconds
+              </VText>
+            </View>
+            <VIcon name="chevron-right" size={16} color={colors.textSecondary} strokeWidth={2} />
+          </VPressable>
+        )}
+
+        {/* ── The "Today" feed ── */}
+        <VText variant="label" style={styles.feedLabel}>
+          Today
+        </VText>
+        {todayLoading ? (
+          <View style={{ paddingHorizontal: spacing.md, gap: spacing.sm }}>
+            <VSkeleton width="100%" height={60} borderRadius={radii.md} />
+            <VSkeleton width="100%" height={60} borderRadius={radii.md} />
           </View>
+        ) : feedItems.length === 0 ? (
+          <VEmptyState
+            icon={<VIcon name="leaf" size={40} color={colors.primaryLight} />}
+            title="Your day, auto-written"
+            body="Your day writes itself here as you move — take a walk, we'll notice."
+            ctaLabel="Add something manually"
+            onCta={() => router.push('/(tabs)/log')}
+          />
+        ) : (
+          feedItems.map((item, i) => <FeedRow key={item.id} item={item} index={i} />)
         )}
 
         {/* Top Moves (ranked personal impact) or AI Insight fallback */}
         {moves.length > 0 ? (
-          <VTopMovesSection moves={moves} />
+          <View style={styles.belowFeedSection}>
+            <VTopMovesSection moves={moves} />
+          </View>
         ) : (
-          <View style={styles.insightWrap}>
+          <View style={[styles.insightWrap, styles.belowFeedSection]}>
             <VAiInsightCard
               insight={insight}
               isLoading={insightLoading}
@@ -676,81 +1009,29 @@ export default function HomeScreen() {
           </View>
         )}
 
-        {/* Recent */}
-        <View style={styles.recentHeader}>
-          <VText variant="label" style={styles.sectionLabel}>
-            Recent
+        {/* This week — momentum, reflowed below the feed */}
+        <View style={styles.weekSection}>
+          <VText variant="label" style={styles.weekLabel}>
+            This week
           </VText>
-          <VPressable
-            onPress={() => router.push('/(tabs)/insights')}
-            haptic="light"
-            hitSlop={8}
-            accessibilityRole="button"
-            accessibilityLabel="View all entries"
-          >
-            <View style={styles.viewAllRow}>
-              <VText variant="caption" style={styles.recentLink}>
-                View all
-              </VText>
-              <VIcon name="chevron-right" size={12} color={colors.primaryLight} strokeWidth={2.25} />
-            </View>
-          </VPressable>
+          <WeekStrip days={weekStrip} />
         </View>
-
-        {entriesLoading ? (
-          <View style={{ paddingHorizontal: spacing.md, gap: spacing.sm }}>
-            <VSkeleton width="100%" height={56} />
-            <VSkeleton width="100%" height={56} />
-          </View>
-        ) : recentEntries.length === 0 ? (
-          <View style={styles.emptyCard}>
-            <VText variant="heading" style={styles.emptyTitle}>
-              Nothing logged yet.
-            </VText>
-            <VText variant="caption" style={styles.emptyBody}>
-              Start with the most common things — a meal, your commute, or home energy.
-            </VText>
-            <VPressable
-              onPress={() => router.push('/(tabs)/log')}
-              haptic="light"
-              hitSlop={8}
-              style={styles.emptyCta}
-            >
-              <VText variant="caption" style={styles.emptyCtaText}>
-                Quick Log
-              </VText>
-              <VIcon name="arrow-right" size={12} color={colors.primaryLight} strokeWidth={2.25} />
-            </VPressable>
-          </View>
-        ) : (
-          recentEntries.slice(0, 5).map((entry, i) => {
-            const cat = entry.emission_factors.category as EmissionCategory;
-            const dotColor = CATEGORY_COLORS[cat] ?? colors.primary;
-            const glowColor = CATEGORY_GLOWS[cat] ?? colors.primaryGlowSoft;
-            return (
-              <VStaggerIn key={entry.id} index={i}>
-                <View style={[styles.entryCard, { borderLeftColor: dotColor }]}>
-                  <View
-                    style={[StyleSheet.absoluteFillObject, { backgroundColor: glowColor }]}
-                    pointerEvents="none"
-                  />
-                  <View style={styles.entryRow}>
-                    <View style={styles.entryLeft}>
-                      <View style={[styles.entryDot, { backgroundColor: dotColor }]} />
-                      <VText variant="body" style={styles.entryItem} numberOfLines={1}>
-                        {entry.emission_factors.item}
-                      </VText>
-                    </View>
-                    <VText variant="mono" style={styles.entryValue}>
-                      {entry.kg_co2e_total.toFixed(2)} kg
-                    </VText>
-                  </View>
-                </View>
-              </VStaggerIn>
-            );
-          })
-        )}
       </ScrollView>
+
+      {/* ── Daily review sheet — one confirm card at a time ── */}
+      <VBottomSheet isOpen={reviewOpen} onClose={() => setReviewOpen(false)} title="Confirm your moves">
+        {reviewDone || !currentTrip ? (
+          <ReviewAllDone />
+        ) : (
+          <ConfirmCard
+            trip={currentTrip}
+            index={reviewIndex}
+            total={reviewQueue.length}
+            onConfirm={handleReviewConfirm}
+            onDismiss={handleReviewDismiss}
+          />
+        )}
+      </VBottomSheet>
     </View>
   );
 }
@@ -772,7 +1053,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: spacing.lg,
     paddingTop: spacing.md,
-    paddingBottom: spacing.md,
+    paddingBottom: spacing.lg,
   },
   topRow: {
     width: '100%',
@@ -810,118 +1091,60 @@ const styles = StyleSheet.create({
   },
   ringWrapper: {
     alignItems: 'center',
-    paddingTop: spacing.xl,
-    paddingBottom: spacing.lg,
+    paddingTop: spacing.lg,
+    paddingBottom: spacing.md,
   },
-  coachLine: {
+  efficacyLine: {
     fontSize: 15,
     fontWeight: '600',
     textAlign: 'center',
     marginTop: spacing.xs,
+    paddingHorizontal: spacing.md,
   },
   scrollContent: {
-    paddingTop: spacing.xs,
+    paddingTop: spacing.md,
     paddingBottom: spacing.xxl,
   },
-  trackedSection: {
+  reviewCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    backgroundColor: colors.surface,
+    borderRadius: radii.lg,
+    borderWidth: 1,
+    borderColor: `${colors.primaryLight}33`,
+    marginHorizontal: spacing.md,
     marginBottom: spacing.md,
-  },
-  sectionLabel: {
     paddingHorizontal: spacing.md,
+    paddingVertical: 14,
+    ...shadows.card,
   },
-  sectionSub: {
-    fontSize: 11,
+  reviewIcon: {
+    width: 34,
+    height: 34,
+    borderRadius: radii.full,
+    backgroundColor: colors.primaryGlow,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  reviewTitle: { fontWeight: '700', lineHeight: 18 },
+  reviewSub: { fontSize: 12, marginTop: 1 },
+  feedLabel: {
     paddingHorizontal: spacing.md,
-    marginTop: 2,
     marginBottom: spacing.sm,
+  },
+  belowFeedSection: {
+    marginTop: spacing.lg,
   },
   insightWrap: {
     paddingHorizontal: spacing.md,
   },
-  recentHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+  weekSection: {
+    marginTop: spacing.lg,
+  },
+  weekLabel: {
     paddingHorizontal: spacing.md,
-    marginTop: spacing.xs,
-    marginBottom: spacing.sm,
-  },
-  viewAllRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 2,
-  },
-  recentLink: {
-    fontWeight: '600',
-    color: colors.primaryLight,
-  },
-  emptyCard: {
-    backgroundColor: colors.surface,
-    borderRadius: radii.lg,
-    borderWidth: 1,
-    borderColor: colors.border,
-    marginHorizontal: spacing.md,
-    padding: spacing.md,
-    ...shadows.card,
-  },
-  emptyTitle: {
-    fontSize: typography.sizes.md,
-  },
-  emptyBody: {
-    marginTop: 4,
-    lineHeight: 18,
-  },
-  emptyCta: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.xs,
-    alignSelf: 'flex-start',
-    marginTop: spacing.sm,
-    paddingVertical: 6,
-    paddingHorizontal: spacing.md,
-    borderRadius: radii.full,
-    borderWidth: 1,
-    borderColor: colors.borderStrong,
-  },
-  emptyCtaText: {
-    fontWeight: '600',
-    color: colors.primaryLight,
-  },
-  entryCard: {
-    backgroundColor: colors.surface,
-    borderRadius: radii.lg,
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderLeftWidth: 3,
-    marginHorizontal: spacing.md,
-    marginBottom: spacing.sm,
-    paddingHorizontal: spacing.md,
-    paddingVertical: 12,
-    overflow: 'hidden',
-    ...shadows.card,
-  },
-  entryRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  entryLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.sm,
-    flex: 1,
-  },
-  entryDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-  },
-  entryItem: {
-    fontWeight: '500',
-    flex: 1,
-    lineHeight: 18,
-  },
-  entryValue: {
-    fontSize: typography.sizes.md,
+    marginBottom: spacing.md,
+    textAlign: 'center',
   },
 });

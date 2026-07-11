@@ -457,9 +457,15 @@ export default function LogScreen() {
 
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
-      {/* ── Header ── */}
+      {/* ── Header — this screen is now the manual escape hatch; autopilot
+          handles the common cases (NORTH_STAR.md §8.1). ── */}
       <View style={styles.header}>
-        <VText variant="title">Log</VText>
+        <View style={styles.headerText}>
+          <VText variant="title">Add manually</VText>
+          <VText variant="caption" style={styles.headerSub}>
+            Most things track themselves — this is for the rest.
+          </VText>
+        </View>
         <View style={[styles.totalPill, { borderColor: `${pillColor}40` }]}>
           <VText variant="mono" style={[styles.totalPillText, { color: pillColor }]}>
             {todayTotal.toFixed(1)} kg today
@@ -889,9 +895,18 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+    gap: spacing.sm,
     paddingHorizontal: spacing.lg,
     paddingTop: spacing.sm,
     paddingBottom: spacing.sm,
+  },
+  headerText: {
+    flex: 1,
+  },
+  headerSub: {
+    fontSize: typography.sizes.xs,
+    color: colors.textSecondary,
+    marginTop: 2,
   },
   totalPill: {
     backgroundColor: colors.surface,

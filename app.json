@@ -13,6 +13,7 @@
       "bundleIdentifier": "com.vedantlakhani.veridian",
       "usesAppleSignIn": false,
       "infoPlist": {
+        "NSMotionUsageDescription": "Veridian uses your iPhone's motion history to reconstruct trips you've already taken — your footprint tracks itself, no logging needed.",
         "NSLocationWhenInUseUsageDescription": "Veridian uses your location to detect transport trips and estimate their carbon footprint.",
         "NSLocationAlwaysAndWhenInUseUsageDescription": "Veridian detects your transport trips in the background so you never have to log a commute manually.",
         "UIBackgroundModes": [

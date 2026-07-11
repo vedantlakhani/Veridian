@@ -15,6 +15,20 @@ import {
   IDLE_ACTIVE_TRIP,
   type ActiveTripState,
 } from '@/lib/tripEngine';
+import {
+  fuseSignals,
+  filterMeaningfulSegments,
+  findVisitEndpoints,
+  estimateDistanceKm,
+  finalizeDraftStatus,
+  VISIT_MATCH_MS,
+  ESTIMATE_CONFIDENCE_CAP,
+  type ActivitySegment,
+  type DistanceSource,
+  type Visit,
+} from '@/lib/activityFusion';
+import * as VeridianMotion from '@/modules/veridian-motion';
+import type { MotionPermissionStatus } from '@/modules/veridian-motion';
 import { useAllEmissionFactors } from '@/hooks/useAllEmissionFactors';
 import { useDurableCreateEntry } from '@/hooks/useDurableCreateEntry';
 import { TRIP_KEYS } from '@/lib/queryKeys';
@@ -41,7 +55,12 @@ const SYNCED_KEYS_KEY = '@veridian/synced_trip_keys';
 const LEGACY_AUTO_LOGGED_KEY = '@veridian/auto_logged_trips';
 const LEGACY_DISMISSED_KEY = '@veridian/dismissed_trips';
 
-const MAX_RECENT_AUTO_LOGS = 5;
+// How far back the OS activity-history query reaches. CMMotionActivity retains
+// ~7 days; the watermark below is always clamped into this window so a device
+// that hasn't opened the app in weeks still reconstructs the last 7 days.
+const ACTIVITY_WATERMARK_KEY = '@veridian/activity_last_sync';
+const ACTIVITY_MAX_LOOKBACK_MS = 7 * 24 * 60 * 60 * 1000;
+
 // How many recent auto_confirmed trips to scan for a missing emission entry —
 // bounds the retry query; a car trip failing to write for this many
 // subsequent auto-confirmed trips is an edge case the offline queue's own
@@ -79,6 +98,29 @@ function findCarFactor(factors: EmissionFactor[]): EmissionFactor | undefined {
   );
 }
 
+// Resolves the emission factor for a confirmed/auto-logged trip mode. Bus and
+// train price against their own transport factors so a needs_confirmation trip
+// the user reclassifies as Bus/Train doesn't get charged at the car rate; both
+// fall back to the car factor when the catalog has no transit row yet.
+function findFactorForMode(factors: EmissionFactor[], mode: TripMode): EmissionFactor | undefined {
+  if (mode === 'bus') {
+    return (
+      factors.find(
+        (f) => f.category === 'transport' && (/bus/i.test(f.subcategory) || /bus/i.test(f.item)),
+      ) ?? findCarFactor(factors)
+    );
+  }
+  if (mode === 'train') {
+    return (
+      factors.find(
+        (f) =>
+          f.category === 'transport' && (/train|rail/i.test(f.subcategory) || /train|rail/i.test(f.item)),
+      ) ?? findCarFactor(factors)
+    );
+  }
+  return findCarFactor(factors);
+}
+
 async function fireNotification(title: string, body: string): Promise<void> {
   try {
     const { status } = await Notifications.getPermissionsAsync();
@@ -95,6 +137,40 @@ async function fireNotification(title: string, body: string): Promise<void> {
 async function readAsyncStorageSet(key: string): Promise<Set<string>> {
   const raw = await AsyncStorage.getItem(key);
   return new Set(raw ? (JSON.parse(raw) as string[]) : []);
+}
+
+// ── Distance resolution for activity-only fused trips (no GPS breadcrumbs) ──
+// Each tolerates the native module being absent (the wrappers return null) and
+// swallows failures so the caller falls back to a conservative estimate.
+
+/** Pedometer distance over [startMs, endMs]; null if unavailable (e.g. cycling). */
+async function resolvePedometerKm(startMs: number, endMs: number): Promise<number | null> {
+  try {
+    const sample = await VeridianMotion.queryPedometerDistance(startMs, endMs);
+    return sample?.distanceKm ?? null;
+  } catch {
+    return null;
+  }
+}
+
+/** MapKit driving distance between the trip's two CLVisit endpoints; null if either is missing. */
+async function resolveRouteKm(
+  trip: { startTime: Date; endTime: Date },
+  visits: Visit[],
+): Promise<number | null> {
+  try {
+    const endpoints = findVisitEndpoints(trip, visits);
+    if (!endpoints) return null;
+    const route = await VeridianMotion.routeDistanceKm(
+      endpoints.origin.lat,
+      endpoints.origin.lng,
+      endpoints.destination.lat,
+      endpoints.destination.lng,
+    );
+    return route?.distanceKm ?? null;
+  } catch {
+    return null;
+  }
 }
 
 interface AutoConfirmedRow {
@@ -122,6 +198,14 @@ export function useTrips(userId: string | undefined) {
   const [hasPermission, setHasPermission] = useState<boolean | null>(null);
   const [activeTrip, setActiveTrip] = useState<ActiveTripState>(IDLE_ACTIVE_TRIP);
   const [hydrated, setHydrated] = useState(false);
+
+  // Whether the iOS motion module is linked in this build (Android/Expo Go/web
+  // and simulator return false) and the current Motion & Fitness authorization.
+  // Both are additive to the return value — location-only users are unaffected.
+  const motionAvailable = VeridianMotion.isAvailable();
+  const [motionPermission, setMotionPermission] = useState<MotionPermissionStatus>('undetermined');
+  // Guards startVisitMonitoring() to one call per session.
+  const visitMonitoringRef = useRef(false);
 
   // Persisted across sessions — client_trip_keys already upserted to detected_trips.
   const syncedKeysRef = useRef<Set<string>>(new Set());
@@ -163,6 +247,48 @@ export function useTrips(userId: string | undefined) {
   const persistSyncedKeys = useCallback(async () => {
     await AsyncStorage.setItem(SYNCED_KEYS_KEY, JSON.stringify([...syncedKeysRef.current]));
   }, []);
+
+  // ── Reflect the current Motion & Fitness authorization on mount ──
+  // So screens see the real status before requestPermissions() ever runs. No-op
+  // (stays 'undetermined') when the native module is absent.
+  useEffect(() => {
+    if (!motionAvailable) return;
+    let cancelled = false;
+    (async () => {
+      const status = await VeridianMotion.getMotionPermission();
+      if (!cancelled) setMotionPermission(status);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [motionAvailable]);
+
+  // ── Re-arm CLVisit monitoring on every process launch ──
+  // Unlike the background-location task (startLocationUpdatesAsync persists
+  // its registration across launches), startMonitoringVisits() does NOT — iOS
+  // requires the call again every cold start, or route-based distance
+  // resolution (needsDistance === 'route') silently stops working after the
+  // very first session. Mirrors the motionPermission hydrate effect above:
+  // best-effort, no-op when the native module is absent, and guarded by
+  // visitMonitoringRef so it only ever fires once per session (requestPermissions()
+  // also sets this same ref when it starts monitoring during the initial grant).
+  useEffect(() => {
+    if (!motionAvailable || visitMonitoringRef.current) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const bg = await Location.getBackgroundPermissionsAsync();
+        if (cancelled || bg.status !== 'granted' || visitMonitoringRef.current) return;
+        visitMonitoringRef.current = true;
+        await VeridianMotion.startVisitMonitoring();
+      } catch {
+        // Best-effort — visit-based distance simply falls back to estimate.
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [motionAvailable]);
 
   // ── needs_confirmation trips — the Log screen's confirm card ──
   const needsConfirmationQuery = useQuery({
@@ -241,7 +367,10 @@ export function useTrips(userId: string | undefined) {
     const pending = autoConfirmedQuery.data?.pendingEntryTrips ?? [];
     if (pending.length === 0) return;
 
-    const carFactor = findCarFactor(factors);
+    // pendingEntryTrips are auto_confirmed car trips (only car auto-confirms via
+    // decideTripAction), so this resolves to the car factor today; routed through
+    // findFactorForMode for consistency with the confirm path.
+    const carFactor = findFactorForMode(factors, 'car');
     if (!carFactor) return;
 
     const process = async () => {
@@ -290,48 +419,143 @@ export function useTrips(userId: string | undefined) {
     void process();
   }, [userId, factors, autoConfirmedQuery.data, createDurable, queryClient]);
 
-  // ── Buffer -> engine -> sync ──
+  // ── Buffer + OS activity -> fusion engine -> sync ──
   const refresh = useCallback(async () => {
     const raw = await AsyncStorage.getItem(LOCATION_HISTORY_KEY);
     const points: StoredLocation[] = raw ? (JSON.parse(raw) as StoredLocation[]) : [];
     setActiveTrip(detectActiveTrip(points));
 
-    if (!userId || !hydrated || points.length === 0) return;
+    if (!userId || !hydrated) return;
 
-    const classified = analyzeTrips(points);
-    const unsynced = classified.filter(
-      (t) => !syncedKeysRef.current.has(t.clientTripKey) && !syncingRef.current.has(t.clientTripKey),
+    const now = Date.now();
+    const gpsTrips = points.length > 0 ? analyzeTrips(points, now) : [];
+
+    // ── OS activity history (retroactive, up to 7 days) ──
+    // Fuses the M-series coprocessor's segments with the GPS trips so trips are
+    // reconstructed even when the app was never opened during them. Absent on
+    // Android / Expo Go / simulator (isAvailable() false) — GPS trips then pass
+    // straight through fuseSignals unchanged.
+    let segments: ActivitySegment[] = [];
+    let motionActive = false;
+    let watermark = now - ACTIVITY_MAX_LOOKBACK_MS;
+    if (VeridianMotion.isAvailable()) {
+      // Any motion failure (permission read, history query) degrades this pass to
+      // GPS-only — location-only behavior stays exactly as it was.
+      try {
+        if ((await VeridianMotion.getMotionPermission()) === 'granted') {
+          const stored = await AsyncStorage.getItem(ACTIVITY_WATERMARK_KEY);
+          const parsed = stored != null ? Number(stored) : NaN;
+          // Always clamp into the 7-day window: a stale watermark can't reach past
+          // what CoreMotion retains, and a corrupt/absent one defaults to the floor.
+          watermark = Number.isFinite(parsed)
+            ? Math.max(parsed, now - ACTIVITY_MAX_LOOKBACK_MS)
+            : now - ACTIVITY_MAX_LOOKBACK_MS;
+          const history = await VeridianMotion.queryActivityHistory(watermark, now);
+          segments = filterMeaningfulSegments(history, now);
+          motionActive = true;
+        }
+      } catch {
+        motionActive = false;
+        segments = [];
+      }
+    }
+
+    const drafts = fuseSignals(gpsTrips, segments, now);
+    if (drafts.length === 0) return;
+
+    const unsynced = drafts.filter(
+      (t) =>
+        !syncedKeysRef.current.has(t.clientTripKey) &&
+        !syncingRef.current.has(t.clientTripKey) &&
+        // A merged draft's actAliasKey is the OS segment's own act_ identity —
+        // once the GPS points backing its clientTripKey age out of the 24h
+        // buffer, a re-query resolves this same real-world trip via its act_
+        // key instead. Skipping on that alias too stops it re-syncing as a
+        // "new" trip.
+        !(t.actAliasKey && syncedKeysRef.current.has(t.actAliasKey)),
     );
-    if (unsynced.length === 0) return;
+
+    // One CLVisit fetch per refresh covers every route-needing draft in the batch.
+    const needsVisits = unsynced.some((t) => t.needsDistance === 'route');
+    const visits: Visit[] =
+      motionActive && needsVisits
+        ? await VeridianMotion.getRecentVisits(watermark - VISIT_MATCH_MS)
+        : [];
 
     for (const trip of unsynced) {
       syncingRef.current.add(trip.clientTripKey);
       try {
+        const durationH = trip.features.durationH ?? 0;
+        let distanceKm = trip.distanceKm;
+        let confidence = trip.confidence;
+        let distanceSource: DistanceSource = trip.features.distanceSource;
+
+        // Activity-only drafts arrive without a distance — resolve it now.
+        if (distanceKm === null) {
+          const startMs = trip.startTime.getTime();
+          const endMs = trip.endTime.getTime();
+          let resolved: number | null = null;
+
+          if (trip.needsDistance === 'pedometer') {
+            resolved = await resolvePedometerKm(startMs, endMs);
+            if (resolved !== null) distanceSource = 'pedometer';
+          } else if (trip.needsDistance === 'route') {
+            resolved = await resolveRouteKm(trip, visits);
+            if (resolved !== null) distanceSource = 'route';
+          }
+
+          if (resolved === null) {
+            // Pedometer/route unavailable — conservative estimate. The
+            // confidence cap below is defense-in-depth only; the actual
+            // auto-log guard is finalizeDraftStatus() forcing
+            // needs_confirmation whenever distanceSource is 'estimate'.
+            resolved = estimateDistanceKm(trip.mode, durationH);
+            distanceSource = 'estimate';
+            confidence = Math.min(confidence, ESTIMATE_CONFIDENCE_CAP);
+          }
+          distanceKm = resolved;
+        }
+
+        const roundedKm = Math.round(distanceKm * 10) / 10;
+        // CRITICAL: an estimated distance (walk, cycling, OR car) must never
+        // auto-log — finalizeDraftStatus forces needs_confirmation for those
+        // regardless of mode/confidence/distance; see its docstring.
+        const status = finalizeDraftStatus({
+          mode: trip.mode,
+          confidence,
+          distanceKm: roundedKm,
+          distanceSource,
+        });
+
         const { error } = await supabase.from('detected_trips').upsert(
           {
             user_id: userId,
             client_trip_key: trip.clientTripKey,
             started_at: trip.startTime.toISOString(),
             ended_at: trip.endTime.toISOString(),
-            distance_km: trip.distanceKm,
-            avg_speed_kmh: trip.avgSpeedKmh,
+            distance_km: roundedKm,
+            // GPS/fused keep their measured avg speed; activity-only derive one
+            // from resolved distance / duration for the confirm card display.
+            avg_speed_kmh:
+              trip.features.avgSpeedKmh ?? (durationH > 0 ? Math.round(distanceKm / durationH) : null),
             mode: trip.mode,
-            confidence: trip.confidence,
-            status: trip.status,
-            features: trip.features,
+            confidence,
+            status,
+            features: { ...trip.features, distanceSource },
           },
           { onConflict: 'user_id,client_trip_key', ignoreDuplicates: false },
         );
         if (error) throw error;
 
         syncedKeysRef.current.add(trip.clientTripKey);
+        if (trip.actAliasKey) syncedKeysRef.current.add(trip.actAliasKey);
         await persistSyncedKeys();
 
-        if (trip.status === 'auto_confirmed' && (trip.mode === 'walk' || trip.mode === 'cycling')) {
-          const savedKg = trip.distanceKm * CAR_KG_PER_KM;
+        if (status === 'auto_confirmed' && (trip.mode === 'walk' || trip.mode === 'cycling')) {
+          const savedKg = roundedKm * CAR_KG_PER_KM;
           await fireNotification(
             trip.mode === 'cycling' ? '🚲 Great choice!' : '🚶 Nice walk!',
-            `${trip.distanceKm.toFixed(1)} km ${trip.mode === 'cycling' ? 'by bike' : 'on foot'} · You avoided ${savedKg.toFixed(2)} kg CO₂`,
+            `${roundedKm.toFixed(1)} km ${trip.mode === 'cycling' ? 'by bike' : 'on foot'} · You avoided ${savedKg.toFixed(2)} kg CO₂`,
           );
         }
       } catch {
@@ -341,8 +565,25 @@ export function useTrips(userId: string | undefined) {
       }
     }
 
-    queryClient.invalidateQueries({ queryKey: TRIP_KEYS.needsConfirmation(userId) });
-    queryClient.invalidateQueries({ queryKey: TRIP_KEYS.recentAutoLogs(userId) });
+    // Advance the activity watermark to the newest OS segment end, but ONLY when
+    // every activity/fused draft this pass is synced (a failed upsert holds the
+    // watermark so its segment is re-queried next refresh; already-synced newer
+    // segments are idempotently skipped via syncedKeysRef).
+    if (motionActive) {
+      const segDrafts = drafts.filter((d) => d.features.signal !== 'gps');
+      const anyFailed = segDrafts.some((d) => !syncedKeysRef.current.has(d.clientTripKey));
+      if (segDrafts.length > 0 && !anyFailed) {
+        const newestEnd = Math.max(...segDrafts.map((d) => d.endTime.getTime()));
+        if (newestEnd > watermark) {
+          await AsyncStorage.setItem(ACTIVITY_WATERMARK_KEY, String(newestEnd));
+        }
+      }
+    }
+
+    if (unsynced.length > 0) {
+      queryClient.invalidateQueries({ queryKey: TRIP_KEYS.needsConfirmation(userId) });
+      queryClient.invalidateQueries({ queryKey: TRIP_KEYS.recentAutoLogs(userId) });
+    }
   }, [userId, hydrated, persistSyncedKeys, queryClient]);
 
   // Writes a fake 12 km car track (45 km/h avg) to AsyncStorage for Expo Go testing.
@@ -401,6 +642,28 @@ export function useTrips(userId: string | undefined) {
             pausesUpdatesAutomatically: true,
           });
         }
+        // CLVisit endpoints need "Always" location — start monitoring once so
+        // automotive segments can be distance-estimated by routing between them.
+        if (VeridianMotion.isAvailable() && !visitMonitoringRef.current) {
+          visitMonitoringRef.current = true;
+          try {
+            await VeridianMotion.startVisitMonitoring();
+          } catch {
+            // Best-effort — visit-based distance simply falls back to estimate.
+          }
+        }
+      }
+
+      // Best-effort Motion & Fitness prompt AFTER location, so a denial here
+      // never affects the location grant returned to the caller. Location-only
+      // users keep working exactly as before.
+      if (VeridianMotion.isAvailable()) {
+        try {
+          const motion = await VeridianMotion.requestMotionPermission();
+          setMotionPermission(motion);
+        } catch {
+          // Leave motionPermission as-is; the fusion path stays dormant.
+        }
       }
 
       return granted;
@@ -416,21 +679,29 @@ export function useTrips(userId: string | undefined) {
       const mode = modeOverride ?? trip.mode;
       const zeroEmission = mode === 'walk' || mode === 'cycling';
 
+      // Resolve the factor BEFORE flipping detected_trips to 'confirmed'. A
+      // missing factor must throw here — before the status update — so a trip
+      // is never left marked confirmed with no linked entry and no retry path
+      // (unlike auto_confirmed car trips, confirmed trips aren't covered by
+      // the pendingEntryTrips retry effect). Priced against the CONFIRMED
+      // (possibly overridden) mode, so a trip the user reclassifies from car
+      // to Bus/Train is charged correctly.
+      const factor = !zeroEmission && factors ? findFactorForMode(factors, mode) : undefined;
+      if (!zeroEmission && !factor) throw new Error('No transport emission factor found');
+
       const { error: updateError } = await supabase
         .from('detected_trips')
         .update({ status: 'confirmed', mode, updated_at: new Date().toISOString() })
         .eq('id', trip.id);
       if (updateError) throw updateError;
 
-      if (!zeroEmission) {
-        const carFactor = factors ? findCarFactor(factors) : undefined;
-        if (!carFactor) throw new Error('No transport emission factor found');
+      if (!zeroEmission && factor) {
         // Queued (offline/network failure) still counts as confirmed — the
         // trip's status update above already committed; the flush path
         // completes the entry itself on reconnect.
         await createDurable({
           userId: userId!,
-          factor: carFactor,
+          factor,
           quantity: trip.distance_km,
           source: 'sensor',
           status: 'user_confirmed',
@@ -481,10 +752,17 @@ export function useTrips(userId: string | undefined) {
   return {
     hasPermission,
     requestPermissions,
+    motionAvailable,
+    motionPermission,
     needsConfirmation: needsConfirmationQuery.data ?? [],
     confirmTrip,
     dismissTrip,
-    recentAutoLogs: (autoConfirmedQuery.data?.autoLogs ?? []).slice(0, MAX_RECENT_AUTO_LOGS),
+    // UNSLICED — already bounded by AUTO_CONFIRMED_SCAN_LIMIT (20). Slicing to
+    // a display cap here (across ALL modes, before any per-screen filter) let
+    // car trips evict same-day zero-emission trips from the Today feed before
+    // it ever got to filter by mode/day. Consumers filter first, then cap
+    // their own rendered rows (see app/(tabs)/index.tsx's feedItems).
+    recentAutoLogs: autoConfirmedQuery.data?.autoLogs ?? [],
     isInMotion: activeTrip.isInMotion,
     currentTripKm: activeTrip.currentTripKm,
     refresh,

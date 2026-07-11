@@ -1,0 +1,10 @@
+{
+  "name": "veridian-motion",
+  "version": "1.0.0",
+  "description": "Local Expo module exposing iOS's pre-computed motion signals (CoreMotion history, pedometer distance, MapKit routing, CLVisit endpoints) for retroactive trip reconstruction.",
+  "main": "index.ts",
+  "author": "Veridian",
+  "license": "UNLICENSED",
+  "homepage": "https://veridian.app",
+  "private": true
+}
