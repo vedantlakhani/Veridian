@@ -7,7 +7,10 @@ import * as Notifications from 'expo-notifications';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import { LOCATION_HISTORY_KEY, type StoredLocation } from '@/tasks/locationTask';
-import { ensureBackgroundTrackingRegistered } from '@/lib/backgroundTracking';
+import {
+  ensureBackgroundTrackingRegistered,
+  ensureMotionPermissionRequested,
+} from '@/lib/backgroundTracking';
 import {
   analyzeTrips,
   detectActiveTrip,
@@ -681,6 +684,21 @@ export function useTrips(userId: string | undefined) {
         if (!cancelled) setHasPermission(granted);
         if (granted) {
           await ensureBackgroundTrackingRegistered(visitMonitoringRef);
+        }
+
+        // Best-effort Motion & Fitness prompt — mirrors requestPermissions()'s
+        // post-location prompt. MUST also run here: a user whose location was
+        // already granted in a prior session never taps the (now-hidden)
+        // banner again, so requestPermissions() never re-runs — without this,
+        // motion permission would never be requested at all, and the app
+        // would never even appear in Settings > Motion & Fitness, even though
+        // the user believes trip detection is fully active. Extracted into
+        // lib/backgroundTracking.ts (see ensureMotionPermissionRequested) so
+        // it's unit-testable without mocking this hook's whole dependency
+        // graph, same reasoning as ensureBackgroundTrackingRegistered above.
+        if (granted) {
+          const motion = await ensureMotionPermissionRequested();
+          if (motion && !cancelled) setMotionPermission(motion);
         }
       } catch {
         if (!cancelled) setHasPermission(false);

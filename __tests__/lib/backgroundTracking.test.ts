@@ -15,7 +15,10 @@
 
 import * as Location from 'expo-location';
 import * as TaskManager from 'expo-task-manager';
-import { ensureBackgroundTrackingRegistered } from '@/lib/backgroundTracking';
+import {
+  ensureBackgroundTrackingRegistered,
+  ensureMotionPermissionRequested,
+} from '@/lib/backgroundTracking';
 import { LOCATION_TASK_NAME } from '@/tasks/locationTask';
 import * as VeridianMotion from '@/modules/veridian-motion';
 
@@ -37,12 +40,16 @@ jest.mock('@/tasks/locationTask', () => ({
 jest.mock('@/modules/veridian-motion', () => ({
   isAvailable: jest.fn(),
   startVisitMonitoring: jest.fn(),
+  getMotionPermission: jest.fn(),
+  requestMotionPermission: jest.fn(),
 }));
 
 const mockIsTaskRegistered = TaskManager.isTaskRegisteredAsync as jest.Mock;
 const mockStartLocationUpdates = Location.startLocationUpdatesAsync as jest.Mock;
 const mockIsAvailable = VeridianMotion.isAvailable as jest.Mock;
 const mockStartVisitMonitoring = VeridianMotion.startVisitMonitoring as jest.Mock;
+const mockGetMotionPermission = VeridianMotion.getMotionPermission as jest.Mock;
+const mockRequestMotionPermission = VeridianMotion.requestMotionPermission as jest.Mock;
 
 describe('ensureBackgroundTrackingRegistered', () => {
   beforeEach(() => {
@@ -102,5 +109,72 @@ describe('ensureBackgroundTrackingRegistered', () => {
 
     await expect(ensureBackgroundTrackingRegistered(visitMonitoringRef)).resolves.toBeUndefined();
     expect(visitMonitoringRef.current).toBe(true);
+  });
+});
+
+// Targeted test for ensureMotionPermissionRequested — the fix for a returning
+// user whose location permission was already granted in a prior session
+// never having Motion & Fitness requested at all (Settings > Motion &
+// Fitness didn't even list the app on a real device, confirmed manually).
+describe('ensureMotionPermissionRequested', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it('returns null without querying anything when the motion module is unavailable', async () => {
+    mockIsAvailable.mockReturnValue(false);
+
+    const result = await ensureMotionPermissionRequested();
+
+    expect(result).toBeNull();
+    expect(mockGetMotionPermission).not.toHaveBeenCalled();
+    expect(mockRequestMotionPermission).not.toHaveBeenCalled();
+  });
+
+  it('requests permission when the current status is undetermined', async () => {
+    mockIsAvailable.mockReturnValue(true);
+    mockGetMotionPermission.mockResolvedValue('undetermined');
+    mockRequestMotionPermission.mockResolvedValue('granted');
+
+    const result = await ensureMotionPermissionRequested();
+
+    expect(mockRequestMotionPermission).toHaveBeenCalledTimes(1);
+    expect(result).toBe('granted');
+  });
+
+  it('does not re-request when permission is already granted', async () => {
+    mockIsAvailable.mockReturnValue(true);
+    mockGetMotionPermission.mockResolvedValue('granted');
+
+    const result = await ensureMotionPermissionRequested();
+
+    expect(mockRequestMotionPermission).not.toHaveBeenCalled();
+    expect(result).toBe('granted');
+  });
+
+  it('does not re-request when permission was already denied', async () => {
+    mockIsAvailable.mockReturnValue(true);
+    mockGetMotionPermission.mockResolvedValue('denied');
+
+    const result = await ensureMotionPermissionRequested();
+
+    expect(mockRequestMotionPermission).not.toHaveBeenCalled();
+    expect(result).toBe('denied');
+  });
+
+  it('returns null and swallows a getMotionPermission failure', async () => {
+    mockIsAvailable.mockReturnValue(true);
+    mockGetMotionPermission.mockRejectedValue(new Error('native query failed'));
+
+    await expect(ensureMotionPermissionRequested()).resolves.toBeNull();
+    expect(mockRequestMotionPermission).not.toHaveBeenCalled();
+  });
+
+  it('returns null and swallows a requestMotionPermission failure', async () => {
+    mockIsAvailable.mockReturnValue(true);
+    mockGetMotionPermission.mockResolvedValue('undetermined');
+    mockRequestMotionPermission.mockRejectedValue(new Error('native request failed'));
+
+    await expect(ensureMotionPermissionRequested()).resolves.toBeNull();
   });
 });

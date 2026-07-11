@@ -2,6 +2,7 @@ import * as Location from 'expo-location';
 import * as TaskManager from 'expo-task-manager';
 import { LOCATION_TASK_NAME } from '@/tasks/locationTask';
 import * as VeridianMotion from '@/modules/veridian-motion';
+import type { MotionPermissionStatus } from '@/modules/veridian-motion';
 
 // Shared "success path" for granted background location — registers the
 // background-location task if it isn't already running, and starts CLVisit
@@ -36,5 +37,28 @@ export async function ensureBackgroundTrackingRegistered(
     } catch {
       // Best-effort — visit-based distance simply falls back to estimate.
     }
+  }
+}
+
+// Requests Motion & Fitness permission if it's still 'undetermined'. Mirrors
+// requestPermissions()'s own best-effort motion prompt (which fires
+// unconditionally right after a user-triggered location grant), but this one
+// is called from useTrips' mount-time location-hydrate effect — which runs on
+// EVERY app launch, not just once per user tap — so it must check the current
+// status first. Without that check, a user who already granted or denied
+// Motion & Fitness would have this native call re-issued every cold start;
+// skipping it here also means it can never re-request against a decided
+// permission, so it can't race requestPermissions() into two overlapping
+// native prompts. Returns null (no-op for the caller) when the module isn't
+// linked or the query/request throws — best-effort, same as the inline logic
+// it replaces.
+export async function ensureMotionPermissionRequested(): Promise<MotionPermissionStatus | null> {
+  if (!VeridianMotion.isAvailable()) return null;
+  try {
+    const current = await VeridianMotion.getMotionPermission();
+    if (current !== 'undetermined') return current;
+    return await VeridianMotion.requestMotionPermission();
+  } catch {
+    return null;
   }
 }
