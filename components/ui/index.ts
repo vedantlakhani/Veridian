@@ -21,6 +21,7 @@ export { SwipeableEntryRow } from './SwipeableEntryRow';
 export { VStaggerIn } from './VStaggerIn';
 export { VTopMoveCard } from './VTopMoveCard';
 export { VTopMovesSection } from './VTopMovesSection';
+export { VMomentumBand } from './VMomentumBand';
 export type { VIconName } from './VIcon';
 export type { VTextVariant } from './VText';
 export type { HapticStrength } from './VPressable';

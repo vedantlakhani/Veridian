@@ -1,0 +1,29 @@
+apply plugin: 'com.android.library'
+
+group = 'expo.modules.veridianmotion'
+version = '1.0.0'
+
+def expoModulesCorePlugin = new File(project(":expo-modules-core").projectDir.absolutePath, "ExpoModulesCorePlugin.gradle")
+apply from: expoModulesCorePlugin
+applyKotlinExpoModulesCorePlugin()
+useCoreDependencies()
+useExpoPublishing()
+
+// The compile/target/min SDK versions come from the host app (managed by
+// expo-modules-core), matching every other local + node_modules Expo module.
+useDefaultAndroidSdkVersions()
+
+android {
+  namespace "expo.modules.veridianmotion"
+  defaultConfig {
+    versionCode 1
+    versionName "1.0.0"
+  }
+}
+
+dependencies {
+  // ActivityRecognitionClient + the ActivityTransition* API live here. Pinned to a
+  // current stable Play Services Location release; no background-location review is
+  // triggered by the Activity Recognition Transition API (see NORTH_STAR §4).
+  implementation "com.google.android.gms:play-services-location:21.3.0"
+}

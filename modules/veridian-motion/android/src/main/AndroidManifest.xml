@@ -1,0 +1,22 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+  <!--
+    ACTIVITY_RECOGNITION is the ONLY permission Android v1 needs (NORTH_STAR §4):
+    the Activity Recognition Transition API is not gated by Play's background-location
+    review. This is a runtime permission on API 29+; install-time (auto-granted) below.
+    The actual runtime REQUEST is made JS-side via PermissionsAndroid — this module
+    never shows a dialog.
+  -->
+  <uses-permission android:name="android.permission.ACTIVITY_RECOGNITION" />
+
+  <application>
+    <!--
+      Manifest-registered (not context-registered) so transition callbacks are
+      delivered even when the app process is dead — Play Services cold-starts the
+      process to deliver the broadcast. exported="false": only the OS/Play Services,
+      via our own PendingIntent, may trigger it; no other app can.
+    -->
+    <receiver
+      android:name="expo.modules.veridianmotion.VeridianTransitionReceiver"
+      android:exported="false" />
+  </application>
+</manifest>

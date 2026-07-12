@@ -13,6 +13,7 @@ import { useDailySummary } from '@/hooks/useSummaries';
 import { useMyChallenges, useCreateChallenge, useJoinChallenge } from '@/hooks/useChallenges';
 import { useAchievements } from '@/hooks/useAchievements';
 import { useStreak } from '@/hooks/useStreak';
+import { useMomentum } from '@/hooks/useMomentum';
 import { supabase } from '@/lib/supabase';
 import AchievementBadge from '@/components/social/AchievementBadge';
 import ChallengeCard from '@/components/social/ChallengeCard';
@@ -22,6 +23,7 @@ import {
   VButton,
   VInput,
   VMetricCard,
+  VMomentumBand,
   VBottomSheet,
   VSkeleton,
   VEmptyState,
@@ -100,7 +102,11 @@ export default function ProfileScreen() {
   const { data: profile, isLoading: profileLoading } = useProfile(userId);
   const { mutate: updateProfile, isPending: isSaving } = useUpdateProfile();
   const { data: daily } = useDailySummary(userId);
+  // Real consecutive-day streak — kept for the achievements shelf's progress
+  // hints (criteria_type: 'streak_days'); the visible stat-row DISPLAY below
+  // is the momentum band instead (NORTH_STAR.md §8 pattern 5).
   const { streak, isLoading: streakLoading } = useStreak(userId);
+  const momentum = useMomentum(userId);
 
   // Lifetime total — cheap aggregate over daily_summaries, not every entry
   const { data: lifetimeRows, isLoading: lifetimeLoading } = useQuery({
@@ -273,7 +279,8 @@ export default function ProfileScreen() {
     }
   };
 
-  const statsLoading = profileLoading || lifetimeLoading || bestWeekLoading || streakLoading;
+  const statsLoading =
+    profileLoading || lifetimeLoading || bestWeekLoading || streakLoading || momentum.isLoading;
 
   const displayName = resolveDisplayName(profile?.display_name, user?.email);
 
@@ -395,13 +402,7 @@ export default function ProfileScreen() {
               />
             </View>
             <View style={styles.statCard}>
-              <VMetricCard
-                value={String(Math.floor(streak))}
-                unit={streak === 1 ? 'day' : 'days'}
-                label="Streak"
-                accentColor={colors.warning}
-                icon={<VIcon name="flame" size={12} color={colors.warning} strokeWidth={2} />}
-              />
+              <VMomentumBand score={momentum.score} band={momentum.band} variant="card" />
             </View>
           </View>
         )}

@@ -144,20 +144,23 @@ function StoryCard({
             <View
               style={[
                 storyStyles.deltaChip,
-                { backgroundColor: deltaGood ? colors.successGlow : colors.dangerGlow },
+                // Muted amber, never red-as-verdict, for a personal total that
+                // ticked up (NORTH_STAR.md §8.4 anti-guilt) — the same "watch"
+                // tone the budget system uses, not a danger color.
+                { backgroundColor: deltaGood ? colors.successGlow : colors.warningGlow },
               ]}
             >
               <VIcon
                 name={deltaGood ? 'arrow-down' : 'arrow-up'}
                 size={10}
-                color={deltaGood ? colors.primaryLight : colors.danger}
+                color={deltaGood ? colors.primaryLight : colors.warning}
                 strokeWidth={2.5}
               />
               <VText
                 variant="mono"
                 style={[
                   storyStyles.deltaText,
-                  { color: deltaGood ? colors.primaryLight : colors.danger },
+                  { color: deltaGood ? colors.primaryLight : colors.warning },
                 ]}
               >
                 {Math.abs(trendPercent!).toFixed(1)}%
@@ -498,8 +501,8 @@ export default function InsightsScreen() {
           </View>
         ) : entries.length === 0 ? (
           <VEmptyState
-            title="No entries found"
-            body="Log emissions using the Log tab"
+            title="Nothing here yet"
+            body="This is where your story shows up — log something or take a walk, and it'll appear here."
             icon={<VIcon name="leaf" size={40} color={colors.textTertiary} />}
           />
         ) : (

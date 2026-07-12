@@ -1,3 +1,4 @@
+import { Platform } from 'react-native';
 import * as Location from 'expo-location';
 import * as TaskManager from 'expo-task-manager';
 import { LOCATION_TASK_NAME } from '@/tasks/locationTask';
@@ -18,6 +19,15 @@ import type { MotionPermissionStatus } from '@/modules/veridian-motion';
 export async function ensureBackgroundTrackingRegistered(
   visitMonitoringRef: { current: boolean },
 ): Promise<void> {
+  // iOS-only. Android is policy-first (NORTH_STAR §4): we never request
+  // ACCESS_BACKGROUND_LOCATION, so startLocationUpdatesAsync (a background task)
+  // has nothing to run against, and CLVisit has no Android analog. Android's
+  // primary signal is the Activity Recognition Transition API, wired separately
+  // via ensureTransitionMonitoring(). Guarding here (rather than only at the two
+  // call sites) makes it impossible for either to accidentally start background
+  // location on Android.
+  if (Platform.OS !== 'ios') return;
+
   const already = await TaskManager.isTaskRegisteredAsync(LOCATION_TASK_NAME);
   if (!already) {
     await Location.startLocationUpdatesAsync(LOCATION_TASK_NAME, {

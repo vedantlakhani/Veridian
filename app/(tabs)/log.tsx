@@ -39,7 +39,17 @@ import { useAuthStore } from '@/stores/authStore';
 import { useTripsContext } from '@/contexts/TripsContext';
 import { CAR_KG_PER_KM } from '@/lib/tripEngine';
 import { getLocalDateString } from '@/lib/emissions';
-import { colors, spacing, typography, radii, motion, gradients, shadows } from '@/lib/theme';
+import {
+  colors,
+  spacing,
+  typography,
+  radii,
+  motion,
+  gradients,
+  shadows,
+  budgetStateFor,
+  budgetStateColors,
+} from '@/lib/theme';
 import { humanizeSubcategory } from '@/lib/format';
 import { DAILY_CARBON_BUDGET_KG } from '@/types/emission';
 import type { EmissionCategory, EmissionFactor, DetectedTrip, TripMode } from '@/types/emission';
@@ -269,8 +279,9 @@ export default function LogScreen() {
 
   const todayTotal = todayEntries.reduce((sum, e) => sum + e.kg_co2e_total, 0);
   const budgetProgress = todayTotal / DAILY_CARBON_BUDGET_KG;
-  const pillColor =
-    budgetProgress >= 1 ? colors.danger : budgetProgress >= 0.5 ? colors.warning : colors.primaryLight;
+  // Same shared budget-state system the Home ring reads (lib/theme.ts) —
+  // no ad hoc red-as-verdict threshold duplicated here (NORTH_STAR.md §8.4).
+  const pillColor = budgetStateColors[budgetStateFor(budgetProgress)].accent;
 
   const todayDateLabel = useMemo(
     () => new Date().toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' }),
@@ -792,9 +803,9 @@ export default function LogScreen() {
                       progress={Math.min((todayTotal + co2Kg) / DAILY_CARBON_BUDGET_KG, 1)}
                       height={6}
                       gradient={
-                        budgetProgress + co2Kg / DAILY_CARBON_BUDGET_KG >= 1
-                          ? [colors.danger, colors.danger]
-                          : [colors.primaryLight, colors.primary]
+                        budgetStateColors[
+                          budgetStateFor(budgetProgress + co2Kg / DAILY_CARBON_BUDGET_KG)
+                        ].ring
                       }
                       animationDuration={400}
                     />

@@ -39,9 +39,12 @@ export function VMetricCard({
   onPress,
   countUp = true,
 }: VMetricCardProps) {
+  // 'up' uses the muted warning tone, not danger-red — this card often shows
+  // a user's own total ticking up, and that's guidance, not a verdict
+  // (NORTH_STAR.md §8.4 anti-guilt).
   const trendColor =
     trend === 'down' ? colors.success :
-    trend === 'up'   ? colors.danger  :
+    trend === 'up'   ? colors.warning :
     colors.textSecondary;
 
   const isNumeric = typeof value === 'number';

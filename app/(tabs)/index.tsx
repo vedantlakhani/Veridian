@@ -22,10 +22,11 @@ import { useWeeklySummary } from '@/hooks/useSummaries';
 import { useEmissionEntries } from '@/hooks/useEmissionEntries';
 import { useAllEmissionFactors } from '@/hooks/useAllEmissionFactors';
 import { useTopMoves } from '@/hooks/useTopMoves';
+import { useWeeklyRecap } from '@/hooks/useWeeklyRecap';
 import { useAuthStore } from '@/stores/authStore';
 import { useProfile } from '@/hooks/useProfile';
 import { useTripsContext } from '@/contexts/TripsContext';
-import { useStreak } from '@/hooks/useStreak';
+import { useMomentum } from '@/hooks/useMomentum';
 import { getLocalDateString, computeDailyCategoryTotals } from '@/lib/emissions';
 import { CAR_KG_PER_KM } from '@/lib/tripEngine';
 import { supabase } from '@/lib/supabase';
@@ -42,6 +43,8 @@ import {
   VBottomSheet,
   VEmptyState,
   VChip,
+  VSparkline,
+  VMomentumBand,
   type VIconName,
 } from '@/components/ui';
 import { DAILY_CARBON_BUDGET_KG } from '@/types/emission';
@@ -67,6 +70,7 @@ import {
   formatClockTime,
   formatKgChip,
   pickFeedIcon,
+  relativeDayLabel,
   type FeedItem,
 } from '@/lib/feedCopy';
 
@@ -683,6 +687,71 @@ const reviewStyles = StyleSheet.create({
   doneBody: { marginTop: spacing.xs, textAlign: 'center' },
 });
 
+// ─── "Your week" teaser — compact week total + 7-day sparkline, taps to recap ─
+function WeekTeaserCard({
+  totalKg,
+  sparkline,
+  onPress,
+}: {
+  totalKg: number;
+  sparkline: number[];
+  onPress: () => void;
+}) {
+  return (
+    <VPressable
+      onPress={onPress}
+      haptic="light"
+      style={teaserStyles.card}
+      accessibilityRole="button"
+      accessibilityLabel={`Your week so far, ${totalKg.toFixed(1)} kilograms — open your weekly recap`}
+    >
+      <View style={teaserStyles.textCol}>
+        <VText variant="label" style={teaserStyles.label}>
+          Your week
+        </VText>
+        <View style={teaserStyles.numberRow}>
+          <VText variant="mono" style={teaserStyles.number}>
+            {totalKg.toFixed(1)}
+          </VText>
+          <VText variant="caption" style={teaserStyles.unit}>
+            kg so far
+          </VText>
+        </View>
+      </View>
+      <VSparkline data={sparkline} width={96} height={36} color={colors.primaryLight} />
+      <VIcon name="chevron-right" size={16} color={colors.textSecondary} strokeWidth={2} />
+    </VPressable>
+  );
+}
+
+const teaserStyles = StyleSheet.create({
+  card: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
+    backgroundColor: colors.surface,
+    borderRadius: radii.lg,
+    borderWidth: 1,
+    borderColor: colors.border,
+    marginHorizontal: spacing.md,
+    paddingHorizontal: spacing.md,
+    paddingVertical: 14,
+    ...shadows.card,
+  },
+  textCol: { flex: 1 },
+  label: { marginBottom: 2 },
+  numberRow: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    gap: spacing.xs,
+  },
+  number: {
+    fontSize: 22,
+    color: colors.textPrimary,
+  },
+  unit: { fontSize: 12 },
+});
+
 // ─── Home ─────────────────────────────────────────────────────────────────────
 export default function HomeScreen() {
   const { user } = useAuthStore();
@@ -700,7 +769,13 @@ export default function HomeScreen() {
   const { isInMotion, currentTripKm, recentAutoLogs, needsConfirmation, confirmTrip, dismissTrip } =
     useTripsContext();
 
-  const { streak } = useStreak(user?.id);
+  const momentum = useMomentum(user?.id);
+
+  // Weekly recap — powers the "Your week" teaser + the "Earlier this week"
+  // backfill section below the Today feed. Self-contained (its own week-ranged
+  // entries + zero-emission-trips queries); reads the same source of truth
+  // (entries) the ring does.
+  const recap = useWeeklyRecap(user?.id);
 
   // Top Moves — pure client-side ranking over already-fetched data
   const { data: allFactors } = useAllEmissionFactors();
@@ -776,6 +851,43 @@ export default function HomeScreen() {
     items.sort((x, y) => y.at.getTime() - x.at.getTime());
     return items;
   }, [todayEntries, recentAutoLogs, today]);
+
+  // ── "Earlier this week" — this ISO week's entries + zero-emission trips from
+  // BEFORE today, newest first, capped at 5 rows. THIS is the backfill
+  // acknowledgment: a retroactively-confirmed earlier-in-the-week trip lands
+  // here immediately (car trips arrive via the week entries query invalidated
+  // on confirm; zero-emission walk/cycling trips via the recap trips query,
+  // whose key nests under recentAutoLogs so confirmTrip invalidates it too). ──
+  const earlierItems = useMemo<FeedRowItem[]>(() => {
+    const items: FeedRowItem[] = [];
+    for (const e of recap.weekEntries) {
+      if (getLocalDateString(new Date(e.logged_at)) >= today) continue;
+      items.push({
+        id: `entry:${e.id}`,
+        kind: 'entry',
+        item: e.emission_factors.item,
+        subcategory: e.emission_factors.subcategory,
+        category: e.emission_factors.category,
+        unit: e.emission_factors.unit,
+        quantity: e.quantity,
+        kgCo2e: e.kg_co2e_total,
+        at: new Date(e.logged_at),
+      });
+    }
+    for (const t of recap.weekTrips) {
+      if (getLocalDateString(t.at) >= today) continue;
+      items.push({
+        id: `trip:${t.mode}:${t.at.getTime()}`,
+        kind: 'trip',
+        mode: t.mode,
+        distanceKm: t.distanceKm,
+        savedKg: t.savedKg,
+        at: t.at,
+      });
+    }
+    items.sort((x, y) => y.at.getTime() - x.at.getTime());
+    return items.slice(0, 5);
+  }, [recap.weekEntries, recap.weekTrips, today]);
 
   // Week strip — one slot per day, today last
   const weekStrip = useMemo(() => {
@@ -894,22 +1006,12 @@ export default function HomeScreen() {
         />
         <SafeAreaView style={styles.heroContainer} edges={['top']}>
           <View style={styles.heroContent}>
-            {/* Greeting + streak flame chip */}
+            {/* Greeting + momentum band */}
             <View style={styles.topRow}>
               <VText variant="heading" style={styles.greeting} numberOfLines={1}>
                 {greeting}
               </VText>
-              {streak > 0 && (
-                <View
-                  style={[styles.streakPill, streak >= 3 && styles.streakPillHot]}
-                  accessibilityLabel={`${streak} day streak`}
-                >
-                  <VIcon name="flame" size={13} color={colors.warning} strokeWidth={2} />
-                  <VText variant="mono" style={styles.streakPillText}>
-                    {streak}
-                  </VText>
-                </View>
-              )}
+              <VMomentumBand score={momentum.score} band={momentum.band} variant="pill" />
             </View>
 
             {/* The Ring — hero anchor */}
@@ -986,6 +1088,53 @@ export default function HomeScreen() {
           feedItems.map((item, i) => <FeedRow key={item.id} item={item} index={i} />)
         )}
 
+        {/* ── Earlier this week — backfill acknowledgment under the Today feed ── */}
+        {earlierItems.length > 0 && (
+          <View style={styles.earlierSection}>
+            <VText variant="label" style={styles.feedLabel}>
+              Earlier this week
+            </VText>
+            {earlierItems.map((item, i) => {
+              const label = relativeDayLabel(item.at);
+              const prevLabel = i > 0 ? relativeDayLabel(earlierItems[i - 1].at) : null;
+              return (
+                <View key={item.id}>
+                  {label !== prevLabel && (
+                    <VText variant="caption" style={styles.dayGroupLabel}>
+                      {label}
+                    </VText>
+                  )}
+                  <FeedRow item={item} index={i} />
+                </View>
+              );
+            })}
+            <VPressable
+              onPress={() => router.push('/recap')}
+              haptic="light"
+              style={styles.seeWeekLink}
+              accessibilityRole="button"
+              accessibilityLabel="See the whole week"
+            >
+              <VText variant="caption" style={styles.seeWeekText}>
+                See the whole week
+              </VText>
+              <VIcon name="chevron-right" size={14} color={colors.primary} strokeWidth={2} />
+            </VPressable>
+          </View>
+        )}
+
+        {/* ── "Your week" teaser — between the feed and Top Moves, gated on
+             activity across 2+ distinct days this week ── */}
+        {recap.distinctDays >= 2 && (
+          <View style={styles.teaserSection}>
+            <WeekTeaserCard
+              totalKg={recap.currentKg}
+              sparkline={recap.sparkline}
+              onPress={() => router.push('/recap')}
+            />
+          </View>
+        )}
+
         {/* Top Moves (ranked personal impact) or AI Insight fallback */}
         {moves.length > 0 ? (
           <View style={styles.belowFeedSection}>
@@ -1060,28 +1209,6 @@ const styles = StyleSheet.create({
     color: colors.textPrimary,
     flexShrink: 1,
   },
-  streakPill: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    backgroundColor: 'rgba(255,181,71,0.12)',
-    borderRadius: radii.full,
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    marginLeft: spacing.sm,
-  },
-  streakPillHot: {
-    backgroundColor: 'rgba(255,181,71,0.2)',
-    shadowColor: colors.warning,
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.35,
-    shadowRadius: 10,
-    elevation: 6,
-  },
-  streakPillText: {
-    fontSize: 12,
-    color: colors.warning,
-  },
   ringWrapper: {
     alignItems: 'center',
     paddingTop: spacing.lg,
@@ -1125,6 +1252,30 @@ const styles = StyleSheet.create({
   feedLabel: {
     paddingHorizontal: spacing.md,
     marginBottom: spacing.sm,
+  },
+  earlierSection: {
+    marginTop: spacing.lg,
+  },
+  dayGroupLabel: {
+    paddingHorizontal: spacing.md,
+    marginTop: spacing.xs,
+    marginBottom: spacing.xs,
+    color: colors.textTertiary,
+  },
+  seeWeekLink: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 4,
+    paddingVertical: spacing.sm,
+    marginHorizontal: spacing.md,
+  },
+  seeWeekText: {
+    color: colors.primary,
+    fontWeight: '700',
+  },
+  teaserSection: {
+    marginTop: spacing.lg,
   },
   belowFeedSection: {
     marginTop: spacing.lg,

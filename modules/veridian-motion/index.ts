@@ -1,4 +1,5 @@
 import { requireOptionalNativeModule } from 'expo';
+import { Platform, PermissionsAndroid } from 'react-native';
 
 import type {
   ActivitySegment,
@@ -20,10 +21,56 @@ export type {
 } from './src/VeridianMotion.types';
 
 // `requireOptionalNativeModule` returns null instead of throwing when the native
-// module isn't linked — i.e. on Android, in Expo Go, on web, or in any build that
-// predates the next `npx expo run:ios`. Every export below tolerates that null so
-// the JS trip pipeline can call these unconditionally without Platform checks.
+// module isn't linked — i.e. in Expo Go, on web, or in any build that predates
+// the next `npx expo run:ios` / `run:android`. The module IS now linked on
+// Android too (the Kotlin Activity-Recognition side), so on Android `native` is
+// non-null and `isAvailable()` is true — the fusion path (queryActivityHistory)
+// runs there. The permission wrappers still fork on Platform.OS below, because
+// Android's ACTIVITY_RECOGNITION grant is owned by the JS PermissionsAndroid
+// layer (the Kotlin module deliberately never shows a dialog and has no
+// requestMotionPermission). Every export tolerates a null `native` so the JS
+// trip pipeline can call these unconditionally.
 const native = requireOptionalNativeModule<VeridianMotionNativeModule>('VeridianMotion');
+
+// ── Android ACTIVITY_RECOGNITION helpers ──
+// ACTIVITY_RECOGNITION is a runtime permission only on API 29+ (Android 10); on
+// older APIs it's install-time granted, so both wrappers short-circuit to
+// 'granted' there. Neither the Kotlin module's headless getMotionPermission nor
+// PermissionsAndroid.check can distinguish "denied" from "never asked" (Android
+// exposes no such state without an Activity), so getMotionPermission maps a
+// missing grant to 'undetermined' — request() is the only place a real denial
+// surfaces.
+const ANDROID_RUNTIME_PERMISSION_API = 29;
+
+function androidNeedsRuntimeRequest(): boolean {
+  return !(typeof Platform.Version === 'number' && Platform.Version < ANDROID_RUNTIME_PERMISSION_API);
+}
+
+async function getAndroidMotionPermission(): Promise<MotionPermissionStatus> {
+  if (!androidNeedsRuntimeRequest()) return 'granted';
+  try {
+    const granted = await PermissionsAndroid.check(
+      PermissionsAndroid.PERMISSIONS.ACTIVITY_RECOGNITION,
+    );
+    return granted ? 'granted' : 'undetermined';
+  } catch {
+    return 'undetermined';
+  }
+}
+
+async function requestAndroidMotionPermission(): Promise<MotionPermissionStatus> {
+  if (!androidNeedsRuntimeRequest()) return 'granted';
+  try {
+    const result = await PermissionsAndroid.request(
+      PermissionsAndroid.PERMISSIONS.ACTIVITY_RECOGNITION,
+    );
+    // GRANTED -> granted; DENIED and NEVER_ASK_AGAIN both collapse to 'denied'
+    // (the fusion path only ever gates on === 'granted').
+    return result === PermissionsAndroid.RESULTS.GRANTED ? 'granted' : 'denied';
+  } catch {
+    return 'undetermined';
+  }
+}
 
 /**
  * Whether the iOS motion module is linked in this build. Callers should gate the
@@ -49,8 +96,16 @@ export async function isActivityAvailable(): Promise<boolean> {
   }
 }
 
-/** Current Motion & Fitness authorization. 'undetermined' when the module is absent. */
+/**
+ * Current motion authorization — iOS Motion & Fitness (CMAuthorizationStatus) or
+ * Android ACTIVITY_RECOGNITION. On Android this reads PermissionsAndroid.check
+ * (the Kotlin module never owns the grant decision); 'granted' | 'undetermined'
+ * only there. 'undetermined' when the module is absent.
+ */
 export async function getMotionPermission(): Promise<MotionPermissionStatus> {
+  if (Platform.OS === 'android') {
+    return getAndroidMotionPermission();
+  }
   if (!native) {
     return 'undetermined';
   }
@@ -58,14 +113,39 @@ export async function getMotionPermission(): Promise<MotionPermissionStatus> {
 }
 
 /**
- * Trigger the system Motion & Fitness prompt (when undetermined) and resolve the
- * resulting status. No-op returning 'undetermined' when the module is absent.
+ * Trigger the motion permission prompt and resolve the resulting status. On iOS
+ * this is the system Motion & Fitness prompt (native, only shows when
+ * undetermined); on Android it's PermissionsAndroid.request for
+ * ACTIVITY_RECOGNITION. No-op returning 'undetermined' when the module is absent
+ * (non-Android).
  */
 export async function requestMotionPermission(): Promise<MotionPermissionStatus> {
+  if (Platform.OS === 'android') {
+    return requestAndroidMotionPermission();
+  }
   if (!native) {
     return 'undetermined';
   }
   return native.requestMotionPermission();
+}
+
+/**
+ * Android-only: register for Activity Recognition Transition updates so the OS
+ * begins recording ENTER/EXIT events (Android has no retroactive backlog, so
+ * this must run before queryActivityHistory can return anything). No-ops
+ * resolving false on iOS (CoreMotion needs no registration), in Expo Go/web, or
+ * when the native module is absent. Never rejects — a native registration
+ * failure resolves false so callers can treat it as "monitoring not active".
+ */
+export async function ensureTransitionMonitoring(): Promise<boolean> {
+  if (Platform.OS !== 'android' || !native || !native.startTransitionMonitoring) {
+    return false;
+  }
+  try {
+    return await native.startTransitionMonitoring();
+  } catch {
+    return false;
+  }
 }
 
 /**

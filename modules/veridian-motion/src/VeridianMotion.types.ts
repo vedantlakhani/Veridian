@@ -73,4 +73,13 @@ export interface VeridianMotionNativeModule {
   ): Promise<RouteEstimate | null>;
   startVisitMonitoring(): Promise<boolean>;
   getRecentVisits(sinceMs: number): Promise<Visit[]>;
+  /**
+   * Android-only: register for Activity Recognition Transition ENTER/EXIT
+   * updates so the OS starts recording transitions (there is no retroactive
+   * backlog on Android — see the Kotlin module header). Optional because the iOS
+   * Swift module records history without registration and never registers this.
+   * Resolves whether monitoring actually started (false when the permission is
+   * missing). The JS `ensureTransitionMonitoring()` wrapper gates this to Android.
+   */
+  startTransitionMonitoring?(): Promise<boolean>;
 }

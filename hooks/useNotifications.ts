@@ -4,6 +4,7 @@ import * as Notifications from 'expo-notifications';
 import { SchedulableTriggerInputTypes } from 'expo-notifications';
 import Constants from 'expo-constants';
 import { supabase } from '@/lib/supabase';
+import { scheduleWeeklyRecapNotification } from '@/lib/recapNotification';
 
 // ─── scheduleDailyReminder ────────────────────────────────────────────────
 /**
@@ -21,7 +22,7 @@ export async function scheduleDailyReminder(hour: number, minute: number): Promi
   await Notifications.scheduleNotificationAsync({
     content: {
       title: 'Log your carbon today',
-      body: 'Track your impact and keep your streak going.',
+      body: 'A couple of taps keeps your momentum moving.',
     },
     trigger: {
       type: SchedulableTriggerInputTypes.DAILY,
@@ -66,9 +67,9 @@ const MEAL_NOTIFICATIONS: {
     minute: 0,
   },
   {
-    identifier: 'veridian-streak-nudge',
-    title: "Don't break your streak 🔥",
-    body: 'Log just one thing before midnight to keep it going.',
+    identifier: 'veridian-momentum-nudge',
+    title: 'Evening nudge 🌿',
+    body: 'Log just one thing before midnight to keep your momentum building.',
     hour: 21,
     minute: 0,
   },
@@ -104,16 +105,21 @@ export async function scheduleMealNotifications(): Promise<void> {
 
 // ─── notifyStreakMilestone ────────────────────────────────────────────────
 /**
- * Fires an immediate (trigger: null) notification celebrating a streak milestone.
- * Only sends if notification permission is already granted.
+ * Fires an immediate (trigger: null) notification celebrating a consistency
+ * milestone. Momentum framing, zero loss-aversion (NORTH_STAR.md §8 pattern
+ * 5 "Momentum, Not Streaks") — "N days of momentum, nice rhythm", never
+ * "don't break your streak". Only sends if notification permission is
+ * already granted. (Name kept for the call site in useEmissionEntries.ts;
+ * the underlying consecutive-day count still comes from the server-side
+ * streak computation there.)
  */
 export async function notifyStreakMilestone(days: number): Promise<void> {
   const { status } = await Notifications.getPermissionsAsync();
   if (status !== 'granted') return;
   await Notifications.scheduleNotificationAsync({
     content: {
-      title: `${days}-day streak!`,
-      body: `You've logged for ${days} days in a row. Keep it up!`,
+      title: `${days} days of momentum`,
+      body: `You've kept a nice rhythm going for ${days} days straight.`,
     },
     trigger: null,
   });
@@ -171,6 +177,12 @@ async function scheduleIfEnabled(userId: string): Promise<void> {
     await scheduleDailyReminder(h, m);
     await scheduleMealNotifications();
   }
+
+  // Weekly recap nudge. MUST run AFTER scheduleDailyReminder (which calls
+  // cancelAllScheduledNotificationsAsync) so it isn't wiped; its own stable
+  // identifier + cancel-before-schedule makes this foreground-safe (no
+  // duplicate stacking). Permission is already granted at this point.
+  await scheduleWeeklyRecapNotification();
 
   await registerPushToken(userId);
 }

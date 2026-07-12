@@ -37,6 +37,7 @@ function AppNavigator() {
         <Stack.Protected guard={!!session}>
           <Stack.Screen name="(tabs)" />
           <Stack.Screen name="carbon-calculator" />
+          <Stack.Screen name="recap" options={{ presentation: 'modal' }} />
         </Stack.Protected>
         <Stack.Protected guard={!session}>
           <Stack.Screen name="(auth)" />

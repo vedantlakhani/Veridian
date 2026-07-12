@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import * as Location from 'expo-location';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { AppState } from 'react-native';
+import { AppState, Platform } from 'react-native';
 import Constants from 'expo-constants';
 import * as Notifications from 'expo-notifications';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -32,6 +32,7 @@ import {
 } from '@/lib/activityFusion';
 import * as VeridianMotion from '@/modules/veridian-motion';
 import type { MotionPermissionStatus } from '@/modules/veridian-motion';
+import { selectNewlyNotifiableKeys } from '@/lib/tripNotifications';
 import { useAllEmissionFactors } from '@/hooks/useAllEmissionFactors';
 import { useDurableCreateEntry } from '@/hooks/useDurableCreateEntry';
 import { TRIP_KEYS } from '@/lib/queryKeys';
@@ -57,6 +58,13 @@ const IS_EXPO_GO = Constants.appOwnership === 'expo';
 const SYNCED_KEYS_KEY = '@veridian/synced_trip_keys';
 const LEGACY_AUTO_LOGGED_KEY = '@veridian/auto_logged_trips';
 const LEGACY_DISMISSED_KEY = '@veridian/dismissed_trips';
+
+// Parallel to SYNCED_KEYS_KEY: client_trip_keys we've already fired the batched
+// "trips spotted" needs_confirmation notification for. Separate from the synced
+// set because a trip is synced the instant it's written, but should be notified
+// exactly once — and only when it lands needs_confirmation (auto_confirmed trips
+// have their own per-trip pings, and zero-emission ones a celebratory one).
+const NOTIFIED_KEYS_KEY = '@veridian/notified_trip_keys';
 
 // How far back the OS activity-history query reaches. CMMotionActivity retains
 // ~7 days; the watermark below is always clamped into this window so a device
@@ -124,16 +132,25 @@ function findFactorForMode(factors: EmissionFactor[], mode: TripMode): EmissionF
   return findCarFactor(factors);
 }
 
-async function fireNotification(title: string, body: string): Promise<void> {
+/**
+ * Best-effort local notification — never blocks trip sync. Returns whether a
+ * notification was actually scheduled: callers that mark state as "already
+ * notified" (the batched confirm ping) must only do so on true, otherwise a
+ * no-permission no-op would permanently suppress that notification even after
+ * the user later grants permission. Fire-and-forget callers ignore the return.
+ */
+async function fireNotification(title: string, body: string): Promise<boolean> {
   try {
     const { status } = await Notifications.getPermissionsAsync();
-    if (status !== 'granted') return;
+    if (status !== 'granted') return false;
     await Notifications.scheduleNotificationAsync({
       content: { title, body },
       trigger: null,
     });
+    return true;
   } catch {
     // Notifications are best-effort — never block trip sync on them
+    return false;
   }
 }
 
@@ -212,8 +229,16 @@ export function useTrips(userId: string | undefined) {
 
   // Persisted across sessions — client_trip_keys already upserted to detected_trips.
   const syncedKeysRef = useRef<Set<string>>(new Set());
+  // Persisted across sessions — client_trip_keys already covered by the batched
+  // needs_confirmation notification, so a re-detected (same-key) trip doesn't
+  // re-ping on the next refresh.
+  const notifiedKeysRef = useRef<Set<string>>(new Set());
   // In-memory only — guards a key mid-upsert against a concurrent/overlapping refresh().
   const syncingRef = useRef<Set<string>>(new Set());
+  // In-memory only — one refresh pass at a time. Overlapping AppState 'active'
+  // bursts (e.g. a permission dialog backgrounding/foregrounding the app) must
+  // not double-process the same drafts or double-fire the batched notification.
+  const refreshInFlightRef = useRef(false);
   // In-memory only — guards a detected_trips id mid-entry-creation, mirrors
   // useAutoLog's old processingRef.
   const attemptRef = useRef<Set<string>>(new Set());
@@ -240,6 +265,8 @@ export function useTrips(userId: string | undefined) {
         await AsyncStorage.multiRemove([LEGACY_AUTO_LOGGED_KEY, LEGACY_DISMISSED_KEY]);
         if (!cancelled) syncedKeysRef.current = migrated;
       }
+      const notified = await AsyncStorage.getItem(NOTIFIED_KEYS_KEY);
+      if (notified && !cancelled) notifiedKeysRef.current = new Set(JSON.parse(notified) as string[]);
       if (!cancelled) setHydrated(true);
     })();
     return () => {
@@ -249,6 +276,10 @@ export function useTrips(userId: string | undefined) {
 
   const persistSyncedKeys = useCallback(async () => {
     await AsyncStorage.setItem(SYNCED_KEYS_KEY, JSON.stringify([...syncedKeysRef.current]));
+  }, []);
+
+  const persistNotifiedKeys = useCallback(async () => {
+    await AsyncStorage.setItem(NOTIFIED_KEYS_KEY, JSON.stringify([...notifiedKeysRef.current]));
   }, []);
 
   // ── Reflect the current Motion & Fitness authorization on mount ──
@@ -276,7 +307,10 @@ export function useTrips(userId: string | undefined) {
   // visitMonitoringRef so it only ever fires once per session (requestPermissions()
   // also sets this same ref when it starts monitoring during the initial grant).
   useEffect(() => {
-    if (!motionAvailable || visitMonitoringRef.current) return;
+    // iOS-only: CLVisit + background location. On Android the module is available
+    // but visits/background location are not part of v1 (NORTH_STAR §4), so this
+    // is a no-op there.
+    if (Platform.OS !== 'ios' || !motionAvailable || visitMonitoringRef.current) return;
     let cancelled = false;
     (async () => {
       try {
@@ -423,7 +457,7 @@ export function useTrips(userId: string | undefined) {
   }, [userId, factors, autoConfirmedQuery.data, createDurable, queryClient]);
 
   // ── Buffer + OS activity -> fusion engine -> sync ──
-  const refresh = useCallback(async () => {
+  const runRefreshPass = useCallback(async () => {
     const raw = await AsyncStorage.getItem(LOCATION_HISTORY_KEY);
     const points: StoredLocation[] = raw ? (JSON.parse(raw) as StoredLocation[]) : [];
     setActiveTrip(detectActiveTrip(points));
@@ -433,11 +467,13 @@ export function useTrips(userId: string | undefined) {
     const now = Date.now();
     const gpsTrips = points.length > 0 ? analyzeTrips(points, now) : [];
 
-    // ── OS activity history (retroactive, up to 7 days) ──
-    // Fuses the M-series coprocessor's segments with the GPS trips so trips are
-    // reconstructed even when the app was never opened during them. Absent on
-    // Android / Expo Go / simulator (isAvailable() false) — GPS trips then pass
-    // straight through fuseSignals unchanged.
+    // ── OS activity history ──
+    // iOS: retroactive up to 7 days from the CoreMotion coprocessor, fused with
+    // GPS trips so trips are reconstructed even when the app was never opened
+    // during them. Android: forward-only segments reconstructed from Activity
+    // Recognition transitions recorded since install. Absent in Expo Go and on
+    // simulators (isAvailable() false) — GPS trips then pass straight through
+    // fuseSignals unchanged.
     let segments: ActivitySegment[] = [];
     let motionActive = false;
     let watermark = now - ACTIVITY_MAX_LOOKBACK_MS;
@@ -480,10 +516,21 @@ export function useTrips(userId: string | undefined) {
 
     // One CLVisit fetch per refresh covers every route-needing draft in the batch.
     const needsVisits = unsynced.some((t) => t.needsDistance === 'route');
-    const visits: Visit[] =
-      motionActive && needsVisits
-        ? await VeridianMotion.getRecentVisits(watermark - VISIT_MATCH_MS)
-        : [];
+    let visits: Visit[] = [];
+    if (motionActive && needsVisits) {
+      try {
+        visits = await VeridianMotion.getRecentVisits(watermark - VISIT_MATCH_MS);
+      } catch {
+        // A visit-fetch failure only costs route precision — affected drafts
+        // fall back to estimates (which land needs_confirmation); it must never
+        // abort the whole refresh pass before trips sync.
+      }
+    }
+
+    // client_trip_keys that newly landed needs_confirmation this pass — the
+    // batched notification (both platforms) fires once for the not-yet-notified
+    // subset after the loop.
+    const newNeedsConfirmationKeys: string[] = [];
 
     for (const trip of unsynced) {
       syncingRef.current.add(trip.clientTripKey);
@@ -554,6 +601,10 @@ export function useTrips(userId: string | undefined) {
         if (trip.actAliasKey) syncedKeysRef.current.add(trip.actAliasKey);
         await persistSyncedKeys();
 
+        if (status === 'needs_confirmation') {
+          newNeedsConfirmationKeys.push(trip.clientTripKey);
+        }
+
         if (status === 'auto_confirmed' && (trip.mode === 'walk' || trip.mode === 'cycling')) {
           const savedKg = roundedKm * CAR_KG_PER_KM;
           await fireNotification(
@@ -583,11 +634,45 @@ export function useTrips(userId: string | undefined) {
       }
     }
 
+    // ── Batched confirm notification (both platforms) ──
+    // One local notification per refresh pass that produced NEW
+    // needs_confirmation trips, deduped against notifiedKeysRef so a re-detected
+    // (same-key) trip never re-pings. Opening the app lands on Home, which
+    // already surfaces the review card — no custom deep-link handling.
+    const toNotify = selectNewlyNotifiableKeys(newNeedsConfirmationKeys, notifiedKeysRef.current);
+    if (toNotify.length > 0) {
+      const n = toNotify.length;
+      const delivered = await fireNotification(
+        n === 1 ? '1 trip spotted' : `${n} trips spotted`,
+        'Takes about 10 seconds to confirm — open Veridian.',
+      );
+      // Mark notified ONLY when a notification was actually scheduled — a
+      // no-permission no-op must leave these trips eligible so they ping once
+      // the user enables notifications.
+      if (delivered) {
+        for (const key of toNotify) notifiedKeysRef.current.add(key);
+        await persistNotifiedKeys();
+      }
+    }
+
     if (unsynced.length > 0) {
       queryClient.invalidateQueries({ queryKey: TRIP_KEYS.needsConfirmation(userId) });
       queryClient.invalidateQueries({ queryKey: TRIP_KEYS.recentAutoLogs(userId) });
     }
-  }, [userId, hydrated, persistSyncedKeys, queryClient]);
+  }, [userId, hydrated, persistSyncedKeys, persistNotifiedKeys, queryClient]);
+
+  // Re-entrancy wrapper: skip (don't queue) when a pass is already in flight —
+  // the next AppState 'active' event triggers a fresh pass anyway. finally
+  // releases the guard so a thrown pass can't wedge the pipeline.
+  const refresh = useCallback(async () => {
+    if (refreshInFlightRef.current) return;
+    refreshInFlightRef.current = true;
+    try {
+      await runRefreshPass();
+    } finally {
+      refreshInFlightRef.current = false;
+    }
+  }, [runRefreshPass]);
 
   // Writes a fake 12 km car track (45 km/h avg) to AsyncStorage for Expo Go testing.
   // The trip ends 20 minutes ago so it surfaces as a completed pending trip,
@@ -623,6 +708,39 @@ export function useTrips(userId: string | undefined) {
       return false;
     }
 
+    // ── Android: policy-first (NORTH_STAR §4) ──
+    // Foreground location ONLY — we no longer declare ACCESS_BACKGROUND_LOCATION,
+    // so Location.requestBackgroundPermissionsAsync is never called. hasPermission
+    // on Android == foreground location granted (the GPS buffer only fills while
+    // the app is open, which is acceptable — the Activity Recognition Transition
+    // API is Android's primary signal). Then request ACTIVITY_RECOGNITION and,
+    // when granted, register transition monitoring so events start accruing.
+    if (Platform.OS === 'android') {
+      try {
+        const fg = await Location.requestForegroundPermissionsAsync();
+        const granted = fg.status === 'granted';
+        setHasPermission(granted);
+
+        // Best-effort motion prompt — a denial here never affects the location
+        // grant returned to the caller.
+        try {
+          const motion = await VeridianMotion.requestMotionPermission();
+          setMotionPermission(motion);
+          if (motion === 'granted') {
+            await VeridianMotion.ensureTransitionMonitoring();
+          }
+        } catch {
+          // Leave motionPermission as-is; the fusion path stays dormant.
+        }
+
+        return granted;
+      } catch {
+        setHasPermission(false);
+        return false;
+      }
+    }
+
+    // ── iOS: unchanged (validated on a real device) ──
     try {
       const fg = await Location.requestForegroundPermissionsAsync();
       if (fg.status !== 'granted') {
@@ -673,6 +791,30 @@ export function useTrips(userId: string | undefined) {
     if (IS_EXPO_GO) return;
     let cancelled = false;
     (async () => {
+      // ── Android: mirror requestPermissions()'s policy-first fork ──
+      // hasPermission hydrates from the real foreground-location status (never
+      // background — we don't declare it). When granted, best-effort request
+      // motion if still undetermined (a returning user whose location was
+      // granted in a prior session never re-taps the banner, so this is the only
+      // place motion gets requested for them), then re-arm transition monitoring
+      // (idempotent; survives process death but not reboot, so re-arm each open).
+      if (Platform.OS === 'android') {
+        try {
+          const fg = await Location.getForegroundPermissionsAsync();
+          const granted = fg.status === 'granted';
+          if (!cancelled) setHasPermission(granted);
+          if (granted) {
+            const motion = await ensureMotionPermissionRequested();
+            if (motion && !cancelled) setMotionPermission(motion);
+            if (motion === 'granted') await VeridianMotion.ensureTransitionMonitoring();
+          }
+        } catch {
+          if (!cancelled) setHasPermission(false);
+        }
+        return;
+      }
+
+      // ── iOS: unchanged ──
       try {
         const fg = await Location.getForegroundPermissionsAsync();
         if (fg.status !== 'granted') {

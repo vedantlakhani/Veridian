@@ -21,7 +21,9 @@ function formatReductionPct(pct: number): string {
 }
 
 function reductionColor(pct: number): string {
-  return pct >= 0 ? colors.primaryLight : colors.danger;
+  // Muted amber for an increase, never danger-red — a personal number on a
+  // shared leaderboard still isn't a verdict (NORTH_STAR.md §8.4 anti-guilt).
+  return pct >= 0 ? colors.primaryLight : colors.warning;
 }
 
 /** Deterministic avatar hue from a user id — stable across sessions */

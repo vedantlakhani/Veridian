@@ -13,6 +13,7 @@
 // called, because that registration only ever ran inside the user-triggered
 // requestPermissions().
 
+import { Platform } from 'react-native';
 import * as Location from 'expo-location';
 import * as TaskManager from 'expo-task-manager';
 import {
@@ -51,9 +52,34 @@ const mockStartVisitMonitoring = VeridianMotion.startVisitMonitoring as jest.Moc
 const mockGetMotionPermission = VeridianMotion.getMotionPermission as jest.Mock;
 const mockRequestMotionPermission = VeridianMotion.requestMotionPermission as jest.Mock;
 
+// Platform.OS is 'ios' by default under jest-expo; the ensureBackgroundTracking
+// fork is iOS-only, so the existing suite runs on the default and the Android
+// case flips it, restoring afterward so nothing leaks between tests.
+const setPlatformOS = (os: typeof Platform.OS) => {
+  Object.defineProperty(Platform, 'OS', { configurable: true, value: os });
+};
+const ORIGINAL_OS = Platform.OS;
+afterEach(() => {
+  setPlatformOS(ORIGINAL_OS);
+});
+
 describe('ensureBackgroundTrackingRegistered', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+  });
+
+  it('is a no-op on Android — never starts background location or visit monitoring (policy-first §4)', async () => {
+    setPlatformOS('android');
+    mockIsTaskRegistered.mockResolvedValue(false);
+    mockIsAvailable.mockReturnValue(true);
+    const visitMonitoringRef = { current: false };
+
+    await ensureBackgroundTrackingRegistered(visitMonitoringRef);
+
+    expect(mockIsTaskRegistered).not.toHaveBeenCalled();
+    expect(mockStartLocationUpdates).not.toHaveBeenCalled();
+    expect(mockStartVisitMonitoring).not.toHaveBeenCalled();
+    expect(visitMonitoringRef.current).toBe(false);
   });
 
   it('starts background location updates when the task is not yet registered', async () => {
