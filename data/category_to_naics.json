@@ -1,0 +1,1059 @@
+{
+  "_meta": {
+    "description": "Crosswalk from Plaid personal_finance_category (PFCv2) detailed categories to 2017 NAICS 6-digit codes, for the USEEIO spend-based carbon factor engine (Sprint D Stage 1).",
+    "plaidTaxonomy": "Plaid personal_finance_category (PFCv2)",
+    "naicsVersion": "2017",
+    "retrievedDate": "2026-07-17",
+    "factorTable": "data/useeio_factors.json (keyed by these same 6-digit codes)",
+    "fallback": {
+      "naicsCode": "452319",
+      "naicsLabel": "All Other General Merchandise Stores",
+      "confidence": "low",
+      "appliesWhen": "A Plaid detailed category is NOT present in this crosswalk but its primary is a known spending primary. Non-emission primaries and wholly-unknown primaries resolve to null instead (see lib/spendFactors.ts)."
+    },
+    "totalCategories": 127,
+    "emissionCategories": 71,
+    "nonEmissionCategories": 56,
+    "corrections": "All NAICS codes verified present in EPA USEEIO v1.3 NAICS-6 dataset. The prior draft used several NAICS-2012 codes invalid under 2017 (restaurants 7221/7222, parking 7521, telecom 5179) and multiple mis-coded rows (convenience 4461, pet 4529, vet 5417, shipping 4931-as-couriers); all corrected \u2014 see per-row notes."
+  },
+  "categories": [
+    {
+      "plaidPrimary": "INCOME",
+      "plaidDetailed": "INCOME_CHILD_SUPPORT",
+      "naicsCode": null,
+      "naicsLabel": null,
+      "nonEmission": true,
+      "confidence": "high"
+    },
+    {
+      "plaidPrimary": "INCOME",
+      "plaidDetailed": "INCOME_CONTRACTOR",
+      "naicsCode": null,
+      "naicsLabel": null,
+      "nonEmission": true,
+      "confidence": "high"
+    },
+    {
+      "plaidPrimary": "INCOME",
+      "plaidDetailed": "INCOME_DIVIDENDS",
+      "naicsCode": null,
+      "naicsLabel": null,
+      "nonEmission": true,
+      "confidence": "high"
+    },
+    {
+      "plaidPrimary": "INCOME",
+      "plaidDetailed": "INCOME_GIG_ECONOMY",
+      "naicsCode": null,
+      "naicsLabel": null,
+      "nonEmission": true,
+      "confidence": "high"
+    },
+    {
+      "plaidPrimary": "INCOME",
+      "plaidDetailed": "INCOME_INTEREST_EARNED",
+      "naicsCode": null,
+      "naicsLabel": null,
+      "nonEmission": true,
+      "confidence": "high"
+    },
+    {
+      "plaidPrimary": "INCOME",
+      "plaidDetailed": "INCOME_LONG_TERM_DISABILITY",
+      "naicsCode": null,
+      "naicsLabel": null,
+      "nonEmission": true,
+      "confidence": "high"
+    },
+    {
+      "plaidPrimary": "INCOME",
+      "plaidDetailed": "INCOME_MILITARY",
+      "naicsCode": null,
+      "naicsLabel": null,
+      "nonEmission": true,
+      "confidence": "high"
+    },
+    {
+      "plaidPrimary": "INCOME",
+      "plaidDetailed": "INCOME_RENTAL",
+      "naicsCode": null,
+      "naicsLabel": null,
+      "nonEmission": true,
+      "confidence": "high"
+    },
+    {
+      "plaidPrimary": "INCOME",
+      "plaidDetailed": "INCOME_RETIREMENT_PENSION",
+      "naicsCode": null,
+      "naicsLabel": null,
+      "nonEmission": true,
+      "confidence": "high"
+    },
+    {
+      "plaidPrimary": "INCOME",
+      "plaidDetailed": "INCOME_SALARY",
+      "naicsCode": null,
+      "naicsLabel": null,
+      "nonEmission": true,
+      "confidence": "high"
+    },
+    {
+      "plaidPrimary": "INCOME",
+      "plaidDetailed": "INCOME_TAX_REFUND",
+      "naicsCode": null,
+      "naicsLabel": null,
+      "nonEmission": true,
+      "confidence": "high"
+    },
+    {
+      "plaidPrimary": "INCOME",
+      "plaidDetailed": "INCOME_UNEMPLOYMENT",
+      "naicsCode": null,
+      "naicsLabel": null,
+      "nonEmission": true,
+      "confidence": "high"
+    },
+    {
+      "plaidPrimary": "INCOME",
+      "plaidDetailed": "INCOME_OTHER",
+      "naicsCode": null,
+      "naicsLabel": null,
+      "nonEmission": true,
+      "confidence": "high"
+    },
+    {
+      "plaidPrimary": "LOAN_DISBURSEMENTS",
+      "plaidDetailed": "LOAN_DISBURSEMENTS_AUTO",
+      "naicsCode": null,
+      "naicsLabel": null,
+      "nonEmission": true,
+      "confidence": "high"
+    },
+    {
+      "plaidPrimary": "LOAN_DISBURSEMENTS",
+      "plaidDetailed": "LOAN_DISBURSEMENTS_CASH_ADVANCES",
+      "naicsCode": null,
+      "naicsLabel": null,
+      "nonEmission": true,
+      "confidence": "high"
+    },
+    {
+      "plaidPrimary": "LOAN_DISBURSEMENTS",
+      "plaidDetailed": "LOAN_DISBURSEMENTS_EWA",
+      "naicsCode": null,
+      "naicsLabel": null,
+      "nonEmission": true,
+      "confidence": "high"
+    },
+    {
+      "plaidPrimary": "LOAN_DISBURSEMENTS",
+      "plaidDetailed": "LOAN_DISBURSEMENTS_MORTGAGE",
+      "naicsCode": null,
+      "naicsLabel": null,
+      "nonEmission": true,
+      "confidence": "high"
+    },
+    {
+      "plaidPrimary": "LOAN_DISBURSEMENTS",
+      "plaidDetailed": "LOAN_DISBURSEMENTS_PERSONAL",
+      "naicsCode": null,
+      "naicsLabel": null,
+      "nonEmission": true,
+      "confidence": "high"
+    },
+    {
+      "plaidPrimary": "LOAN_DISBURSEMENTS",
+      "plaidDetailed": "LOAN_DISBURSEMENTS_STUDENT",
+      "naicsCode": null,
+      "naicsLabel": null,
+      "nonEmission": true,
+      "confidence": "high"
+    },
+    {
+      "plaidPrimary": "LOAN_DISBURSEMENTS",
+      "plaidDetailed": "LOAN_DISBURSEMENTS_OTHER_DISBURSEMENT",
+      "naicsCode": null,
+      "naicsLabel": null,
+      "nonEmission": true,
+      "confidence": "high"
+    },
+    {
+      "plaidPrimary": "LOAN_PAYMENTS",
+      "plaidDetailed": "LOAN_PAYMENTS_BNPL",
+      "naicsCode": null,
+      "naicsLabel": null,
+      "nonEmission": true,
+      "confidence": "high"
+    },
+    {
+      "plaidPrimary": "LOAN_PAYMENTS",
+      "plaidDetailed": "LOAN_PAYMENTS_CAR_PAYMENT",
+      "naicsCode": null,
+      "naicsLabel": null,
+      "nonEmission": true,
+      "confidence": "high"
+    },
+    {
+      "plaidPrimary": "LOAN_PAYMENTS",
+      "plaidDetailed": "LOAN_PAYMENTS_CASH_ADVANCES",
+      "naicsCode": null,
+      "naicsLabel": null,
+      "nonEmission": true,
+      "confidence": "high"
+    },
+    {
+      "plaidPrimary": "LOAN_PAYMENTS",
+      "plaidDetailed": "LOAN_PAYMENTS_CREDIT_CARD_PAYMENT",
+      "naicsCode": null,
+      "naicsLabel": null,
+      "nonEmission": true,
+      "confidence": "high"
+    },
+    {
+      "plaidPrimary": "LOAN_PAYMENTS",
+      "plaidDetailed": "LOAN_PAYMENTS_EWA",
+      "naicsCode": null,
+      "naicsLabel": null,
+      "nonEmission": true,
+      "confidence": "high"
+    },
+    {
+      "plaidPrimary": "LOAN_PAYMENTS",
+      "plaidDetailed": "LOAN_PAYMENTS_MORTGAGE_PAYMENT",
+      "naicsCode": null,
+      "naicsLabel": null,
+      "nonEmission": true,
+      "confidence": "high"
+    },
+    {
+      "plaidPrimary": "LOAN_PAYMENTS",
+      "plaidDetailed": "LOAN_PAYMENTS_PERSONAL_LOAN_PAYMENT",
+      "naicsCode": null,
+      "naicsLabel": null,
+      "nonEmission": true,
+      "confidence": "high"
+    },
+    {
+      "plaidPrimary": "LOAN_PAYMENTS",
+      "plaidDetailed": "LOAN_PAYMENTS_STUDENT_LOAN_PAYMENT",
+      "naicsCode": null,
+      "naicsLabel": null,
+      "nonEmission": true,
+      "confidence": "high"
+    },
+    {
+      "plaidPrimary": "LOAN_PAYMENTS",
+      "plaidDetailed": "LOAN_PAYMENTS_OTHER_PAYMENT",
+      "naicsCode": null,
+      "naicsLabel": null,
+      "nonEmission": true,
+      "confidence": "high"
+    },
+    {
+      "plaidPrimary": "TRANSFER_IN",
+      "plaidDetailed": "TRANSFER_IN_ACCOUNT_TRANSFER",
+      "naicsCode": null,
+      "naicsLabel": null,
+      "nonEmission": true,
+      "confidence": "high"
+    },
+    {
+      "plaidPrimary": "TRANSFER_IN",
+      "plaidDetailed": "TRANSFER_IN_DEPOSIT",
+      "naicsCode": null,
+      "naicsLabel": null,
+      "nonEmission": true,
+      "confidence": "high"
+    },
+    {
+      "plaidPrimary": "TRANSFER_IN",
+      "plaidDetailed": "TRANSFER_IN_INVESTMENT_AND_RETIREMENT_FUNDS",
+      "naicsCode": null,
+      "naicsLabel": null,
+      "nonEmission": true,
+      "confidence": "high"
+    },
+    {
+      "plaidPrimary": "TRANSFER_IN",
+      "plaidDetailed": "TRANSFER_IN_SAVINGS",
+      "naicsCode": null,
+      "naicsLabel": null,
+      "nonEmission": true,
+      "confidence": "high"
+    },
+    {
+      "plaidPrimary": "TRANSFER_IN",
+      "plaidDetailed": "TRANSFER_IN_TRANSFER_IN_FROM_APPS",
+      "naicsCode": null,
+      "naicsLabel": null,
+      "nonEmission": true,
+      "confidence": "high"
+    },
+    {
+      "plaidPrimary": "TRANSFER_IN",
+      "plaidDetailed": "TRANSFER_IN_WIRE",
+      "naicsCode": null,
+      "naicsLabel": null,
+      "nonEmission": true,
+      "confidence": "high"
+    },
+    {
+      "plaidPrimary": "TRANSFER_IN",
+      "plaidDetailed": "TRANSFER_IN_OTHER_TRANSFER_IN",
+      "naicsCode": null,
+      "naicsLabel": null,
+      "nonEmission": true,
+      "confidence": "high"
+    },
+    {
+      "plaidPrimary": "TRANSFER_OUT",
+      "plaidDetailed": "TRANSFER_OUT_ACCOUNT_TRANSFER",
+      "naicsCode": null,
+      "naicsLabel": null,
+      "nonEmission": true,
+      "confidence": "high"
+    },
+    {
+      "plaidPrimary": "TRANSFER_OUT",
+      "plaidDetailed": "TRANSFER_OUT_CRYPTO",
+      "naicsCode": null,
+      "naicsLabel": null,
+      "nonEmission": true,
+      "confidence": "high",
+      "note": "Crypto transactions are financial transfers; actual carbon footprint depends on mining/network activity, not transaction intent"
+    },
+    {
+      "plaidPrimary": "TRANSFER_OUT",
+      "plaidDetailed": "TRANSFER_OUT_INVESTMENT_AND_RETIREMENT_FUNDS",
+      "naicsCode": null,
+      "naicsLabel": null,
+      "nonEmission": true,
+      "confidence": "high"
+    },
+    {
+      "plaidPrimary": "TRANSFER_OUT",
+      "plaidDetailed": "TRANSFER_OUT_SAVINGS",
+      "naicsCode": null,
+      "naicsLabel": null,
+      "nonEmission": true,
+      "confidence": "high"
+    },
+    {
+      "plaidPrimary": "TRANSFER_OUT",
+      "plaidDetailed": "TRANSFER_OUT_TRANSFER_OUT_FROM_APPS",
+      "naicsCode": null,
+      "naicsLabel": null,
+      "nonEmission": true,
+      "confidence": "high"
+    },
+    {
+      "plaidPrimary": "TRANSFER_OUT",
+      "plaidDetailed": "TRANSFER_OUT_WIRE",
+      "naicsCode": null,
+      "naicsLabel": null,
+      "nonEmission": true,
+      "confidence": "high"
+    },
+    {
+      "plaidPrimary": "TRANSFER_OUT",
+      "plaidDetailed": "TRANSFER_OUT_WITHDRAWAL",
+      "naicsCode": null,
+      "naicsLabel": null,
+      "nonEmission": true,
+      "confidence": "high"
+    },
+    {
+      "plaidPrimary": "TRANSFER_OUT",
+      "plaidDetailed": "TRANSFER_OUT_OTHER_TRANSFER_OUT",
+      "naicsCode": null,
+      "naicsLabel": null,
+      "nonEmission": true,
+      "confidence": "high"
+    },
+    {
+      "plaidPrimary": "BANK_FEES",
+      "plaidDetailed": "BANK_FEES_ATM_FEES",
+      "naicsCode": null,
+      "naicsLabel": null,
+      "nonEmission": true,
+      "confidence": "high"
+    },
+    {
+      "plaidPrimary": "BANK_FEES",
+      "plaidDetailed": "BANK_FEES_INSUFFICIENT_FUNDS",
+      "naicsCode": null,
+      "naicsLabel": null,
+      "nonEmission": true,
+      "confidence": "high"
+    },
+    {
+      "plaidPrimary": "BANK_FEES",
+      "plaidDetailed": "BANK_FEES_INTEREST_CHARGE",
+      "naicsCode": null,
+      "naicsLabel": null,
+      "nonEmission": true,
+      "confidence": "high"
+    },
+    {
+      "plaidPrimary": "BANK_FEES",
+      "plaidDetailed": "BANK_FEES_FOREIGN_TRANSACTION_FEES",
+      "naicsCode": null,
+      "naicsLabel": null,
+      "nonEmission": true,
+      "confidence": "high"
+    },
+    {
+      "plaidPrimary": "BANK_FEES",
+      "plaidDetailed": "BANK_FEES_OVERDRAFT_FEES",
+      "naicsCode": null,
+      "naicsLabel": null,
+      "nonEmission": true,
+      "confidence": "high"
+    },
+    {
+      "plaidPrimary": "BANK_FEES",
+      "plaidDetailed": "BANK_FEES_LATE_FEES",
+      "naicsCode": null,
+      "naicsLabel": null,
+      "nonEmission": true,
+      "confidence": "high"
+    },
+    {
+      "plaidPrimary": "BANK_FEES",
+      "plaidDetailed": "BANK_FEES_CASH_ADVANCE",
+      "naicsCode": null,
+      "naicsLabel": null,
+      "nonEmission": true,
+      "confidence": "high"
+    },
+    {
+      "plaidPrimary": "BANK_FEES",
+      "plaidDetailed": "BANK_FEES_OTHER_BANK_FEES",
+      "naicsCode": null,
+      "naicsLabel": null,
+      "nonEmission": true,
+      "confidence": "high"
+    },
+    {
+      "plaidPrimary": "ENTERTAINMENT",
+      "plaidDetailed": "ENTERTAINMENT_CASINOS_AND_GAMBLING",
+      "naicsCode": "713290",
+      "naicsLabel": "Other Gambling Industries",
+      "nonEmission": false,
+      "confidence": "high"
+    },
+    {
+      "plaidPrimary": "ENTERTAINMENT",
+      "plaidDetailed": "ENTERTAINMENT_MUSIC_AND_AUDIO",
+      "naicsCode": "512250",
+      "naicsLabel": "Record Production and Distribution",
+      "nonEmission": false,
+      "confidence": "medium",
+      "note": "Music/audio purchases & streaming; sound-recording sector (5122)."
+    },
+    {
+      "plaidPrimary": "ENTERTAINMENT",
+      "plaidDetailed": "ENTERTAINMENT_SPORTING_EVENTS_AMUSEMENT_PARKS_AND_MUSEUMS",
+      "naicsCode": "713110",
+      "naicsLabel": "Amusement and Theme Parks",
+      "nonEmission": false,
+      "confidence": "medium",
+      "note": "Spans amusement parks (713110), spectator sports (7112), museums (7121); mapped to amusement parks."
+    },
+    {
+      "plaidPrimary": "ENTERTAINMENT",
+      "plaidDetailed": "ENTERTAINMENT_TV_AND_MOVIES",
+      "naicsCode": "512131",
+      "naicsLabel": "Motion Picture Theaters (except Drive-Ins)",
+      "nonEmission": false,
+      "confidence": "high"
+    },
+    {
+      "plaidPrimary": "ENTERTAINMENT",
+      "plaidDetailed": "ENTERTAINMENT_VIDEO_GAMES",
+      "naicsCode": "511210",
+      "naicsLabel": "Software Publishers",
+      "nonEmission": false,
+      "confidence": "medium",
+      "note": "Game software publishing (511210); hardware retail would be 443142."
+    },
+    {
+      "plaidPrimary": "ENTERTAINMENT",
+      "plaidDetailed": "ENTERTAINMENT_OTHER_ENTERTAINMENT",
+      "naicsCode": "713990",
+      "naicsLabel": "All Other Amusement and Recreation Industries",
+      "nonEmission": false,
+      "confidence": "medium"
+    },
+    {
+      "plaidPrimary": "FOOD_AND_DRINK",
+      "plaidDetailed": "FOOD_AND_DRINK_BEER_WINE_AND_LIQUOR",
+      "naicsCode": "445310",
+      "naicsLabel": "Beer, Wine, and Liquor Stores",
+      "nonEmission": false,
+      "confidence": "high"
+    },
+    {
+      "plaidPrimary": "FOOD_AND_DRINK",
+      "plaidDetailed": "FOOD_AND_DRINK_COFFEE",
+      "naicsCode": "722515",
+      "naicsLabel": "Snack and Nonalcoholic Beverage Bars",
+      "nonEmission": false,
+      "confidence": "high"
+    },
+    {
+      "plaidPrimary": "FOOD_AND_DRINK",
+      "plaidDetailed": "FOOD_AND_DRINK_FAST_FOOD",
+      "naicsCode": "722513",
+      "naicsLabel": "Limited-Service Restaurants",
+      "nonEmission": false,
+      "confidence": "high"
+    },
+    {
+      "plaidPrimary": "FOOD_AND_DRINK",
+      "plaidDetailed": "FOOD_AND_DRINK_GROCERIES",
+      "naicsCode": "445110",
+      "naicsLabel": "Supermarkets and Other Grocery (except Convenience) Stores",
+      "nonEmission": false,
+      "confidence": "high"
+    },
+    {
+      "plaidPrimary": "FOOD_AND_DRINK",
+      "plaidDetailed": "FOOD_AND_DRINK_RESTAURANT",
+      "naicsCode": "722511",
+      "naicsLabel": "Full-Service Restaurants",
+      "nonEmission": false,
+      "confidence": "high"
+    },
+    {
+      "plaidPrimary": "FOOD_AND_DRINK",
+      "plaidDetailed": "FOOD_AND_DRINK_VENDING_MACHINES",
+      "naicsCode": "454210",
+      "naicsLabel": "Vending Machine Operators",
+      "nonEmission": false,
+      "confidence": "high"
+    },
+    {
+      "plaidPrimary": "FOOD_AND_DRINK",
+      "plaidDetailed": "FOOD_AND_DRINK_OTHER_FOOD_AND_DRINK",
+      "naicsCode": "722511",
+      "naicsLabel": "Full-Service Restaurants",
+      "nonEmission": false,
+      "confidence": "medium"
+    },
+    {
+      "plaidPrimary": "GENERAL_MERCHANDISE",
+      "plaidDetailed": "GENERAL_MERCHANDISE_BOOKSTORES_AND_NEWSSTANDS",
+      "naicsCode": "451211",
+      "naicsLabel": "Book Stores",
+      "nonEmission": false,
+      "confidence": "high"
+    },
+    {
+      "plaidPrimary": "GENERAL_MERCHANDISE",
+      "plaidDetailed": "GENERAL_MERCHANDISE_CLOTHING_AND_ACCESSORIES",
+      "naicsCode": "448140",
+      "naicsLabel": "Family Clothing Stores",
+      "nonEmission": false,
+      "confidence": "high"
+    },
+    {
+      "plaidPrimary": "GENERAL_MERCHANDISE",
+      "plaidDetailed": "GENERAL_MERCHANDISE_CONVENIENCE_STORES",
+      "naicsCode": "445120",
+      "naicsLabel": "Convenience Stores",
+      "nonEmission": false,
+      "confidence": "high",
+      "note": "CORRECTED: prior draft used 4461 (Health & Personal Care); convenience stores are 445120 in NAICS 2017."
+    },
+    {
+      "plaidPrimary": "GENERAL_MERCHANDISE",
+      "plaidDetailed": "GENERAL_MERCHANDISE_DEPARTMENT_STORES",
+      "naicsCode": "452210",
+      "naicsLabel": "Department Stores",
+      "nonEmission": false,
+      "confidence": "high"
+    },
+    {
+      "plaidPrimary": "GENERAL_MERCHANDISE",
+      "plaidDetailed": "GENERAL_MERCHANDISE_DISCOUNT_STORES",
+      "naicsCode": "452319",
+      "naicsLabel": "All Other General Merchandise Stores",
+      "nonEmission": false,
+      "confidence": "high"
+    },
+    {
+      "plaidPrimary": "GENERAL_MERCHANDISE",
+      "plaidDetailed": "GENERAL_MERCHANDISE_ELECTRONICS",
+      "naicsCode": "443142",
+      "naicsLabel": "Electronics Stores",
+      "nonEmission": false,
+      "confidence": "high"
+    },
+    {
+      "plaidPrimary": "GENERAL_MERCHANDISE",
+      "plaidDetailed": "GENERAL_MERCHANDISE_GIFTS_AND_NOVELTIES",
+      "naicsCode": "453220",
+      "naicsLabel": "Gift, Novelty, and Souvenir Stores",
+      "nonEmission": false,
+      "confidence": "high"
+    },
+    {
+      "plaidPrimary": "GENERAL_MERCHANDISE",
+      "plaidDetailed": "GENERAL_MERCHANDISE_OFFICE_SUPPLIES",
+      "naicsCode": "453210",
+      "naicsLabel": "Office Supplies and Stationery Stores",
+      "nonEmission": false,
+      "confidence": "high"
+    },
+    {
+      "plaidPrimary": "GENERAL_MERCHANDISE",
+      "plaidDetailed": "GENERAL_MERCHANDISE_ONLINE_MARKETPLACES",
+      "naicsCode": "454110",
+      "naicsLabel": "Electronic Shopping and Mail-Order Houses",
+      "nonEmission": false,
+      "confidence": "high"
+    },
+    {
+      "plaidPrimary": "GENERAL_MERCHANDISE",
+      "plaidDetailed": "GENERAL_MERCHANDISE_PET_SUPPLIES",
+      "naicsCode": "453910",
+      "naicsLabel": "Pet and Pet Supplies Stores",
+      "nonEmission": false,
+      "confidence": "high",
+      "note": "CORRECTED: prior draft used 4529; pet & pet-supplies stores are 453910 in NAICS 2017."
+    },
+    {
+      "plaidPrimary": "GENERAL_MERCHANDISE",
+      "plaidDetailed": "GENERAL_MERCHANDISE_SPORTING_GOODS",
+      "naicsCode": "451110",
+      "naicsLabel": "Sporting Goods Stores",
+      "nonEmission": false,
+      "confidence": "high"
+    },
+    {
+      "plaidPrimary": "GENERAL_MERCHANDISE",
+      "plaidDetailed": "GENERAL_MERCHANDISE_SUPERSTORES",
+      "naicsCode": "452311",
+      "naicsLabel": "Warehouse Clubs and Supercenters",
+      "nonEmission": false,
+      "confidence": "high"
+    },
+    {
+      "plaidPrimary": "GENERAL_MERCHANDISE",
+      "plaidDetailed": "GENERAL_MERCHANDISE_TOBACCO_AND_VAPE",
+      "naicsCode": "453991",
+      "naicsLabel": "Tobacco Stores",
+      "nonEmission": false,
+      "confidence": "high"
+    },
+    {
+      "plaidPrimary": "GENERAL_MERCHANDISE",
+      "plaidDetailed": "GENERAL_MERCHANDISE_OTHER_GENERAL_MERCHANDISE",
+      "naicsCode": "452319",
+      "naicsLabel": "All Other General Merchandise Stores",
+      "nonEmission": false,
+      "confidence": "medium"
+    },
+    {
+      "plaidPrimary": "HOME_IMPROVEMENT",
+      "plaidDetailed": "HOME_IMPROVEMENT_FURNITURE",
+      "naicsCode": "442110",
+      "naicsLabel": "Furniture Stores",
+      "nonEmission": false,
+      "confidence": "high"
+    },
+    {
+      "plaidPrimary": "HOME_IMPROVEMENT",
+      "plaidDetailed": "HOME_IMPROVEMENT_HARDWARE",
+      "naicsCode": "444130",
+      "naicsLabel": "Hardware Stores",
+      "nonEmission": false,
+      "confidence": "high"
+    },
+    {
+      "plaidPrimary": "HOME_IMPROVEMENT",
+      "plaidDetailed": "HOME_IMPROVEMENT_REPAIR_AND_MAINTENANCE",
+      "naicsCode": "811490",
+      "naicsLabel": "Other Personal and Household Goods Repair and Maintenance",
+      "nonEmission": false,
+      "confidence": "low",
+      "note": "CORRECTED: prior draft used 5611 (Office Admin Svcs). Household-goods repair proxy (811490); trade-specific repair (HVAC/plumbing) spans 238/811."
+    },
+    {
+      "plaidPrimary": "HOME_IMPROVEMENT",
+      "plaidDetailed": "HOME_IMPROVEMENT_SECURITY",
+      "naicsCode": "561621",
+      "naicsLabel": "Security Systems Services (except Locksmiths)",
+      "nonEmission": false,
+      "confidence": "medium",
+      "note": "Security systems services (561621); installation is construction (238)."
+    },
+    {
+      "plaidPrimary": "HOME_IMPROVEMENT",
+      "plaidDetailed": "HOME_IMPROVEMENT_OTHER_HOME_IMPROVEMENT",
+      "naicsCode": "444110",
+      "naicsLabel": "Home Centers",
+      "nonEmission": false,
+      "confidence": "medium"
+    },
+    {
+      "plaidPrimary": "MEDICAL",
+      "plaidDetailed": "MEDICAL_DENTAL_CARE",
+      "naicsCode": "621210",
+      "naicsLabel": "Offices of Dentists",
+      "nonEmission": false,
+      "confidence": "high"
+    },
+    {
+      "plaidPrimary": "MEDICAL",
+      "plaidDetailed": "MEDICAL_EYE_CARE",
+      "naicsCode": "621320",
+      "naicsLabel": "Offices of Optometrists",
+      "nonEmission": false,
+      "confidence": "high"
+    },
+    {
+      "plaidPrimary": "MEDICAL",
+      "plaidDetailed": "MEDICAL_NURSING_CARE",
+      "naicsCode": "623110",
+      "naicsLabel": "Nursing Care Facilities (Skilled Nursing Facilities)",
+      "nonEmission": false,
+      "confidence": "high"
+    },
+    {
+      "plaidPrimary": "MEDICAL",
+      "plaidDetailed": "MEDICAL_PHARMACIES_AND_SUPPLEMENTS",
+      "naicsCode": "446110",
+      "naicsLabel": "Pharmacies and Drug Stores",
+      "nonEmission": false,
+      "confidence": "high"
+    },
+    {
+      "plaidPrimary": "MEDICAL",
+      "plaidDetailed": "MEDICAL_PRIMARY_CARE",
+      "naicsCode": "621111",
+      "naicsLabel": "Offices of Physicians (except Mental Health Specialists)",
+      "nonEmission": false,
+      "confidence": "high"
+    },
+    {
+      "plaidPrimary": "MEDICAL",
+      "plaidDetailed": "MEDICAL_VETERINARY_SERVICES",
+      "naicsCode": "541940",
+      "naicsLabel": "Veterinary Services",
+      "nonEmission": false,
+      "confidence": "high",
+      "note": "CORRECTED: prior draft used 5417 (Scientific R&D). Veterinary Services are 541940 in NAICS 2017."
+    },
+    {
+      "plaidPrimary": "MEDICAL",
+      "plaidDetailed": "MEDICAL_OTHER_MEDICAL",
+      "naicsCode": "621399",
+      "naicsLabel": "Offices of All Other Miscellaneous Health Practitioners",
+      "nonEmission": false,
+      "confidence": "medium"
+    },
+    {
+      "plaidPrimary": "PERSONAL_CARE",
+      "plaidDetailed": "PERSONAL_CARE_GYMS_AND_FITNESS_CENTERS",
+      "naicsCode": "713940",
+      "naicsLabel": "Fitness and Recreational Sports Centers",
+      "nonEmission": false,
+      "confidence": "high"
+    },
+    {
+      "plaidPrimary": "PERSONAL_CARE",
+      "plaidDetailed": "PERSONAL_CARE_HAIR_AND_BEAUTY",
+      "naicsCode": "812112",
+      "naicsLabel": "Beauty Salons",
+      "nonEmission": false,
+      "confidence": "high"
+    },
+    {
+      "plaidPrimary": "PERSONAL_CARE",
+      "plaidDetailed": "PERSONAL_CARE_LAUNDRY_AND_DRY_CLEANING",
+      "naicsCode": "812320",
+      "naicsLabel": "Drycleaning and Laundry Services (except Coin-Operated)",
+      "nonEmission": false,
+      "confidence": "high"
+    },
+    {
+      "plaidPrimary": "PERSONAL_CARE",
+      "plaidDetailed": "PERSONAL_CARE_OTHER_PERSONAL_CARE",
+      "naicsCode": "812199",
+      "naicsLabel": "Other Personal Care Services",
+      "nonEmission": false,
+      "confidence": "medium"
+    },
+    {
+      "plaidPrimary": "GENERAL_SERVICES",
+      "plaidDetailed": "GENERAL_SERVICES_ACCOUNTING_AND_FINANCIAL_PLANNING",
+      "naicsCode": "541211",
+      "naicsLabel": "Offices of Certified Public Accountants",
+      "nonEmission": false,
+      "confidence": "high"
+    },
+    {
+      "plaidPrimary": "GENERAL_SERVICES",
+      "plaidDetailed": "GENERAL_SERVICES_AUTOMOTIVE",
+      "naicsCode": "811111",
+      "naicsLabel": "General Automotive Repair",
+      "nonEmission": false,
+      "confidence": "high"
+    },
+    {
+      "plaidPrimary": "GENERAL_SERVICES",
+      "plaidDetailed": "GENERAL_SERVICES_CHILDCARE",
+      "naicsCode": "624410",
+      "naicsLabel": "Child Day Care Services",
+      "nonEmission": false,
+      "confidence": "high"
+    },
+    {
+      "plaidPrimary": "GENERAL_SERVICES",
+      "plaidDetailed": "GENERAL_SERVICES_CONSULTING_AND_LEGAL",
+      "naicsCode": "541110",
+      "naicsLabel": "Offices of Lawyers",
+      "nonEmission": false,
+      "confidence": "high"
+    },
+    {
+      "plaidPrimary": "GENERAL_SERVICES",
+      "plaidDetailed": "GENERAL_SERVICES_EDUCATION",
+      "naicsCode": "611310",
+      "naicsLabel": "Colleges, Universities, and Professional Schools",
+      "nonEmission": false,
+      "confidence": "medium",
+      "note": "Higher ed (611310); K-12 (611110) has a similar factor."
+    },
+    {
+      "plaidPrimary": "GENERAL_SERVICES",
+      "plaidDetailed": "GENERAL_SERVICES_INSURANCE",
+      "naicsCode": "524210",
+      "naicsLabel": "Insurance Agencies and Brokerages",
+      "nonEmission": false,
+      "confidence": "high"
+    },
+    {
+      "plaidPrimary": "GENERAL_SERVICES",
+      "plaidDetailed": "GENERAL_SERVICES_POSTAGE_AND_SHIPPING",
+      "naicsCode": "492110",
+      "naicsLabel": "Couriers and Express Delivery Services",
+      "nonEmission": false,
+      "confidence": "high",
+      "note": "CORRECTED: prior draft coded 4931 (Warehousing) but labelled it Couriers. Couriers & Express Delivery are 492110."
+    },
+    {
+      "plaidPrimary": "GENERAL_SERVICES",
+      "plaidDetailed": "GENERAL_SERVICES_STORAGE",
+      "naicsCode": "493110",
+      "naicsLabel": "General Warehousing and Storage",
+      "nonEmission": false,
+      "confidence": "medium"
+    },
+    {
+      "plaidPrimary": "GENERAL_SERVICES",
+      "plaidDetailed": "GENERAL_SERVICES_OTHER_GENERAL_SERVICES",
+      "naicsCode": "561990",
+      "naicsLabel": "All Other Support Services",
+      "nonEmission": false,
+      "confidence": "medium"
+    },
+    {
+      "plaidPrimary": "GOVERNMENT_AND_NON_PROFIT",
+      "plaidDetailed": "GOVERNMENT_AND_NON_PROFIT_DONATIONS",
+      "naicsCode": "813219",
+      "naicsLabel": "Other Grantmaking and Giving Services",
+      "nonEmission": false,
+      "confidence": "high"
+    },
+    {
+      "plaidPrimary": "GOVERNMENT_AND_NON_PROFIT",
+      "plaidDetailed": "GOVERNMENT_AND_NON_PROFIT_GOVERNMENT_DEPARTMENTS_AND_AGENCIES",
+      "naicsCode": null,
+      "naicsLabel": null,
+      "nonEmission": true,
+      "confidence": "high",
+      "note": "RECLASSIFIED to non-emission: USEEIO has no public-administration factor (government is I-O final demand, not a commodity). Agency payments are predominantly fees/fines/licenses/taxes = transfers."
+    },
+    {
+      "plaidPrimary": "GOVERNMENT_AND_NON_PROFIT",
+      "plaidDetailed": "GOVERNMENT_AND_NON_PROFIT_TAX_PAYMENT",
+      "naicsCode": null,
+      "naicsLabel": null,
+      "nonEmission": true,
+      "confidence": "high"
+    },
+    {
+      "plaidPrimary": "GOVERNMENT_AND_NON_PROFIT",
+      "plaidDetailed": "GOVERNMENT_AND_NON_PROFIT_OTHER_GOVERNMENT_AND_NON_PROFIT",
+      "naicsCode": "813990",
+      "naicsLabel": "Other Similar Organizations (except Business, Professional, Labor, and Political Organizations)",
+      "nonEmission": false,
+      "confidence": "medium"
+    },
+    {
+      "plaidPrimary": "TRANSPORTATION",
+      "plaidDetailed": "TRANSPORTATION_BIKES_AND_SCOOTERS",
+      "naicsCode": "532284",
+      "naicsLabel": "Recreational Goods Rental",
+      "nonEmission": false,
+      "confidence": "low",
+      "note": "Micro-mobility rentals; recreational-goods rental (532284) proxy."
+    },
+    {
+      "plaidPrimary": "TRANSPORTATION",
+      "plaidDetailed": "TRANSPORTATION_GAS",
+      "naicsCode": "447110",
+      "naicsLabel": "Gasoline Stations with Convenience Stores",
+      "nonEmission": false,
+      "confidence": "high"
+    },
+    {
+      "plaidPrimary": "TRANSPORTATION",
+      "plaidDetailed": "TRANSPORTATION_PARKING",
+      "naicsCode": "812930",
+      "naicsLabel": "Parking Lots and Garages",
+      "nonEmission": false,
+      "confidence": "high",
+      "note": "Parking lots & garages are 812930 in NAICS 2017 (prior draft used 7521, a NAICS-2012 code)."
+    },
+    {
+      "plaidPrimary": "TRANSPORTATION",
+      "plaidDetailed": "TRANSPORTATION_PUBLIC_TRANSIT",
+      "naicsCode": "485113",
+      "naicsLabel": "Bus and Other Motor Vehicle Transit Systems",
+      "nonEmission": false,
+      "confidence": "high"
+    },
+    {
+      "plaidPrimary": "TRANSPORTATION",
+      "plaidDetailed": "TRANSPORTATION_TAXIS_AND_RIDE_SHARES",
+      "naicsCode": "485310",
+      "naicsLabel": "Taxi Service",
+      "nonEmission": false,
+      "confidence": "high"
+    },
+    {
+      "plaidPrimary": "TRANSPORTATION",
+      "plaidDetailed": "TRANSPORTATION_TOLLS",
+      "naicsCode": "488490",
+      "naicsLabel": "Other Support Activities for Road Transportation",
+      "nonEmission": false,
+      "confidence": "medium",
+      "note": "Tolls unclassified in NAICS; mapped to Other Support Activities for Road Transportation."
+    },
+    {
+      "plaidPrimary": "TRANSPORTATION",
+      "plaidDetailed": "TRANSPORTATION_OTHER_TRANSPORTATION",
+      "naicsCode": "485999",
+      "naicsLabel": "All Other Transit and Ground Passenger Transportation",
+      "nonEmission": false,
+      "confidence": "medium"
+    },
+    {
+      "plaidPrimary": "TRAVEL",
+      "plaidDetailed": "TRAVEL_FLIGHTS",
+      "naicsCode": "481111",
+      "naicsLabel": "Scheduled Passenger Air Transportation",
+      "nonEmission": false,
+      "confidence": "high"
+    },
+    {
+      "plaidPrimary": "TRAVEL",
+      "plaidDetailed": "TRAVEL_LODGING",
+      "naicsCode": "721110",
+      "naicsLabel": "Hotels (except Casino Hotels) and Motels",
+      "nonEmission": false,
+      "confidence": "high"
+    },
+    {
+      "plaidPrimary": "TRAVEL",
+      "plaidDetailed": "TRAVEL_RENTAL_CARS",
+      "naicsCode": "532111",
+      "naicsLabel": "Passenger Car Rental",
+      "nonEmission": false,
+      "confidence": "high"
+    },
+    {
+      "plaidPrimary": "TRAVEL",
+      "plaidDetailed": "TRAVEL_OTHER_TRAVEL",
+      "naicsCode": "561520",
+      "naicsLabel": "Tour Operators",
+      "nonEmission": false,
+      "confidence": "medium",
+      "note": "Tour operators / travel arrangement (5615)."
+    },
+    {
+      "plaidPrimary": "RENT_AND_UTILITIES",
+      "plaidDetailed": "RENT_AND_UTILITIES_GAS_AND_ELECTRICITY",
+      "naicsCode": "221210",
+      "naicsLabel": "Natural Gas Distribution",
+      "nonEmission": false,
+      "confidence": "low",
+      "note": "KNOWN GAP: electric power (2211xx) is ABSENT from the USEEIO v1.3 NAICS-6 file. Natural Gas Distribution (221210) is used as a utilities proxy \u2014 this UNDERSTATES grid electricity. Needs the commodity-keyed USEEIO dataset for a real electricity factor."
+    },
+    {
+      "plaidPrimary": "RENT_AND_UTILITIES",
+      "plaidDetailed": "RENT_AND_UTILITIES_INTERNET_AND_CABLE",
+      "naicsCode": "517311",
+      "naicsLabel": "Wired Telecommunications Carriers",
+      "nonEmission": false,
+      "confidence": "high",
+      "note": "CORRECTED: prior draft used 5179 (not a NAICS-2017 4-digit). Wired Telecom Carriers = 517311."
+    },
+    {
+      "plaidPrimary": "RENT_AND_UTILITIES",
+      "plaidDetailed": "RENT_AND_UTILITIES_RENT",
+      "naicsCode": null,
+      "naicsLabel": null,
+      "nonEmission": true,
+      "confidence": "high",
+      "note": "Rent is a transfer to landlord; building operations are their responsibility"
+    },
+    {
+      "plaidPrimary": "RENT_AND_UTILITIES",
+      "plaidDetailed": "RENT_AND_UTILITIES_SEWAGE_AND_WASTE_MANAGEMENT",
+      "naicsCode": "562111",
+      "naicsLabel": "Solid Waste Collection",
+      "nonEmission": false,
+      "confidence": "high",
+      "note": "CORRECTED: prior draft used 5622. Solid Waste Collection = 562111."
+    },
+    {
+      "plaidPrimary": "RENT_AND_UTILITIES",
+      "plaidDetailed": "RENT_AND_UTILITIES_TELEPHONE",
+      "naicsCode": "517312",
+      "naicsLabel": "Wireless Telecommunications Carriers (except Satellite)",
+      "nonEmission": false,
+      "confidence": "high",
+      "note": "CORRECTED: prior draft used 5179. Wireless Telecom Carriers = 517312."
+    },
+    {
+      "plaidPrimary": "RENT_AND_UTILITIES",
+      "plaidDetailed": "RENT_AND_UTILITIES_WATER",
+      "naicsCode": "221310",
+      "naicsLabel": "Water Supply and Irrigation Systems",
+      "nonEmission": false,
+      "confidence": "high"
+    },
+    {
+      "plaidPrimary": "RENT_AND_UTILITIES",
+      "plaidDetailed": "RENT_AND_UTILITIES_OTHER_UTILITIES",
+      "naicsCode": "221330",
+      "naicsLabel": "Steam and Air-Conditioning Supply",
+      "nonEmission": false,
+      "confidence": "medium"
+    },
+    {
+      "plaidPrimary": "OTHER",
+      "plaidDetailed": "OTHER_OTHER",
+      "naicsCode": null,
+      "naicsLabel": null,
+      "nonEmission": true,
+      "confidence": "low",
+      "note": "Catch-all category with unknown intent; cannot map reliably"
+    }
+  ]
+}

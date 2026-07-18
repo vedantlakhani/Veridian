@@ -1,0 +1,380 @@
+{
+  "_meta": {
+    "dataset": "EPA Supply Chain Greenhouse Gas Emission Factors v1.3 (by NAICS-6)",
+    "datasetVersion": "v1.3.0",
+    "model": "USEEIO",
+    "sourceCsv": "https://pasteur.epa.gov/uploads/10.23719/1531143/SupplyChainGHGEmissionFactors_v1.3.0_NAICS_CO2e_USD2022.csv",
+    "sourceLanding": "https://catalog.data.gov/dataset/supply-chain-greenhouse-gas-emission-factors-v1-3-by-naics-6",
+    "retrievedDate": "2026-07-17",
+    "naicsVersion": "2017",
+    "dollarYear": 2022,
+    "unit": "kg CO2e per 2022 USD, purchaser price",
+    "factorVariant": "Supply Chain Emission Factors with Margins (SEF+MEF)",
+    "gwp": "IPCC AR5, 100-year",
+    "provenance": "Every kgCo2ePerUsd2022 value is the exact \"Supply Chain Emission Factors with Margins\" cell for the listed 6-digit 2017 NAICS code, copied verbatim from the EPA CSV. No value is averaged, interpolated, or estimated.",
+    "coverage": "CURATED SUBSET: contains only the 69 NAICS sectors referenced by data/category_to_naics.json (plus the general-retail fallback), NOT the full 1,016-row EPA dataset. Every row is backed by the primary EPA source above.",
+    "knownGaps": [
+      "ELECTRIC POWER (NAICS 2211xx) is ABSENT from the EPA v1.3 NAICS-6 file (sector 22 contains only natural gas 221210 and water/sewage/steam 2213xx). RENT_AND_UTILITIES_GAS_AND_ELECTRICITY therefore proxies to natural-gas distribution and UNDERSTATES grid electricity. A proper fix needs the commodity-keyed USEEIO dataset. INCOMPLETE for home electricity.",
+      "PUBLIC ADMINISTRATION (NAICS 92) is absent (government is I-O final demand, not a commodity); the government-departments Plaid category is treated as non-emission upstream in the crosswalk."
+    ],
+    "cpi": {
+      "index": "CPI-U, All items, US city average, not seasonally adjusted (BLS series CPIAUCNS)",
+      "source": "https://fred.stlouisfed.org/series/CPIAUCNS",
+      "sourceYear": 2022,
+      "sourceYearIndex": 292.655,
+      "sourceYearIndexNote": "2022 annual average (complete, official).",
+      "targetYear": 2025,
+      "targetYearIndex": 321.943,
+      "targetYearIndexNote": "2025 average over 11 available months (Jan-Dec 2025 excl. Oct; Oct 2025 value was blank in the FRED CPIAUCNS snapshot retrieved 2026-07-17). Difference from a full 12-month average is <0.1%."
+    },
+    "cpiAdjustmentTo2025": 1.10008,
+    "cpiAdjustmentNote": "cpiAdjustmentTo2025 = targetYearIndex/sourceYearIndex = price growth 2022->2025. The engine applies its RECIPROCAL (sourceYearIndex/targetYearIndex ~= 0.90903) to deflate a nominal transaction to 2022 dollars before multiplying by the 2022-dollar factor. Modeling assumption: spend-based emissions track real consumption, so nominal spend is deflated to the factor dollar-year."
+  },
+  "factors": {
+    "221210": {
+      "naicsTitle": "Natural Gas Distribution",
+      "kgCo2ePerUsd2022": 0.532,
+      "appCategory": "energy"
+    },
+    "221310": {
+      "naicsTitle": "Water Supply and Irrigation Systems",
+      "kgCo2ePerUsd2022": 0.578,
+      "appCategory": "energy"
+    },
+    "221330": {
+      "naicsTitle": "Steam and Air-Conditioning Supply",
+      "kgCo2ePerUsd2022": 0.578,
+      "appCategory": "energy"
+    },
+    "442110": {
+      "naicsTitle": "Furniture Stores",
+      "kgCo2ePerUsd2022": 0.111,
+      "appCategory": "shopping"
+    },
+    "443142": {
+      "naicsTitle": "Electronics Stores",
+      "kgCo2ePerUsd2022": 0.111,
+      "appCategory": "shopping"
+    },
+    "444110": {
+      "naicsTitle": "Home Centers",
+      "kgCo2ePerUsd2022": 0.087,
+      "appCategory": "shopping"
+    },
+    "444130": {
+      "naicsTitle": "Hardware Stores",
+      "kgCo2ePerUsd2022": 0.087,
+      "appCategory": "shopping"
+    },
+    "445110": {
+      "naicsTitle": "Supermarkets and Other Grocery (except Convenience) Stores",
+      "kgCo2ePerUsd2022": 0.186,
+      "appCategory": "food"
+    },
+    "445120": {
+      "naicsTitle": "Convenience Stores",
+      "kgCo2ePerUsd2022": 0.186,
+      "appCategory": "food"
+    },
+    "445310": {
+      "naicsTitle": "Beer, Wine, and Liquor Stores",
+      "kgCo2ePerUsd2022": 0.186,
+      "appCategory": "food"
+    },
+    "446110": {
+      "naicsTitle": "Pharmacies and Drug Stores",
+      "kgCo2ePerUsd2022": 0.13,
+      "appCategory": "shopping"
+    },
+    "447110": {
+      "naicsTitle": "Gasoline Stations with Convenience Stores",
+      "kgCo2ePerUsd2022": 0.183,
+      "appCategory": "transport"
+    },
+    "448140": {
+      "naicsTitle": "Family Clothing Stores",
+      "kgCo2ePerUsd2022": 0.138,
+      "appCategory": "shopping"
+    },
+    "451110": {
+      "naicsTitle": "Sporting Goods Stores",
+      "kgCo2ePerUsd2022": 0.111,
+      "appCategory": "shopping"
+    },
+    "451211": {
+      "naicsTitle": "Book Stores",
+      "kgCo2ePerUsd2022": 0.111,
+      "appCategory": "shopping"
+    },
+    "452210": {
+      "naicsTitle": "Department Stores",
+      "kgCo2ePerUsd2022": 0.164,
+      "appCategory": "shopping"
+    },
+    "452311": {
+      "naicsTitle": "Warehouse Clubs and Supercenters",
+      "kgCo2ePerUsd2022": 0.164,
+      "appCategory": "shopping"
+    },
+    "452319": {
+      "naicsTitle": "All Other General Merchandise Stores",
+      "kgCo2ePerUsd2022": 0.164,
+      "appCategory": "shopping"
+    },
+    "453210": {
+      "naicsTitle": "Office Supplies and Stationery Stores",
+      "kgCo2ePerUsd2022": 0.111,
+      "appCategory": "shopping"
+    },
+    "453220": {
+      "naicsTitle": "Gift, Novelty, and Souvenir Stores",
+      "kgCo2ePerUsd2022": 0.111,
+      "appCategory": "shopping"
+    },
+    "453910": {
+      "naicsTitle": "Pet and Pet Supplies Stores",
+      "kgCo2ePerUsd2022": 0.111,
+      "appCategory": "shopping"
+    },
+    "453991": {
+      "naicsTitle": "Tobacco Stores",
+      "kgCo2ePerUsd2022": 0.111,
+      "appCategory": "shopping"
+    },
+    "454110": {
+      "naicsTitle": "Electronic Shopping and Mail-Order Houses",
+      "kgCo2ePerUsd2022": 0.094,
+      "appCategory": "shopping"
+    },
+    "454210": {
+      "naicsTitle": "Vending Machine Operators",
+      "kgCo2ePerUsd2022": 0.094,
+      "appCategory": "food"
+    },
+    "481111": {
+      "naicsTitle": "Scheduled Passenger Air Transportation",
+      "kgCo2ePerUsd2022": 0.644,
+      "appCategory": "transport"
+    },
+    "485113": {
+      "naicsTitle": "Bus and Other Motor Vehicle Transit Systems",
+      "kgCo2ePerUsd2022": 0.566,
+      "appCategory": "transport"
+    },
+    "485310": {
+      "naicsTitle": "Taxi Service",
+      "kgCo2ePerUsd2022": 0.566,
+      "appCategory": "transport"
+    },
+    "485999": {
+      "naicsTitle": "All Other Transit and Ground Passenger Transportation",
+      "kgCo2ePerUsd2022": 0.566,
+      "appCategory": "transport"
+    },
+    "488490": {
+      "naicsTitle": "Other Support Activities for Road Transportation",
+      "kgCo2ePerUsd2022": 0.162,
+      "appCategory": "transport"
+    },
+    "492110": {
+      "naicsTitle": "Couriers and Express Delivery Services",
+      "kgCo2ePerUsd2022": 0.303,
+      "appCategory": "shopping"
+    },
+    "493110": {
+      "naicsTitle": "General Warehousing and Storage",
+      "kgCo2ePerUsd2022": 0.244,
+      "appCategory": "shopping"
+    },
+    "511210": {
+      "naicsTitle": "Software Publishers",
+      "kgCo2ePerUsd2022": 0.08,
+      "appCategory": "shopping"
+    },
+    "512131": {
+      "naicsTitle": "Motion Picture Theaters (except Drive-Ins)",
+      "kgCo2ePerUsd2022": 0.052,
+      "appCategory": "shopping"
+    },
+    "512250": {
+      "naicsTitle": "Record Production and Distribution",
+      "kgCo2ePerUsd2022": 0.044,
+      "appCategory": "shopping"
+    },
+    "517311": {
+      "naicsTitle": "Wired Telecommunications Carriers",
+      "kgCo2ePerUsd2022": 0.075,
+      "appCategory": "shopping"
+    },
+    "517312": {
+      "naicsTitle": "Wireless Telecommunications Carriers (except Satellite)",
+      "kgCo2ePerUsd2022": 0.096,
+      "appCategory": "shopping"
+    },
+    "524210": {
+      "naicsTitle": "Insurance Agencies and Brokerages",
+      "kgCo2ePerUsd2022": 0.029,
+      "appCategory": "shopping"
+    },
+    "532111": {
+      "naicsTitle": "Passenger Car Rental",
+      "kgCo2ePerUsd2022": 0.11,
+      "appCategory": "transport"
+    },
+    "532284": {
+      "naicsTitle": "Recreational Goods Rental",
+      "kgCo2ePerUsd2022": 0.102,
+      "appCategory": "transport"
+    },
+    "541110": {
+      "naicsTitle": "Offices of Lawyers",
+      "kgCo2ePerUsd2022": 0.041,
+      "appCategory": "shopping"
+    },
+    "541211": {
+      "naicsTitle": "Offices of Certified Public Accountants",
+      "kgCo2ePerUsd2022": 0.054,
+      "appCategory": "shopping"
+    },
+    "541940": {
+      "naicsTitle": "Veterinary Services",
+      "kgCo2ePerUsd2022": 0.127,
+      "appCategory": "shopping"
+    },
+    "561520": {
+      "naicsTitle": "Tour Operators",
+      "kgCo2ePerUsd2022": 0.088,
+      "appCategory": "shopping"
+    },
+    "561621": {
+      "naicsTitle": "Security Systems Services (except Locksmiths)",
+      "kgCo2ePerUsd2022": 0.074,
+      "appCategory": "shopping"
+    },
+    "561990": {
+      "naicsTitle": "All Other Support Services",
+      "kgCo2ePerUsd2022": 0.127,
+      "appCategory": "shopping"
+    },
+    "562111": {
+      "naicsTitle": "Solid Waste Collection",
+      "kgCo2ePerUsd2022": 0.988,
+      "appCategory": "energy"
+    },
+    "611310": {
+      "naicsTitle": "Colleges, Universities, and Professional Schools",
+      "kgCo2ePerUsd2022": 0.14,
+      "appCategory": "shopping"
+    },
+    "621111": {
+      "naicsTitle": "Offices of Physicians (except Mental Health Specialists)",
+      "kgCo2ePerUsd2022": 0.083,
+      "appCategory": "shopping"
+    },
+    "621210": {
+      "naicsTitle": "Offices of Dentists",
+      "kgCo2ePerUsd2022": 0.056,
+      "appCategory": "shopping"
+    },
+    "621320": {
+      "naicsTitle": "Offices of Optometrists",
+      "kgCo2ePerUsd2022": 0.105,
+      "appCategory": "shopping"
+    },
+    "621399": {
+      "naicsTitle": "Offices of All Other Miscellaneous Health Practitioners",
+      "kgCo2ePerUsd2022": 0.105,
+      "appCategory": "shopping"
+    },
+    "623110": {
+      "naicsTitle": "Nursing Care Facilities (Skilled Nursing Facilities)",
+      "kgCo2ePerUsd2022": 0.159,
+      "appCategory": "shopping"
+    },
+    "624410": {
+      "naicsTitle": "Child Day Care Services",
+      "kgCo2ePerUsd2022": 0.215,
+      "appCategory": "shopping"
+    },
+    "713110": {
+      "naicsTitle": "Amusement and Theme Parks",
+      "kgCo2ePerUsd2022": 0.167,
+      "appCategory": "shopping"
+    },
+    "713290": {
+      "naicsTitle": "Other Gambling Industries",
+      "kgCo2ePerUsd2022": 0.174,
+      "appCategory": "shopping"
+    },
+    "713940": {
+      "naicsTitle": "Fitness and Recreational Sports Centers",
+      "kgCo2ePerUsd2022": 0.235,
+      "appCategory": "shopping"
+    },
+    "713990": {
+      "naicsTitle": "All Other Amusement and Recreation Industries",
+      "kgCo2ePerUsd2022": 0.235,
+      "appCategory": "shopping"
+    },
+    "721110": {
+      "naicsTitle": "Hotels (except Casino Hotels) and Motels",
+      "kgCo2ePerUsd2022": 0.145,
+      "appCategory": "shopping"
+    },
+    "722511": {
+      "naicsTitle": "Full-Service Restaurants",
+      "kgCo2ePerUsd2022": 0.194,
+      "appCategory": "food"
+    },
+    "722513": {
+      "naicsTitle": "Limited-Service Restaurants",
+      "kgCo2ePerUsd2022": 0.255,
+      "appCategory": "food"
+    },
+    "722515": {
+      "naicsTitle": "Snack and Nonalcoholic Beverage Bars",
+      "kgCo2ePerUsd2022": 0.132,
+      "appCategory": "food"
+    },
+    "811111": {
+      "naicsTitle": "General Automotive Repair",
+      "kgCo2ePerUsd2022": 0.103,
+      "appCategory": "shopping"
+    },
+    "811490": {
+      "naicsTitle": "Other Personal and Household Goods Repair and Maintenance",
+      "kgCo2ePerUsd2022": 0.113,
+      "appCategory": "shopping"
+    },
+    "812112": {
+      "naicsTitle": "Beauty Salons",
+      "kgCo2ePerUsd2022": 0.125,
+      "appCategory": "shopping"
+    },
+    "812199": {
+      "naicsTitle": "Other Personal Care Services",
+      "kgCo2ePerUsd2022": 0.125,
+      "appCategory": "shopping"
+    },
+    "812320": {
+      "naicsTitle": "Drycleaning and Laundry Services (except Coin-Operated)",
+      "kgCo2ePerUsd2022": 0.158,
+      "appCategory": "shopping"
+    },
+    "812930": {
+      "naicsTitle": "Parking Lots and Garages",
+      "kgCo2ePerUsd2022": 0.111,
+      "appCategory": "transport"
+    },
+    "813219": {
+      "naicsTitle": "Other Grantmaking and Giving Services",
+      "kgCo2ePerUsd2022": 0.059,
+      "appCategory": "shopping"
+    },
+    "813990": {
+      "naicsTitle": "Other Similar Organizations (except Business, Professional, Labor, and Political Organizations)",
+      "kgCo2ePerUsd2022": 0.128,
+      "appCategory": "shopping"
+    }
+  }
+}
