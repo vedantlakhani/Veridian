@@ -339,6 +339,7 @@ export default function InsightsScreen() {
         { label: 'Food', value: totals['food'] ?? 0, color: colors.food },
         { label: 'Transport', value: totals['transport'] ?? 0, color: colors.transport },
         { label: 'Energy', value: totals['energy'] ?? 0, color: colors.energy },
+        { label: 'Shopping', value: totals['shopping'] ?? 0, color: colors.shopping },
       ];
     }
     // Daily bars colored by that day's budget state
@@ -372,7 +373,8 @@ export default function InsightsScreen() {
     }
     return totals;
   }, [entries]);
-  const compositionTotal = composition.food + composition.transport + composition.energy;
+  const compositionTotal =
+    composition.food + composition.transport + composition.energy + composition.shopping;
 
   return (
     <ScrollView
@@ -439,6 +441,7 @@ export default function InsightsScreen() {
                   { value: composition.food, color: colors.food },
                   { value: composition.transport, color: colors.transport },
                   { value: composition.energy, color: colors.energy },
+                  { value: composition.shopping, color: colors.shopping },
                 ]}
                 height={10}
               />

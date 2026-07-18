@@ -98,6 +98,48 @@ describe('buildFeedSentence · entries', () => {
   });
 });
 
+// ─── buildFeedSentence — transaction-sourced entries (Sprint D) ────────────────
+
+describe('buildFeedSentence · transaction entries', () => {
+  it('leads with the merchant name when the entry is a bank-linked estimate', () => {
+    expect(
+      buildFeedSentence(
+        entry({
+          item: 'Grocery Stores',
+          subcategory: 'GROCERIES',
+          category: 'shopping',
+          unit: 'USD',
+          quantity: 1,
+          source: 'transaction',
+          merchantName: "Trader Joe's",
+        }),
+      ),
+    ).toBe("Grocery Stores at Trader Joe's");
+  });
+
+  it('falls back to the normal "Logged X" sentence when no merchant name is present', () => {
+    expect(
+      buildFeedSentence(
+        entry({
+          item: 'Grocery Stores',
+          subcategory: 'GROCERIES',
+          category: 'shopping',
+          unit: 'USD',
+          quantity: 1,
+          source: 'transaction',
+          merchantName: null,
+        }),
+      ),
+    ).toBe('Logged Grocery Stores — Groceries');
+  });
+
+  it('does not apply merchant phrasing to non-transaction entries even if merchantName were somehow set', () => {
+    expect(
+      buildFeedSentence(entry({ item: 'Beef', subcategory: 'RED_MEAT', category: 'food', source: 'manual' })),
+    ).toBe('Logged Beef — Red Meat');
+  });
+});
+
 // ─── buildFeedSentence — zero-emission trips ───────────────────────────────────
 
 describe('buildFeedSentence · trips', () => {
@@ -134,6 +176,22 @@ describe('buildImpactChip', () => {
     expect(formatKgChip(0.9)).toBe('0.9 kg');
     expect(formatKgChip(0.05)).toBe('<0.1 kg');
     expect(formatKgChip(0)).toBe('0.0 kg');
+  });
+
+  it('marks a transaction-sourced entry chip as estimated with a "~" prefix', () => {
+    expect(buildImpactChip(entry({ kgCo2e: 4.2, source: 'transaction' }))).toEqual({
+      label: '~4.2 kg',
+      positive: false,
+      estimated: true,
+    });
+  });
+
+  it('never renders a transaction-sourced chip identically to a sensor/manual chip', () => {
+    const sensorChip = buildImpactChip(entry({ kgCo2e: 4.2, source: 'sensor' }));
+    const transactionChip = buildImpactChip(entry({ kgCo2e: 4.2, source: 'transaction' }));
+    expect(transactionChip).not.toEqual(sensorChip);
+    expect(transactionChip.estimated).toBe(true);
+    expect(sensorChip.estimated).toBeUndefined();
   });
 });
 

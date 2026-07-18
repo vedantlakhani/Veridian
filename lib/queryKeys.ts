@@ -17,3 +17,8 @@ export const TRIP_KEYS = {
   needsConfirmation: (userId: string) => ['detected_trips', userId, 'needs_confirmation'] as const,
   recentAutoLogs: (userId: string) => ['detected_trips', userId, 'auto_confirmed'] as const,
 };
+
+export const LINKED_ITEMS_KEYS = {
+  all: ['linked_items'] as const,
+  list: (userId: string) => ['linked_items', userId] as const,
+};

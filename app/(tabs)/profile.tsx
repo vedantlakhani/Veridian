@@ -14,6 +14,7 @@ import { useMyChallenges, useCreateChallenge, useJoinChallenge } from '@/hooks/u
 import { useAchievements } from '@/hooks/useAchievements';
 import { useStreak } from '@/hooks/useStreak';
 import { useMomentum } from '@/hooks/useMomentum';
+import { useLinkedAccounts, useUnlinkAccount } from '@/hooks/useLinkedAccounts';
 import { supabase } from '@/lib/supabase';
 import AchievementBadge from '@/components/social/AchievementBadge';
 import ChallengeCard from '@/components/social/ChallengeCard';
@@ -21,6 +22,7 @@ import type { Achievement } from '@/types/achievement';
 import {
   VCard,
   VButton,
+  VBadge,
   VInput,
   VMetricCard,
   VMomentumBand,
@@ -107,6 +109,18 @@ export default function ProfileScreen() {
   // is the momentum band instead (NORTH_STAR.md §8 pattern 5).
   const { streak, isLoading: streakLoading } = useStreak(userId);
   const momentum = useMomentum(userId);
+
+  // Linked bank accounts — Sprint D Stage 4 "money layer"
+  const { data: linkedAccounts = [], isLoading: linkedAccountsLoading } = useLinkedAccounts(userId);
+  const { mutate: unlinkAccount, isPending: isUnlinking } = useUnlinkAccount();
+  const [unlinkingId, setUnlinkingId] = useState<string | null>(null);
+  const handleUnlink = (id: string) => {
+    setUnlinkingId(id);
+    unlinkAccount(id, {
+      onError: () => setErrorToast("Couldn't unlink that account — try again"),
+      onSettled: () => setUnlinkingId(null),
+    });
+  };
 
   // Lifetime total — cheap aggregate over daily_summaries, not every entry
   const { data: lifetimeRows, isLoading: lifetimeLoading } = useQuery({
@@ -498,6 +512,75 @@ export default function ProfileScreen() {
           )}
         </VCard>
 
+        {/* ── Linked accounts — Sprint D Stage 4 "money layer" ── */}
+        <VCard elevation="sm" style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <View style={styles.sectionTitleRow}>
+              <View style={styles.sectionTitleAccent} />
+              <VText variant="heading" style={styles.sectionTitle}>
+                Linked accounts
+              </VText>
+            </View>
+            <VPressable
+              onPress={() => router.push('/link-bank')}
+              hitSlop={8}
+              haptic="light"
+              accessibilityRole="button"
+              accessibilityLabel="Link a bank account"
+            >
+              <View style={styles.newChallengeRow}>
+                <VIcon name="plus" size={13} color={colors.primaryLight} strokeWidth={2.25} />
+                <VText variant="caption" style={styles.sectionAction}>
+                  Add
+                </VText>
+              </View>
+            </VPressable>
+          </View>
+
+          {linkedAccountsLoading ? (
+            <VSkeleton width="100%" height={56} borderRadius={radii.sm} />
+          ) : linkedAccounts.length === 0 ? (
+            <VEmptyState
+              title="No banks linked yet"
+              body="Connect a card to see shopping, food, and fuel appear automatically"
+              ctaLabel="Connect a bank"
+              onCta={() => router.push('/link-bank')}
+              icon={<VIcon name="lock" size={36} color={colors.textTertiary} />}
+            />
+          ) : (
+            linkedAccounts.map((item) => (
+              <View key={item.id} style={styles.linkedAccountRow}>
+                <View style={{ flex: 1 }}>
+                  <VText variant="body" style={styles.linkedAccountName} numberOfLines={1}>
+                    {item.institution_name ?? 'Linked bank'}
+                  </VText>
+                  <View style={styles.linkedAccountMetaRow}>
+                    <VBadge
+                      label={item.status}
+                      variant={item.status === 'active' ? 'success' : 'warning'}
+                      size="sm"
+                    />
+                    <VText variant="caption" style={styles.linkedAccountDate}>
+                      {new Date(item.created_at).toLocaleDateString('en-US', {
+                        month: 'short',
+                        day: 'numeric',
+                        year: 'numeric',
+                      })}
+                    </VText>
+                  </View>
+                </View>
+                <VButton
+                  variant="ghost"
+                  size="sm"
+                  label="Unlink"
+                  loading={isUnlinking && unlinkingId === item.id}
+                  onPress={() => handleUnlink(item.id)}
+                />
+              </View>
+            ))
+          )}
+        </VCard>
+
         {/* ── Sign out — quiet, this page is about pride ── */}
         <VPressable style={styles.signOutRow} onPress={() => void signOut()} haptic="light">
           <VText variant="caption" style={styles.signOutText}>
@@ -810,6 +893,26 @@ const styles = StyleSheet.create({
   },
   skeletonRow: {
     marginBottom: spacing.sm,
+  },
+  linkedAccountRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    paddingVertical: spacing.sm,
+    borderTopWidth: 1,
+    borderTopColor: colors.border,
+  },
+  linkedAccountName: {
+    fontWeight: '600',
+  },
+  linkedAccountMetaRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    marginTop: 3,
+  },
+  linkedAccountDate: {
+    color: colors.textTertiary,
   },
   sheetAvatarWrap: {
     alignItems: 'center',

@@ -408,11 +408,31 @@ function feedIcon(item: FeedItem): { name: VIconName; color: string } {
   return { name, color };
 }
 
-function ImpactPill({ label, positive }: { label: string; positive: boolean }) {
+function ImpactPill({
+  label,
+  positive,
+  estimated,
+}: {
+  label: string;
+  positive: boolean;
+  estimated?: boolean;
+}) {
   if (positive) {
     return (
       <View style={feedStyles.savedChip}>
         <VText variant="caption" style={feedStyles.savedChipText}>
+          {label}
+        </VText>
+      </View>
+    );
+  }
+  // Spend-based estimate — a distinct muted pill, never the sensor-measured
+  // plain mono value, so an estimate never LOOKS like a confident number
+  // (NORTH_STAR.md §5 — false precision is a documented churn cause).
+  if (estimated) {
+    return (
+      <View style={feedStyles.estimatedChip}>
+        <VText variant="caption" style={feedStyles.estimatedChipText}>
           {label}
         </VText>
       </View>
@@ -450,7 +470,7 @@ function FeedRow({ item, index }: { item: FeedRowItem; index: number }) {
             {formatClockTime(item.at)}
           </VText>
         </View>
-        <ImpactPill label={chip.label} positive={chip.positive} />
+        <ImpactPill label={chip.label} positive={chip.positive} estimated={chip.estimated} />
       </View>
     </VStaggerIn>
   );
@@ -504,6 +524,18 @@ const feedStyles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '700',
     color: colors.primary,
+  },
+  estimatedChip: {
+    backgroundColor: colors.estimatedGlow,
+    borderRadius: radii.full,
+    paddingHorizontal: spacing.sm + 2,
+    paddingVertical: 4,
+  },
+  estimatedChipText: {
+    fontSize: 12,
+    fontWeight: '600',
+    fontStyle: 'italic',
+    color: colors.textSecondary,
   },
 });
 
@@ -833,6 +865,8 @@ export default function HomeScreen() {
         quantity: e.quantity,
         kgCo2e: e.kg_co2e_total,
         at: new Date(e.logged_at),
+        source: e.source,
+        merchantName: (e.metadata?.merchant_name as string | null | undefined) ?? null,
       });
     }
     const todayTripLogs = recentAutoLogs
@@ -872,6 +906,8 @@ export default function HomeScreen() {
         quantity: e.quantity,
         kgCo2e: e.kg_co2e_total,
         at: new Date(e.logged_at),
+        source: e.source,
+        merchantName: (e.metadata?.merchant_name as string | null | undefined) ?? null,
       });
     }
     for (const t of recap.weekTrips) {

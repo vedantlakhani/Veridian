@@ -44,6 +44,14 @@ export const colors = {
   warningGlow:     'rgba(196,125,22,0.10)',
   dangerGlow:      'rgba(192,57,43,0.10)',
 
+  // Spend-based ("estimated") chip treatment — Sprint D. Deliberately NOT
+  // successGlow/primary (that's reserved for celebratory zero-emission
+  // "saved" chips) and NOT a plain unstyled kg value (that's the sensor-
+  // measured convention) — a muted neutral pill so an estimate never reads
+  // as a confident, precise sensor number (NORTH_STAR.md §5 — false
+  // precision is a documented churn driver).
+  estimatedGlow:   'rgba(92,114,101,0.12)',
+
   // Status
   success:         '#1B6B42',
   warning:         '#C47D16',

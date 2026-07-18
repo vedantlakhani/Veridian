@@ -98,6 +98,17 @@ summary math, timezone of txn_date→loggedAt, RLS holes on linked_items (client
 access_token — prove it), factor fallback overconfidence. Then human sandbox walkthrough script:
 link sandbox bank → sync → see feed entries → unlink → entries remain but no new syncs.
 
+## Known limitations (built, shipped, and explicitly flagged — not silently decided)
+
+- **Refund netting**: a refund arrives from Plaid as its own transaction (distinct `plaid_transaction_id`),
+  not a modification of the original purchase. The implementation does not look up and net the original
+  purchase's `emission_entries` row against it, so a refunded purchase's emissions stay counted in the
+  user's total indefinitely (`supabase/functions/_shared/plaidSync.ts`, the refund-skip branch). Proper
+  netting needs fuzzy-matching a refund to its original purchase (Plaid does not guarantee a direct link
+  between the two) — real engineering effort, not a quick fix. **Human decision needed**: fix now, defer to
+  a follow-up, or accept as a permanent v1 limitation (likely rare in practice — refunds are a small
+  fraction of transactions, and sandbox testing may not exercise this path at all).
+
 ## Explicitly out of scope
 
 Real-bank production access, EU/India aggregators, offset anything, receipts matching (Sprint E),

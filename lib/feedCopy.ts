@@ -16,7 +16,7 @@
  *   - Zero-emission trips celebrate ("saved X kg vs driving"); nothing shames.
  */
 
-import type { EmissionCategory, TripMode } from '@/types/emission';
+import type { EmissionCategory, EntrySource, TripMode } from '@/types/emission';
 import { humanizeSubcategory } from '@/lib/format';
 import type { VIconName } from '@/components/ui/VIcon';
 
@@ -41,6 +41,12 @@ export interface FeedEntryInput {
   kgCo2e: number;
   /** logged_at, as a Date */
   at: Date;
+  /** emission_entries.source — 'transaction' entries get the spend-estimate
+   *  sentence + chip treatment below. Optional/undefined for callers that
+   *  predate Sprint D (treated identically to 'manual'/'sensor'). */
+  source?: EntrySource;
+  /** emission_entries.metadata.merchant_name (transaction entries only) */
+  merchantName?: string | null;
 }
 
 export interface FeedTripInput {
@@ -59,6 +65,10 @@ export interface ImpactChip {
   label: string;
   /** true for celebratory "saved" chips (positive accent), false for a plain kg */
   positive: boolean;
+  /** true for spend-based estimates (source: 'transaction') — renders as a
+   *  distinct muted pill, never identical to a sensor-measured plain kg
+   *  value (NORTH_STAR.md §5: false precision is a documented churn cause). */
+  estimated?: boolean;
 }
 
 // ─── Number formatting ──────────────────────────────────────────────────────
@@ -161,6 +171,14 @@ export function buildFeedSentence(item: FeedItem): string {
     return transportPhrase(item.item, item.subcategory, item.quantity);
   }
 
+  // Transaction-sourced entries (Sprint D "money layer"): lead with the
+  // merchant when we have one — "Grocery Stores at Trader Joe's" — the
+  // plain-language fact a spend-based estimate actually knows, rather than
+  // the generic subcategory qualifier used for manually-logged items.
+  if (item.source === 'transaction' && item.merchantName) {
+    return `${item.item} at ${item.merchantName}`;
+  }
+
   // Food / energy / shopping (and non-distance transport): describe the thing;
   // the impact lands in the chip.
   return `Logged ${withQualifier(item.item, item.subcategory)}`;
@@ -171,6 +189,11 @@ export function buildFeedSentence(item: FeedItem): string {
 export function buildImpactChip(item: FeedItem): ImpactChip {
   if (item.kind === 'trip') {
     return { label: `saved ${formatKgChip(item.savedKg)}`, positive: true };
+  }
+  if (item.source === 'transaction') {
+    // "~" prefix + estimated:true drive a visually distinct muted chip —
+    // never a plain confident kg value like a sensor-measured entry gets.
+    return { label: `~${formatKgChip(item.kgCo2e)}`, positive: false, estimated: true };
   }
   return { label: formatKgChip(item.kgCo2e), positive: false };
 }
