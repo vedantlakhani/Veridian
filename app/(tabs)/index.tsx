@@ -69,6 +69,7 @@ import {
   buildTripConfirmSentence,
   formatClockTime,
   formatKgChip,
+  isFreshSupersedeUpgrade,
   pickFeedIcon,
   relativeDayLabel,
   type FeedItem,
@@ -445,33 +446,116 @@ function ImpactPill({
   );
 }
 
+// ─── Receipt item expansion (Stage R4) ─────────────────────────────────────
+// Lightweight inline expand, not a new screen/route — fetched lazily (only
+// once a receipt row is tapped open) via a plain useQuery, no new hook file
+// needed for a single read-only SELECT.
+function useReceiptItemsExpanded(receiptId: string | null | undefined, expanded: boolean) {
+  return useQuery({
+    queryKey: ['receiptItemsExpand', receiptId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('receipt_items')
+        .select('id, name, qty, price_usd, kg_co2e')
+        .eq('receipt_id', receiptId!)
+        .order('name', { ascending: true });
+      if (error) throw error;
+      return data as { id: string; name: string; qty: number; price_usd: number; kg_co2e: number | null }[];
+    },
+    enabled: expanded && !!receiptId,
+  });
+}
+
 function FeedRow({ item, index }: { item: FeedRowItem; index: number }) {
   const { name, color } = feedIcon(item);
   const sentence = buildFeedSentence(item);
   const chip = buildImpactChip(item);
+  const isReceipt = item.kind === 'entry' && item.source === 'receipt' && !!item.receiptId;
+  const [expanded, setExpanded] = useState(false);
+  const { data: receiptItems, isLoading: receiptItemsLoading } = useReceiptItemsExpanded(
+    isReceipt && item.kind === 'entry' ? item.receiptId : null,
+    expanded,
+  );
+
+  // Stage R4 "upgraded" moment — SIMPLIFIED (see isFreshSupersedeUpgrade doc
+  // comment in lib/feedCopy.ts): we do not attempt to live-morph the OLD
+  // transaction-estimate row (it's server-deleted by the time this receipt
+  // row exists, and may not be mounted anyway). Instead this NEW row, on
+  // first mount, plays a one-time scale-pulse using the repo's existing
+  // motion tokens if it's a fresh supersede.
+  const justUpgraded = item.kind === 'entry' && isFreshSupersedeUpgrade(item);
+  const pulse = useSharedValue(justUpgraded ? 0 : 1);
+  useEffect(() => {
+    if (justUpgraded) {
+      pulse.value = withSequence(
+        withTiming(1.12, { duration: motion.timingFast, easing: motion.easeOut }),
+        withSpring(1, motion.springBouncy),
+      );
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+  const pulseStyle = useAnimatedStyle(() => ({ transform: [{ scale: pulse.value }] }));
+
+  const Row = (
+    <View style={[feedStyles.row, chip.positive && feedStyles.rowPositive]}>
+      {chip.positive && (
+        <View
+          style={[StyleSheet.absoluteFillObject, { backgroundColor: colors.primaryGlowSoft }]}
+          pointerEvents="none"
+        />
+      )}
+      <View style={[feedStyles.iconWrap, { backgroundColor: `${color}14` }]}>
+        <VIcon name={name} size={18} color={color} />
+      </View>
+      <View style={{ flex: 1 }}>
+        <VText variant="body" style={feedStyles.sentence} numberOfLines={2}>
+          {sentence}
+        </VText>
+        <VText variant="caption" style={feedStyles.time}>
+          {formatClockTime(item.at)}
+          {justUpgraded ? '  ·  upgraded from an estimate' : ''}
+        </VText>
+      </View>
+      <Animated.View style={justUpgraded ? pulseStyle : undefined}>
+        <ImpactPill label={chip.label} positive={chip.positive} estimated={chip.estimated} />
+      </Animated.View>
+    </View>
+  );
 
   return (
     <VStaggerIn index={index}>
-      <View style={[feedStyles.row, chip.positive && feedStyles.rowPositive]}>
-        {chip.positive && (
-          <View
-            style={[StyleSheet.absoluteFillObject, { backgroundColor: colors.primaryGlowSoft }]}
-            pointerEvents="none"
-          />
-        )}
-        <View style={[feedStyles.iconWrap, { backgroundColor: `${color}14` }]}>
-          <VIcon name={name} size={18} color={color} />
-        </View>
-        <View style={{ flex: 1 }}>
-          <VText variant="body" style={feedStyles.sentence} numberOfLines={2}>
-            {sentence}
-          </VText>
-          <VText variant="caption" style={feedStyles.time}>
-            {formatClockTime(item.at)}
-          </VText>
-        </View>
-        <ImpactPill label={chip.label} positive={chip.positive} estimated={chip.estimated} />
-      </View>
+      {isReceipt ? (
+        <VPressable onPress={() => setExpanded((e) => !e)} accessibilityRole="button">
+          {Row}
+          {expanded && (
+            <Animated.View entering={FadeIn.duration(motion.timingBase)} style={feedStyles.receiptExpand}>
+              {receiptItemsLoading && (
+                <VText variant="caption" style={feedStyles.receiptItemMuted}>
+                  Loading items…
+                </VText>
+              )}
+              {!receiptItemsLoading && (receiptItems ?? []).length === 0 && (
+                <VText variant="caption" style={feedStyles.receiptItemMuted}>
+                  No item details available
+                </VText>
+              )}
+              {(receiptItems ?? []).map((ri) => (
+                <View key={ri.id} style={feedStyles.receiptItemRow}>
+                  <VText variant="caption" style={feedStyles.receiptItemName} numberOfLines={1}>
+                    {ri.qty > 1 ? `${ri.qty}× ` : ''}
+                    {ri.name}
+                  </VText>
+                  <VText variant="caption" style={feedStyles.receiptItemMuted}>
+                    {ri.kg_co2e != null ? formatKgChip(ri.kg_co2e) : '—'}
+                  </VText>
+                </View>
+              ))}
+            </Animated.View>
+          )}
+        </VPressable>
+      ) : (
+        Row
+      )}
     </VStaggerIn>
   );
 }
@@ -535,6 +619,30 @@ const feedStyles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '600',
     fontStyle: 'italic',
+    color: colors.textSecondary,
+  },
+  receiptExpand: {
+    marginHorizontal: spacing.md,
+    marginTop: -spacing.sm + 2,
+    marginBottom: spacing.sm,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    borderRadius: radii.md,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.surface,
+    gap: 6,
+  },
+  receiptItemRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    gap: spacing.sm,
+  },
+  receiptItemName: {
+    flex: 1,
+  },
+  receiptItemMuted: {
     color: colors.textSecondary,
   },
 });
@@ -867,6 +975,10 @@ export default function HomeScreen() {
         at: new Date(e.logged_at),
         source: e.source,
         merchantName: (e.metadata?.merchant_name as string | null | undefined) ?? null,
+        itemCount: (e.metadata?.item_count as number | null | undefined) ?? null,
+        receiptId: (e.metadata?.receipt_id as string | null | undefined) ?? null,
+        matchedTransactionId: (e.metadata?.matched_transaction_id as string | null | undefined) ?? null,
+        createdAt: e.created_at ? new Date(e.created_at) : undefined,
       });
     }
     const todayTripLogs = recentAutoLogs
@@ -908,6 +1020,10 @@ export default function HomeScreen() {
         at: new Date(e.logged_at),
         source: e.source,
         merchantName: (e.metadata?.merchant_name as string | null | undefined) ?? null,
+        itemCount: (e.metadata?.item_count as number | null | undefined) ?? null,
+        receiptId: (e.metadata?.receipt_id as string | null | undefined) ?? null,
+        matchedTransactionId: (e.metadata?.matched_transaction_id as string | null | undefined) ?? null,
+        createdAt: e.created_at ? new Date(e.created_at) : undefined,
       });
     }
     for (const t of recap.weekTrips) {

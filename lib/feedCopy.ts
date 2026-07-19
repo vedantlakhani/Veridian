@@ -47,6 +47,18 @@ export interface FeedEntryInput {
   source?: EntrySource;
   /** emission_entries.metadata.merchant_name (transaction entries only) */
   merchantName?: string | null;
+  /** emission_entries.metadata.item_count (receipt entries only — Stage R4) */
+  itemCount?: number | null;
+  /** emission_entries.metadata.receipt_id (receipt entries only — Stage R4) */
+  receiptId?: string | null;
+  /** emission_entries.metadata.matched_transaction_id (receipt entries only —
+   *  Stage R4). Present only when this receipt superseded a bank_transactions
+   *  spend-estimate; drives the one-time "upgraded" chip animation. */
+  matchedTransactionId?: string | null;
+  /** emission_entries.created_at, as a Date — DB write time, distinct from
+   *  `at` (logged_at, which for receipts is the backdated order date). Used
+   *  only to decide whether the supersede animation is "fresh" (Stage R4). */
+  createdAt?: Date;
 }
 
 export interface FeedTripInput {
@@ -179,6 +191,18 @@ export function buildFeedSentence(item: FeedItem): string {
     return `${item.item} at ${item.merchantName}`;
   }
 
+  // Receipt-sourced entries (Sprint E Stage R4): one emission_entries row per
+  // item, but the feed reads at the receipt/order level — "Amazon order — 3
+  // items" — not a separate line per item. itemCount comes from
+  // metadata.item_count (Stage 1 wrote metadata per-item; Stage R4 added the
+  // denormalized count — see receipt-parse/index.ts). Falls back to the plain
+  // "Logged X" sentence if a merchant or count is missing (e.g. older rows
+  // parsed before this field existed).
+  if (item.source === 'receipt' && item.merchantName && item.itemCount && item.itemCount > 0) {
+    const noun = item.itemCount === 1 ? 'item' : 'items';
+    return `${item.merchantName} order — ${item.itemCount} ${noun}`;
+  }
+
   // Food / energy / shopping (and non-distance transport): describe the thing;
   // the impact lands in the chip.
   return `Logged ${withQualifier(item.item, item.subcategory)}`;
@@ -196,6 +220,37 @@ export function buildImpactChip(item: FeedItem): ImpactChip {
     return { label: `~${formatKgChip(item.kgCo2e)}`, positive: false, estimated: true };
   }
   return { label: formatKgChip(item.kgCo2e), positive: false };
+}
+
+// ─── Public: the supersede "upgraded" moment (Stage R4) ────────────────────
+//
+// SIMPLIFICATION (documented per task spec): a true live in-place morph of
+// the OLD transaction row's "~4.2 kg est." chip into the new receipt-based
+// number would require realtime push timing this repo doesn't have wired for
+// this case, AND the old row may not even be mounted when the swap happens
+// (receipt-parse deletes the old emission_entries row server-side in the same
+// request that creates the new one — see index.ts's supersede-matching
+// block). Instead: the NEW receipt-sourced row, on its first appearance in
+// the feed, plays a one-time "upgraded" micro-animation (FadeIn + scale pulse
+// in index.tsx) if it is both receipt-sourced, references a superseded
+// transaction, and was created recently enough that the user plausibly still
+// has the feed open from when the estimate first landed.
+
+const SUPERSEDE_ANIMATION_WINDOW_MS = 2 * 60 * 1000; // 2 minutes
+
+/**
+ * True when a receipt-sourced entry just upgraded a coarse transaction
+ * estimate AND is fresh enough to treat as "the user is probably watching
+ * this happen right now" rather than a receipt parsed hours/days later.
+ * `now` injectable for deterministic tests.
+ */
+export function isFreshSupersedeUpgrade(item: FeedItem, now: Date = new Date()): boolean {
+  if (item.kind !== 'entry') return false;
+  if (item.source !== 'receipt') return false;
+  if (!item.matchedTransactionId) return false;
+  if (!item.createdAt) return false;
+  const ageMs = now.getTime() - item.createdAt.getTime();
+  return ageMs >= 0 && ageMs < SUPERSEDE_ANIMATION_WINDOW_MS;
 }
 
 // ─── Public: feed row icon ──────────────────────────────────────────────────

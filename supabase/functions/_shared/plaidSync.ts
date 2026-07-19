@@ -380,11 +380,22 @@ export async function syncLinkedItem(admin: SupabaseClient, itemId: string): Pro
   // ── factor + entry creation pass: every row for this item still missing
   // an entry_id (new adds, or rows reset to null by the reconciliation step
   // above).
+  //
+  // CRITICAL: must also exclude superseded_by IS NOT NULL. A receipt-parse
+  // supersede sets entry_id back to null (its coarse entry was deleted) AND
+  // superseded_by to the receipt's id, in the same operation — without this
+  // filter, the very next sync of this linked item re-finds that transaction
+  // as "unprocessed" and creates a SECOND coarse entry for a purchase that
+  // already has correct item-level receipt entries, permanently double-
+  // counting it (an adversarial review caught this as a regression of the
+  // exact bug class claim_bank_transaction_entry was written to fix — same
+  // failure mode, different code path).
   const { data: unprocessed, error: unprocessedError } = await admin
     .from('bank_transactions')
     .select('id, user_id, amount_usd, plaid_category, txn_date, merchant_name')
     .eq('item_id', item.id)
-    .is('entry_id', null);
+    .is('entry_id', null)
+    .is('superseded_by', null);
   if (unprocessedError) throw unprocessedError;
 
   for (const txn of (unprocessed ?? []) as Pick<

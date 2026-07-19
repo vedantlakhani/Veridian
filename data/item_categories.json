@@ -1,0 +1,33 @@
+{
+  "_meta": {
+    "description": "LOW-CONFIDENCE FALLBACK ONLY — keyword substring hints for individual receipt line-item names, used by receipt-parse when Haiku's own per-item categoryGuess does not cleanly map to a NAICS code via data/category_to_naics.json's plaidDetailed rows. This is NOT a primary classifier: it is a small, deliberately incomplete keyword -> NAICS crosswalk that exists only to avoid throwing away an otherwise-parseable receipt item. Any match via this file must be surfaced at 'low' confidence, same ceiling discipline as spendFactors.ts's own fallback path (NAICS 452319, see category_to_naics.json's _meta.fallback).",
+    "matchRule": "case-insensitive substring match against the item name (and categoryGuess if present); first match in array order wins",
+    "confidence": "low",
+    "totalEntries": 21,
+    "codesVerifiedAgainst": "every naicsCode below was checked present in data/useeio_factors.json's factor table as of this file's creation — a keyword hint that resolved to a NAICS code missing from the factor file would make findOrCreateFactorId throw at parse time, so any future addition to this list MUST be cross-checked against data/useeio_factors.json first"
+  },
+  "keywords": [
+    { "keyword": "organic", "naicsCode": "445110", "naicsLabel": "Supermarkets and Other Grocery Stores" },
+    { "keyword": "coffee", "naicsCode": "445110", "naicsLabel": "Supermarkets and Other Grocery Stores" },
+    { "keyword": "tea", "naicsCode": "445110", "naicsLabel": "Supermarkets and Other Grocery Stores" },
+    { "keyword": "produce", "naicsCode": "445110", "naicsLabel": "Supermarkets and Other Grocery Stores" },
+    { "keyword": "meat", "naicsCode": "445110", "naicsLabel": "Supermarkets and Other Grocery Stores" },
+    { "keyword": "shirt", "naicsCode": "448140", "naicsLabel": "Family Clothing Stores" },
+    { "keyword": "jeans", "naicsCode": "448140", "naicsLabel": "Family Clothing Stores" },
+    { "keyword": "dress", "naicsCode": "448140", "naicsLabel": "Family Clothing Stores" },
+    { "keyword": "jacket", "naicsCode": "448140", "naicsLabel": "Family Clothing Stores" },
+    { "keyword": "shoes", "naicsCode": "448140", "naicsLabel": "Family Clothing Stores" },
+    { "keyword": "sneaker", "naicsCode": "448140", "naicsLabel": "Family Clothing Stores" },
+    { "keyword": "laptop", "naicsCode": "443142", "naicsLabel": "Electronics Stores" },
+    { "keyword": "phone", "naicsCode": "443142", "naicsLabel": "Electronics Stores" },
+    { "keyword": "charger", "naicsCode": "443142", "naicsLabel": "Electronics Stores" },
+    { "keyword": "headphone", "naicsCode": "443142", "naicsLabel": "Electronics Stores" },
+    { "keyword": "book", "naicsCode": "451211", "naicsLabel": "Book Stores" },
+    { "keyword": "furniture", "naicsCode": "442110", "naicsLabel": "Furniture Stores" },
+    { "keyword": "mattress", "naicsCode": "442110", "naicsLabel": "Furniture Stores" },
+    { "keyword": "hardware", "naicsCode": "444130", "naicsLabel": "Hardware Stores" },
+    { "keyword": "vitamin", "naicsCode": "446110", "naicsLabel": "Pharmacies and Drug Stores" },
+    { "keyword": "pet food", "naicsCode": "453910", "naicsLabel": "Pet and Pet Supplies Stores" },
+    { "keyword": "candle", "naicsCode": "452319", "naicsLabel": "All Other General Merchandise Stores" }
+  ]
+}

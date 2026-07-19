@@ -581,6 +581,28 @@ export default function ProfileScreen() {
           )}
         </VCard>
 
+        {/* ── Import receipts — Sprint E Stage R3 ── */}
+        <VPressable
+          onPress={() => router.push('/import')}
+          haptic="light"
+          style={styles.importRow}
+          accessibilityRole="button"
+          accessibilityLabel="Import receipts"
+        >
+          <View style={styles.importIconWrap}>
+            <VIcon name="share" size={16} color={colors.primary} />
+          </View>
+          <View style={{ flex: 1 }}>
+            <VText variant="body" style={styles.linkedAccountName}>
+              Import receipts
+            </VText>
+            <VText variant="caption" style={styles.linkedAccountDate}>
+              Share a receipt or backfill Amazon/DoorDash orders
+            </VText>
+          </View>
+          <VIcon name="chevron-right" size={18} color={colors.textTertiary} />
+        </VPressable>
+
         {/* ── Sign out — quiet, this page is about pride ── */}
         <VPressable style={styles.signOutRow} onPress={() => void signOut()} haptic="light">
           <VText variant="caption" style={styles.signOutText}>
@@ -913,6 +935,25 @@ const styles = StyleSheet.create({
   },
   linkedAccountDate: {
     color: colors.textTertiary,
+  },
+  importRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    backgroundColor: colors.surface,
+    borderRadius: radii.lg,
+    borderWidth: 1,
+    borderColor: colors.border,
+    padding: spacing.md,
+    marginTop: spacing.md,
+  },
+  importIconWrap: {
+    width: 32,
+    height: 32,
+    borderRadius: radii.full,
+    backgroundColor: colors.primaryGlowSoft,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   sheetAvatarWrap: {
     alignItems: 'center',

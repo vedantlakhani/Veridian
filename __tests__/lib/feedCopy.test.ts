@@ -4,6 +4,7 @@ import {
   buildTripConfirmSentence,
   formatClockTime,
   formatKgChip,
+  isFreshSupersedeUpgrade,
   pickFeedIcon,
   relativeDayLabel,
   type FeedEntryInput,
@@ -137,6 +138,114 @@ describe('buildFeedSentence · transaction entries', () => {
     expect(
       buildFeedSentence(entry({ item: 'Beef', subcategory: 'RED_MEAT', category: 'food', source: 'manual' })),
     ).toBe('Logged Beef — Red Meat');
+  });
+});
+
+// ─── buildFeedSentence — receipt-sourced entries (Sprint E Stage R4) ───────────
+
+describe('buildFeedSentence · receipt entries', () => {
+  it('phrases a multi-item receipt order with pluralized item count', () => {
+    expect(
+      buildFeedSentence(
+        entry({
+          item: 'Grocery Stores',
+          subcategory: 'GROCERIES',
+          category: 'shopping',
+          unit: 'USD',
+          quantity: 1,
+          source: 'receipt',
+          merchantName: 'Amazon',
+          itemCount: 3,
+        }),
+      ),
+    ).toBe('Amazon order — 3 items');
+  });
+
+  it('uses singular "item" phrasing for a single-item receipt', () => {
+    expect(
+      buildFeedSentence(
+        entry({
+          item: 'Electronics',
+          subcategory: 'ELECTRONICS',
+          category: 'shopping',
+          source: 'receipt',
+          merchantName: 'Best Buy',
+          itemCount: 1,
+        }),
+      ),
+    ).toBe('Best Buy order — 1 item');
+  });
+
+  it('falls back to the plain "Logged X" sentence when merchant or item count is missing', () => {
+    expect(
+      buildFeedSentence(
+        entry({
+          item: 'Coffee Maker',
+          subcategory: 'ELECTRONICS',
+          category: 'shopping',
+          source: 'receipt',
+          merchantName: null,
+          itemCount: 2,
+        }),
+      ),
+    ).toBe('Logged Coffee Maker — Electronics');
+    expect(
+      buildFeedSentence(
+        entry({
+          item: 'Coffee Maker',
+          subcategory: 'ELECTRONICS',
+          category: 'shopping',
+          source: 'receipt',
+          merchantName: 'Target',
+          itemCount: null,
+        }),
+      ),
+    ).toBe('Logged Coffee Maker — Electronics');
+  });
+});
+
+// ─── isFreshSupersedeUpgrade ────────────────────────────────────────────────────
+
+describe('isFreshSupersedeUpgrade', () => {
+  const now = new Date(2026, 0, 6, 10, 0, 0);
+
+  it('is true for a receipt entry created moments ago that matched a transaction', () => {
+    const created = new Date(now.getTime() - 5_000);
+    expect(
+      isFreshSupersedeUpgrade(
+        entry({ source: 'receipt', matchedTransactionId: 'txn_1', createdAt: created }),
+        now,
+      ),
+    ).toBe(true);
+  });
+
+  it('is false once the entry is older than the animation window', () => {
+    const created = new Date(now.getTime() - 10 * 60 * 1000);
+    expect(
+      isFreshSupersedeUpgrade(
+        entry({ source: 'receipt', matchedTransactionId: 'txn_1', createdAt: created }),
+        now,
+      ),
+    ).toBe(false);
+  });
+
+  it('is false when there is no matched transaction', () => {
+    expect(
+      isFreshSupersedeUpgrade(
+        entry({ source: 'receipt', matchedTransactionId: null, createdAt: now }),
+        now,
+      ),
+    ).toBe(false);
+  });
+
+  it('is false for non-receipt sources and for trips', () => {
+    expect(
+      isFreshSupersedeUpgrade(
+        entry({ source: 'transaction', matchedTransactionId: 'txn_1', createdAt: now }),
+        now,
+      ),
+    ).toBe(false);
+    expect(isFreshSupersedeUpgrade(trip({}), now)).toBe(false);
   });
 });
 
