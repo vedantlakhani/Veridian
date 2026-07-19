@@ -51,6 +51,7 @@ function AppNavigator() {
           <Stack.Screen name="(tabs)" />
           <Stack.Screen name="carbon-calculator" />
           <Stack.Screen name="recap" options={{ presentation: 'modal' }} />
+          <Stack.Screen name="passport" options={{ presentation: 'modal' }} />
           <Stack.Screen name="link-bank" options={{ presentation: 'modal' }} />
           <Stack.Screen name="import" options={{ presentation: 'modal' }} />
         </Stack.Protected>

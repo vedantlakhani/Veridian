@@ -581,6 +581,28 @@ export default function ProfileScreen() {
           )}
         </VCard>
 
+        {/* ── Carbon Passport — Sprint E Stage A4, the shareable artifact ── */}
+        <VPressable
+          onPress={() => router.push('/passport')}
+          haptic="light"
+          style={styles.importRow}
+          accessibilityRole="button"
+          accessibilityLabel="Open your Carbon Passport"
+        >
+          <View style={styles.importIconWrap}>
+            <VIcon name="sparkle" size={16} color={colors.primary} />
+          </View>
+          <View style={{ flex: 1 }}>
+            <VText variant="body" style={styles.linkedAccountName}>
+              Your Carbon Passport
+            </VText>
+            <VText variant="caption" style={styles.linkedAccountDate}>
+              This month and this year, beautifully told
+            </VText>
+          </View>
+          <VIcon name="chevron-right" size={18} color={colors.textTertiary} />
+        </VPressable>
+
         {/* ── Import receipts — Sprint E Stage R3 ── */}
         <VPressable
           onPress={() => router.push('/import')}

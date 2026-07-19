@@ -10,12 +10,22 @@ import {
   sumByCategory,
   sumTotal,
   computeWeekDelta,
+  computeDelta,
   aggregateByDay,
   weekSparkline,
   distinctActiveDays,
   topCategoryInsight,
   selectWeekWin,
+  selectPeriodWin,
   winCopy,
+  monthWindow,
+  previousMonthWindow,
+  yearWindow,
+  previousYearWindow,
+  formatMonthRange,
+  formatYearRange,
+  computePassportTripStats,
+  formatTripsTrackedThemselves,
   type RecapEntryInput,
   type RecapTripInput,
 } from '@/lib/recap';
@@ -133,7 +143,7 @@ describe('computeWeekDelta', () => {
 
   it('guards divide-by-zero on the first tracked week (previous = 0)', () => {
     const d = computeWeekDelta(42, 0);
-    expect(d.direction).toBe('first-week');
+    expect(d.direction).toBe('first-period');
     expect(d.percent).toBeNull();
     expect(d.improved).toBe(true);
     expect(d.sentence).toBe('Your first tracked week — this is your baseline');
@@ -141,7 +151,7 @@ describe('computeWeekDelta', () => {
 
   it('handles a first week with no data at all (0 vs 0)', () => {
     const d = computeWeekDelta(0, 0);
-    expect(d.direction).toBe('first-week');
+    expect(d.direction).toBe('first-period');
     expect(d.percent).toBeNull();
     expect(d.sentence).toBe('Your first week starts here');
   });
@@ -272,5 +282,176 @@ describe('winCopy', () => {
   it('names the weekday for a lightest-day fallback', () => {
     const copy = winCopy({ kind: 'light-day', date: '2026-03-17', totalKg: 3 });
     expect(copy.title).toBe('Tuesday was your lightest'); // 2026-03-17 is a Tuesday
+  });
+});
+
+// ─── Month/year windowing (Sprint E Stage A4 — Carbon Passport) ───────────────────
+
+describe('monthWindow / previousMonthWindow', () => {
+  it('computes a 31-day month', () => {
+    expect(monthWindow(new Date(2026, 2, 18))).toEqual({ start: '2026-03-01', end: '2026-03-31' });
+  });
+
+  it('computes a 30-day month', () => {
+    expect(monthWindow(new Date(2026, 3, 15))).toEqual({ start: '2026-04-01', end: '2026-04-30' });
+  });
+
+  it('computes February in a non-leap year (28 days)', () => {
+    expect(monthWindow(new Date(2026, 1, 10))).toEqual({ start: '2026-02-01', end: '2026-02-28' });
+  });
+
+  it('computes February in a leap year (29 days)', () => {
+    expect(monthWindow(new Date(2024, 1, 10))).toEqual({ start: '2024-02-01', end: '2024-02-29' });
+  });
+
+  it('computes the previous month, crossing a year boundary', () => {
+    expect(previousMonthWindow(new Date(2026, 0, 15))).toEqual({
+      start: '2025-12-01',
+      end: '2025-12-31',
+    });
+  });
+
+  it('computes the previous month within the same year', () => {
+    expect(previousMonthWindow(new Date(2026, 3, 1))).toEqual({
+      start: '2026-03-01',
+      end: '2026-03-31',
+    });
+  });
+});
+
+describe('yearWindow / previousYearWindow', () => {
+  it('computes the calendar year', () => {
+    expect(yearWindow(new Date(2026, 5, 1))).toEqual({ start: '2026-01-01', end: '2026-12-31' });
+  });
+
+  it('computes the previous calendar year', () => {
+    expect(previousYearWindow(new Date(2026, 5, 1))).toEqual({
+      start: '2025-01-01',
+      end: '2025-12-31',
+    });
+  });
+
+  it('handles a leap year correctly (still Dec 31 end)', () => {
+    expect(yearWindow(new Date(2024, 0, 1))).toEqual({ start: '2024-01-01', end: '2024-12-31' });
+  });
+});
+
+describe('formatMonthRange / formatYearRange', () => {
+  it('formats a month window as "Month YYYY"', () => {
+    expect(formatMonthRange({ start: '2026-03-01', end: '2026-03-31' })).toBe('March 2026');
+  });
+
+  it('formats a year window as "YYYY"', () => {
+    expect(formatYearRange({ start: '2026-01-01', end: '2026-12-31' })).toBe('2026');
+  });
+});
+
+// ─── computeDelta (period-agnostic) ────────────────────────────────────────────────
+
+describe('computeDelta', () => {
+  it('defaults to week-flavored copy, matching computeWeekDelta exactly', () => {
+    expect(computeDelta(120, 100)).toEqual(computeWeekDelta(120, 100));
+    expect(computeDelta(42, 0)).toEqual(computeWeekDelta(42, 0));
+    expect(computeDelta(100.3, 100)).toEqual(computeWeekDelta(100.3, 100));
+  });
+
+  it('phrases a month-over-month comparison with "month" copy', () => {
+    const d = computeDelta(88, 100, 'month');
+    expect(d.direction).toBe('down');
+    expect(d.sentence).toBe('Down 12% from last month');
+  });
+
+  it('phrases a year-over-year comparison with "year" copy, never as shame', () => {
+    const d = computeDelta(120, 100, 'year');
+    expect(d.direction).toBe('up');
+    expect(d.improved).toBe(false);
+    expect(d.sentence).toBe('Up 20% from last year — a fresh start this year');
+  });
+
+  it('guards divide-by-zero on the first tracked period at any scale', () => {
+    const d = computeDelta(50, 0, 'year');
+    expect(d.direction).toBe('first-period'); // direction enum is period-agnostic internally
+    expect(d.percent).toBeNull();
+    expect(d.sentence).toBe('Your first tracked year — this is your baseline');
+  });
+});
+
+// ─── selectPeriodWin (generalized selectWeekWin) ───────────────────────────────────
+
+describe('selectPeriodWin', () => {
+  it('is the same function as selectWeekWin (no week-length assumption survives)', () => {
+    expect(selectPeriodWin).toBe(selectWeekWin);
+  });
+
+  it('celebrates zero-emission movement over a month-long trip list', () => {
+    const trips: RecapTripInput[] = Array.from({ length: 40 }, (_, i) =>
+      trip({ mode: i % 2 === 0 ? 'walk' : 'cycling', distanceKm: 1, savedKg: 0.1 }),
+    );
+    const win = selectPeriodWin(trips, []);
+    expect(win.kind).toBe('zero');
+    if (win.kind === 'zero') {
+      expect(win.totalZeroKm).toBe(40);
+    }
+  });
+
+  it('falls back to the lightest day across a year of day totals', () => {
+    const dayTotals = Array.from({ length: 365 }, (_, i) => ({
+      date: `2026-01-${String((i % 28) + 1).padStart(2, '0')}`,
+      totalKg: i === 100 ? 0.5 : 10,
+    }));
+    const win = selectPeriodWin([], dayTotals);
+    expect(win.kind).toBe('light-day');
+    if (win.kind === 'light-day') expect(win.totalKg).toBe(0.5);
+  });
+});
+
+// ─── Carbon Passport trip stats (modeSplit / tripsTrackedThemselves) ──────────────
+
+describe('computePassportTripStats', () => {
+  it('counts total tracked trips across all modes', () => {
+    const stats = computePassportTripStats([
+      { mode: 'car', distanceKm: 5 },
+      { mode: 'walk', distanceKm: 2 },
+      { mode: 'bus', distanceKm: 10 },
+    ]);
+    expect(stats.tripsTrackedThemselves).toBe(3);
+  });
+
+  it('splits km and count per mode, covering every TripMode', () => {
+    const stats = computePassportTripStats([
+      { mode: 'car', distanceKm: 10 },
+      { mode: 'car', distanceKm: 5 },
+      { mode: 'walk', distanceKm: 2 },
+      { mode: 'cycling', distanceKm: 8 },
+      { mode: 'bus', distanceKm: 20 },
+      { mode: 'train', distanceKm: 50 },
+      { mode: 'unknown', distanceKm: 1 },
+    ]);
+    const byMode = Object.fromEntries(stats.modeSplit.map((m) => [m.mode, m]));
+    expect(byMode.car).toEqual({ mode: 'car', km: 15, count: 2 });
+    expect(byMode.walk).toEqual({ mode: 'walk', km: 2, count: 1 });
+    expect(byMode.cycling).toEqual({ mode: 'cycling', km: 8, count: 1 });
+    expect(byMode.bus).toEqual({ mode: 'bus', km: 20, count: 1 });
+    expect(byMode.train).toEqual({ mode: 'train', km: 50, count: 1 });
+    expect(byMode.unknown).toEqual({ mode: 'unknown', km: 1, count: 1 });
+    expect(stats.tripsTrackedThemselves).toBe(7);
+  });
+
+  it('returns an empty split for no trips', () => {
+    const stats = computePassportTripStats([]);
+    expect(stats.tripsTrackedThemselves).toBe(0);
+    expect(stats.modeSplit).toEqual([]);
+  });
+});
+
+describe('formatTripsTrackedThemselves', () => {
+  it('pluralizes for zero and many', () => {
+    expect(formatTripsTrackedThemselves(0)).toBe('0 trips tracked themselves');
+    expect(formatTripsTrackedThemselves(2)).toBe('2 trips tracked themselves');
+    expect(formatTripsTrackedThemselves(42)).toBe('42 trips tracked themselves');
+  });
+
+  it('singularizes for exactly one', () => {
+    expect(formatTripsTrackedThemselves(1)).toBe('1 trip tracked itself');
   });
 });

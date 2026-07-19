@@ -88,6 +88,59 @@ export function formatWeekRange(window: WeekWindow): string {
   return `${sMonth} ${s.getDate()} – ${eMonth} ${e.getDate()}`;
 }
 
+// ─── Generic period windowing (month / year) ──────────────────────────────────
+// NORTH_STAR §8 pattern 9 extended to Sprint E's Stage A4 Carbon Passport
+// (month/year scale). ISO-week windowing above is UNCHANGED — app/recap.tsx
+// and the Home teaser keep working exactly as before. These are additive.
+
+export interface PeriodWindow {
+  /** "YYYY-MM-DD" (local) */
+  start: string;
+  /** "YYYY-MM-DD" (local) */
+  end: string;
+}
+
+/** The calendar month (1st–last day) containing `date`. */
+export function monthWindow(date: Date): PeriodWindow {
+  const y = date.getFullYear();
+  const m = date.getMonth();
+  const start = new Date(y, m, 1);
+  const end = new Date(y, m + 1, 0); // day 0 of next month = last day of this month
+  return { start: start.toLocaleDateString('en-CA'), end: end.toLocaleDateString('en-CA') };
+}
+
+/** The calendar month immediately before the one containing `date`. */
+export function previousMonthWindow(date: Date): PeriodWindow {
+  const y = date.getFullYear();
+  const m = date.getMonth();
+  const start = new Date(y, m - 1, 1);
+  const end = new Date(y, m, 0);
+  return { start: start.toLocaleDateString('en-CA'), end: end.toLocaleDateString('en-CA') };
+}
+
+/** The calendar year (Jan 1–Dec 31) containing `date`. */
+export function yearWindow(date: Date): PeriodWindow {
+  const y = date.getFullYear();
+  return { start: `${y}-01-01`, end: `${y}-12-31` };
+}
+
+/** The calendar year immediately before the one containing `date`. */
+export function previousYearWindow(date: Date): PeriodWindow {
+  const y = date.getFullYear() - 1;
+  return { start: `${y}-01-01`, end: `${y}-12-31` };
+}
+
+/** "March 2026" */
+export function formatMonthRange(window: PeriodWindow): string {
+  const s = ymdToDate(window.start);
+  return s.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+}
+
+/** "2026" */
+export function formatYearRange(window: PeriodWindow): string {
+  return String(ymdToDate(window.start).getFullYear());
+}
+
 // ─── Category split ────────────────────────────────────────────────────────────
 
 export interface CategorySplit {
@@ -115,7 +168,7 @@ export function sumTotal(entries: RecapEntryInput[]): number {
 
 // ─── Delta math ─────────────────────────────────────────────────────────────────
 
-export type DeltaDirection = 'down' | 'up' | 'flat' | 'first-week';
+export type DeltaDirection = 'down' | 'up' | 'flat' | 'first-period';
 
 export interface WeekDelta {
   currentKg: number;
@@ -131,25 +184,32 @@ export interface WeekDelta {
 }
 
 /**
- * Week-over-week comparison. Guards divide-by-zero / the first tracked week
+ * Period-over-period comparison (week, month, or year — the math never
+ * assumed a week length). Guards divide-by-zero / the first tracked period
  * (previousKg <= 0) so a brand-new user never sees a NaN% or a shaming line.
+ * `periodLabel` drives the copy only ("week" | "month" | "year"); defaults to
+ * "week" so computeWeekDelta below is a thin, byte-identical wrapper.
  */
-export function computeWeekDelta(currentKg: number, previousKg: number): WeekDelta {
+export function computeDelta(
+  currentKg: number,
+  previousKg: number,
+  periodLabel: string = 'week',
+): WeekDelta {
   const deltaKg = currentKg - previousKg;
 
-  // First tracked week (or no prior data) — a baseline, never a comparison.
+  // First tracked period (or no prior data) — a baseline, never a comparison.
   if (previousKg <= 0) {
     return {
       currentKg,
       previousKg,
       deltaKg,
       percent: null,
-      direction: 'first-week',
+      direction: 'first-period',
       improved: true,
       sentence:
         currentKg > 0
-          ? 'Your first tracked week — this is your baseline'
-          : 'Your first week starts here',
+          ? `Your first tracked ${periodLabel} — this is your baseline`
+          : `Your first ${periodLabel} starts here`,
     };
   }
 
@@ -164,7 +224,7 @@ export function computeWeekDelta(currentKg: number, previousKg: number): WeekDel
       percent: 0,
       direction: 'flat',
       improved: true,
-      sentence: 'About the same as last week',
+      sentence: `About the same as last ${periodLabel}`,
     };
   }
 
@@ -178,7 +238,7 @@ export function computeWeekDelta(currentKg: number, previousKg: number): WeekDel
       percent: display,
       direction: 'down',
       improved: true,
-      sentence: `Down ${display}% from last week`,
+      sentence: `Down ${display}% from last ${periodLabel}`,
     };
   }
 
@@ -189,8 +249,18 @@ export function computeWeekDelta(currentKg: number, previousKg: number): WeekDel
     percent: display,
     direction: 'up',
     improved: false,
-    sentence: `Up ${display}% from last week — a fresh start this week`,
+    sentence: `Up ${display}% from last ${periodLabel} — a fresh start this ${periodLabel}`,
   };
+}
+
+/**
+ * Week-over-week comparison. Guards divide-by-zero / the first tracked week
+ * (previousKg <= 0) so a brand-new user never sees a NaN% or a shaming line.
+ * Thin wrapper over computeDelta — kept as its own export so existing callers
+ * (app/recap.tsx, hooks/useWeeklyRecap.ts, and this file's tests) are unaffected.
+ */
+export function computeWeekDelta(currentKg: number, previousKg: number): WeekDelta {
+  return computeDelta(currentKg, previousKg, 'week');
 }
 
 // ─── Daily aggregates + sparkline ────────────────────────────────────────────────
@@ -318,6 +388,70 @@ export function selectWeekWin(
     return { kind: 'light-day', date: lightest.date, totalKg: lightest.totalKg };
   }
   return { kind: 'empty' };
+}
+
+/**
+ * Generalized selectWeekWin — the original had no week-length assumption baked
+ * in (it operates on whatever trips/dayTotals it's handed), so this is a
+ * direct alias usable at month/year scale for the Carbon Passport (Sprint E
+ * Stage A4). Kept as a separate export (rather than renaming selectWeekWin)
+ * so existing call sites are untouched.
+ */
+export const selectPeriodWin = selectWeekWin;
+
+// ─── Carbon Passport aggregates (Sprint E Stage A4) ────────────────────────────
+// Month/year-scale stats for the Passport: "N trips tracked themselves" (the
+// spec's literal callout) + a mode split, both driven off detected_trips rows
+// in the period with status auto_confirmed | confirmed.
+
+export interface PassportTripInput {
+  mode: TripMode;
+  distanceKm: number;
+}
+
+export interface ModeSplitEntry {
+  mode: TripMode;
+  km: number;
+  count: number;
+}
+
+export interface PassportTripStats {
+  /** total detected_trips (auto_confirmed | confirmed) in the period */
+  tripsTrackedThemselves: number;
+  /** per-mode km + count, only modes present in the input, order of first appearance */
+  modeSplit: ModeSplitEntry[];
+}
+
+/**
+ * Aggregates auto/confirmed detected_trips over an arbitrary period into the
+ * Passport's headline "N trips tracked themselves" stat plus a mode split
+ * (km + count per TripMode). Caller is responsible for pre-filtering the rows
+ * to status IN ('auto_confirmed', 'confirmed') and the period's date range —
+ * this function is pure aggregation, no date logic.
+ */
+export function computePassportTripStats(trips: PassportTripInput[]): PassportTripStats {
+  const byMode = new Map<TripMode, ModeSplitEntry>();
+  for (const t of trips) {
+    const existing = byMode.get(t.mode);
+    if (existing) {
+      existing.km += t.distanceKm;
+      existing.count += 1;
+    } else {
+      byMode.set(t.mode, { mode: t.mode, km: t.distanceKm, count: 1 });
+    }
+  }
+  return {
+    tripsTrackedThemselves: trips.length,
+    modeSplit: [...byMode.values()],
+  };
+}
+
+/**
+ * "12 trips tracked themselves" / "1 trip tracked itself" — the Passport's
+ * headline autopilot-thesis stat, singular/plural-correct.
+ */
+export function formatTripsTrackedThemselves(count: number): string {
+  return count === 1 ? '1 trip tracked itself' : `${count} trips tracked themselves`;
 }
 
 /** "12" for 12.0, "12.4" otherwise — one decimal, trailing .0 dropped. */
