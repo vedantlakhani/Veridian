@@ -46,3 +46,12 @@ app-example
 /ios
 /android
 .mcp.json
+
+# local AI-agent tooling config (not part of the app)
+.agents/
+.claude/
+.codex/
+.vscode/
+
+# unrelated personal notes accidentally created in this directory
+PM_Intern_Leads_May2026.md

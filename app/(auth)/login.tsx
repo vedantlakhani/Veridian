@@ -1,18 +1,16 @@
 import {
   View,
   Text,
-  TextInput,
-  TouchableOpacity,
   StyleSheet,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
-  ActivityIndicator,
 } from 'react-native';
 import { Link } from 'expo-router';
 import { useState } from 'react';
 import { useAuthStore } from '@/stores/authStore';
-import { colors } from '@/lib/theme';
+import { colors, typography } from '@/lib/theme';
+import { VInput, VButton, VToast, VIcon } from '@/components/ui';
 
 export default function LoginScreen() {
   const [email, setEmail] = useState('');
@@ -54,53 +52,44 @@ export default function LoginScreen() {
         </View>
 
         <View style={styles.form}>
-          <View style={styles.field}>
-            <Text style={styles.label}>Email</Text>
-            <TextInput
-              style={styles.input}
-              value={email}
-              onChangeText={(v) => { setEmail(v); setAuthError(null); }}
-              placeholder="you@example.com"
-              placeholderTextColor={colors.textTertiary}
-              autoCapitalize="none"
-              keyboardType="email-address"
-              autoComplete="email"
-              textContentType="emailAddress"
-            />
-          </View>
+          <VInput
+            label="Email"
+            value={email}
+            onChangeText={(v) => { setEmail(v); setAuthError(null); }}
+            placeholder="you@example.com"
+            autoCapitalize="none"
+            keyboardType="email-address"
+            autoComplete="email"
+            textContentType="emailAddress"
+          />
 
-          <View style={styles.field}>
-            <Text style={styles.label}>Password</Text>
-            <TextInput
-              style={styles.input}
-              value={password}
-              onChangeText={(v) => { setPassword(v); setAuthError(null); }}
-              placeholder="••••••••"
-              placeholderTextColor={colors.textTertiary}
-              secureTextEntry
-              autoComplete="password"
-              textContentType="password"
-            />
-          </View>
+          <VInput
+            label="Password"
+            value={password}
+            onChangeText={(v) => { setPassword(v); setAuthError(null); }}
+            placeholder="••••••••"
+            secureTextEntry
+            autoComplete="password"
+            textContentType="password"
+          />
 
           {authError ? (
-            <View style={styles.errorBox}>
-              <Text style={styles.errorText}>{authError}</Text>
-            </View>
+            <VToast
+              message={authError}
+              tone="error"
+              icon={<VIcon name="close" size={16} color={colors.danger} strokeWidth={2} />}
+              onDismiss={() => setAuthError(null)}
+            />
           ) : null}
 
-          <TouchableOpacity
-            style={[styles.primaryButton, loading && styles.buttonDisabled]}
+          <VButton
+            label="Sign In"
+            variant="primary"
+            fullWidth
+            loading={loading}
             onPress={handleEmailLogin}
-            disabled={loading}
-            activeOpacity={0.8}
-          >
-            {loading ? (
-              <ActivityIndicator color={colors.textPrimary} />
-            ) : (
-              <Text style={styles.primaryButtonText}>Sign In</Text>
-            )}
-          </TouchableOpacity>
+            style={styles.primaryButton}
+          />
 
           <Link href="/(auth)/forgot-password" style={styles.forgotLink}>
             <Text style={styles.forgotText}>Forgot password?</Text>
@@ -112,26 +101,22 @@ export default function LoginScreen() {
             <View style={styles.dividerLine} />
           </View>
 
-          <TouchableOpacity
-            style={styles.socialButton}
-            onPress={handleGoogle}
+          <VButton
+            label="Continue with Google"
+            variant="secondary"
+            fullWidth
             disabled={loading}
-            activeOpacity={0.8}
-          >
-            <Text style={styles.socialButtonText}>Continue with Google</Text>
-          </TouchableOpacity>
+            onPress={handleGoogle}
+          />
 
           {Platform.OS === 'ios' && (
-            <TouchableOpacity
-              style={[styles.socialButton, styles.appleButton]}
-              onPress={handleApple}
+            <VButton
+              label="Continue with Apple"
+              variant="apple"
+              fullWidth
               disabled={loading}
-              activeOpacity={0.8}
-            >
-              <Text style={[styles.socialButtonText, styles.appleButtonText]}>
-                Continue with Apple
-              </Text>
-            </TouchableOpacity>
+              onPress={handleApple}
+            />
           )}
         </View>
 
@@ -150,56 +135,15 @@ const styles = StyleSheet.create({
   flex: { flex: 1, backgroundColor: colors.background },
   container: { flexGrow: 1, padding: 24, justifyContent: 'center' },
   header: { alignItems: 'center', marginBottom: 40 },
-  logo: { fontSize: 40, fontWeight: '800', color: colors.primary, letterSpacing: -1 },
+  logo: { fontFamily: typography.fontFamilyDisplay, fontSize: 40, fontWeight: typography.weights.semibold, color: colors.primary, letterSpacing: typography.letterSpacing.tight },
   tagline: { fontSize: 15, color: colors.textSecondary, marginTop: 8 },
   form: { gap: 16 },
-  field: { gap: 6 },
-  label: { fontSize: 13, fontWeight: '600', color: colors.textPrimary },
-  input: {
-    height: 48,
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: 12,
-    paddingHorizontal: 16,
-    fontSize: 15,
-    color: colors.textPrimary,
-    backgroundColor: colors.surface,
-  },
-  errorBox: {
-    backgroundColor: colors.errorLight,
-    borderRadius: 8,
-    padding: 12,
-    borderWidth: 1,
-    borderColor: colors.errorBorder,
-  },
-  errorText: { fontSize: 13, color: colors.error },
-  primaryButton: {
-    height: 52,
-    backgroundColor: colors.primary,
-    borderRadius: 12,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginTop: 4,
-  },
-  buttonDisabled: { opacity: 0.6 },
-  primaryButtonText: { fontSize: 16, fontWeight: '700', color: colors.textPrimary },
+  primaryButton: { marginTop: 4 },
   forgotLink: { alignSelf: 'center' },
   forgotText: { fontSize: 13, color: colors.primary, fontWeight: '500' },
   dividerRow: { flexDirection: 'row', alignItems: 'center', gap: 12, marginVertical: 4 },
   dividerLine: { flex: 1, height: 1, backgroundColor: colors.divider },
   dividerText: { fontSize: 13, color: colors.textSecondary },
-  socialButton: {
-    height: 52,
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: 12,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: colors.surface,
-  },
-  socialButtonText: { fontSize: 15, fontWeight: '600', color: colors.textPrimary },
-  appleButton: { backgroundColor: '#000000', borderColor: '#000000' },
-  appleButtonText: { color: colors.textPrimary },
   footer: { flexDirection: 'row', justifyContent: 'center', marginTop: 32 },
   footerText: { fontSize: 14, color: colors.textSecondary },
   footerLink: { fontSize: 14, color: colors.primary, fontWeight: '600' },

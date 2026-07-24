@@ -500,22 +500,33 @@ export default function LogScreen() {
             <VSkeleton width={128} height={124} borderRadius={radii.lg} />
           </View>
         ) : (
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.slotRow}
-            style={{ flexGrow: 0 }}
-          >
-            {quickSlots.map((slot) => (
-              <QuickSlotCard
-                key={slot.factor.id}
-                slot={slot}
-                onLog={handleQuickLog}
-                onAdjust={(s) => openSheet(s.factor, String(s.quantity))}
-                disabled={durableCreateEntry.isPending}
+          <View style={styles.slotRowWrap}>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.slotRow}
+              style={{ flexGrow: 0 }}
+            >
+              {quickSlots.map((slot) => (
+                <QuickSlotCard
+                  key={slot.factor.id}
+                  slot={slot}
+                  onLog={handleQuickLog}
+                  onAdjust={(s) => openSheet(s.factor, String(s.quantity))}
+                  disabled={durableCreateEntry.isPending}
+                />
+              ))}
+            </ScrollView>
+            {quickSlots.length > 2 && (
+              <LinearGradient
+                colors={['transparent', colors.background]}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+                style={styles.slotRowFade}
+                pointerEvents="none"
               />
-            ))}
-          </ScrollView>
+            )}
+          </View>
         )}
         <VText variant="caption" style={styles.quickHint}>
           Tap to log at your usual amount · hold to adjust
@@ -937,9 +948,19 @@ const styles = StyleSheet.create({
   },
 
   quickLabel: { marginBottom: spacing.sm },
+  slotRowWrap: {
+    position: 'relative',
+  },
   slotRow: {
     flexDirection: 'row',
     gap: spacing.sm,
+  },
+  slotRowFade: {
+    position: 'absolute',
+    top: 0,
+    bottom: 0,
+    right: 0,
+    width: 32,
   },
   quickHint: {
     fontSize: 11,

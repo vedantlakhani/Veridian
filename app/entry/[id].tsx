@@ -111,7 +111,7 @@ export default function EditEntryScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background, padding: spacing.lg },
-  centered: { flex: 1, alignItems: 'center', justifyContent: 'center' },
+  centered: { flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.background },
   heading: {
     fontSize: typography.sizes.xxl, fontWeight: '700',
     color: colors.textPrimary, marginBottom: spacing.lg,

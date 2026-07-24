@@ -1,26 +1,49 @@
 import {
   View,
   Text,
+  Image,
   Dimensions,
   Platform,
   SafeAreaView,
   StyleSheet,
   TouchableOpacity,
 } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import Animated, {
   useSharedValue,
   interpolate,
   Extrapolation,
   useAnimatedScrollHandler,
   useAnimatedStyle,
+  FadeIn,
 } from 'react-native-reanimated';
 import { useRouter } from 'expo-router';
-import { VProgressRing } from '@/components/ui/VProgressRing';
 import { VAiInsightCard } from '@/components/ui/VAiInsightCard';
 import { VButton } from '@/components/ui/VButton';
 import { useOnboardingStore } from '@/stores/useOnboardingStore';
 import { colors, spacing, typography, radii } from '@/lib/theme';
 import type { AiInsight } from '@/hooks/useAiInsight';
+
+// Real licensed photography (assets/images/PHOTO_CREDITS.md) — replaces the
+// old bare VProgressRing "illustration" with actual full-bleed imagery per slide.
+const HERO_IMAGES = [
+  require('@/assets/images/hero-forest.jpg'),
+  require('@/assets/images/hero-field.jpg'),
+  require('@/assets/images/hero-mountain.jpg'),
+];
+
+function SlideHero({ image }: { image: number }) {
+  return (
+    <Animated.View entering={FadeIn.duration(500)} style={styles.heroWrap} pointerEvents="none">
+      <Image source={image} style={styles.heroImage} resizeMode="cover" />
+      <LinearGradient
+        colors={['transparent', 'rgba(14,21,18,0.55)', colors.background]}
+        locations={[0, 0.6, 1]}
+        style={styles.heroScrim}
+      />
+    </Animated.View>
+  );
+}
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
 
@@ -92,25 +115,30 @@ function DotIndicator({ index, scrollX }: { index: number; scrollX: ReturnType<t
 
 function SlideOne() {
   return (
-    <View style={styles.slideContent}>
-      <VProgressRing progress={0.65} size={120} color={colors.primary} />
-      <Text style={styles.slideTitle}>{SLIDES[0].title}</Text>
-      <Text style={styles.slideSubtitle}>{SLIDES[0].subtitle}</Text>
-    </View>
+    <>
+      <SlideHero image={HERO_IMAGES[0]} />
+      <View style={styles.slideContent}>
+        <Text style={styles.slideTitle}>{SLIDES[0].title}</Text>
+        <Text style={styles.slideSubtitle}>{SLIDES[0].subtitle}</Text>
+      </View>
+    </>
   );
 }
 
 function SlideTwo() {
   return (
-    <View style={styles.slideContent}>
-      <VAiInsightCard
-        insight={MOCK_INSIGHT}
-        isLoading={false}
-        error={null}
-      />
-      <Text style={styles.slideTitle}>{SLIDES[1].title}</Text>
-      <Text style={styles.slideSubtitle}>{SLIDES[1].subtitle}</Text>
-    </View>
+    <>
+      <SlideHero image={HERO_IMAGES[1]} />
+      <View style={styles.slideContent}>
+        <VAiInsightCard
+          insight={MOCK_INSIGHT}
+          isLoading={false}
+          error={null}
+        />
+        <Text style={styles.slideTitle}>{SLIDES[1].title}</Text>
+        <Text style={styles.slideSubtitle}>{SLIDES[1].subtitle}</Text>
+      </View>
+    </>
   );
 }
 
@@ -139,32 +167,35 @@ function SlideThree({ onGetStarted }: { onGetStarted: () => void }) {
   };
 
   return (
-    <View style={styles.slideContent}>
-      <View style={styles.leaderboard}>
-        {MOCK_LEADERBOARD.map((row) => (
-          <View key={row.rank} style={styles.leaderboardRow}>
-            <Text style={styles.leaderboardRank}>{row.rank}</Text>
-            <Text style={styles.leaderboardName}>{row.name}</Text>
-            <Text style={styles.leaderboardKg}>{row.kg} kg</Text>
-          </View>
-        ))}
+    <>
+      <SlideHero image={HERO_IMAGES[2]} />
+      <View style={styles.slideContent}>
+        <View style={styles.leaderboard}>
+          {MOCK_LEADERBOARD.map((row) => (
+            <View key={row.rank} style={styles.leaderboardRow}>
+              <Text style={styles.leaderboardRank}>{row.rank}</Text>
+              <Text style={styles.leaderboardName}>{row.name}</Text>
+              <Text style={styles.leaderboardKg}>{row.kg} kg</Text>
+            </View>
+          ))}
+        </View>
+        <Text style={styles.slideTitle}>{SLIDES[2].title}</Text>
+        <Text style={styles.slideSubtitle}>{SLIDES[2].subtitle}</Text>
+        <VButton
+          label="Allow notifications"
+          variant="secondary"
+          fullWidth
+          style={styles.notifButton}
+          onPress={handleNotifications}
+        />
+        <VButton
+          label="Get Started"
+          variant="primary"
+          fullWidth
+          onPress={onGetStarted}
+        />
       </View>
-      <Text style={styles.slideTitle}>{SLIDES[2].title}</Text>
-      <Text style={styles.slideSubtitle}>{SLIDES[2].subtitle}</Text>
-      <VButton
-        label="Allow notifications"
-        variant="secondary"
-        fullWidth
-        style={styles.notifButton}
-        onPress={handleNotifications}
-      />
-      <VButton
-        label="Get Started"
-        variant="primary"
-        fullWidth
-        onPress={onGetStarted}
-      />
-    </View>
+    </>
   );
 }
 
@@ -254,22 +285,41 @@ const styles = StyleSheet.create({
     width: SCREEN_WIDTH,
     flex: 1,
     alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: spacing.lg,
-    paddingTop: spacing.xxl,
+    justifyContent: 'flex-end',
+  },
+  heroWrap: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: '66%',
+  },
+  heroImage: {
+    width: '100%',
+    height: '100%',
+  },
+  heroScrim: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 0,
+    height: '100%',
   },
   slideContent: {
     width: '100%',
     alignItems: 'center',
+    paddingHorizontal: spacing.lg,
+    paddingBottom: spacing.lg,
   },
   slideTitle: {
-    fontFamily: typography.fontFamilyDefault,
+    fontFamily: typography.fontFamilyDisplay,
     fontSize: typography.sizes.xxl,
-    fontWeight: typography.weights.bold,
+    fontWeight: typography.weights.semibold,
     color: colors.textPrimary,
     textAlign: 'center',
     marginTop: spacing.lg,
     marginBottom: spacing.sm,
+    letterSpacing: typography.letterSpacing.tight,
   },
   slideSubtitle: {
     fontFamily: typography.fontFamilyDefault,

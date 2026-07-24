@@ -11,18 +11,18 @@ import {
 } from '@/lib/theme';
 
 describe('theme', () => {
-  // Palette pins updated for the light-mode redesign (commit a4c42e3) — the
-  // original dark-mode expectations were never updated with it.
-  it('exports colors with forest-green primary', () => {
-    expect(colors.primary).toBe('#1B6B42');
-    expect(colors.primaryLight).toBe('#1B6B42');
+  // Palette pins updated for the Understory dark redesign (Sprint F,
+  // docs/DESIGN_DIRECTION.md) — moss primary on a near-black "soil" ramp.
+  it('exports colors with moss primary', () => {
+    expect(colors.primary).toBe('#5FA876');
+    expect(colors.primaryLight).toBe('#5FA876');
   });
 
-  it('exports light green-tinted background ramp', () => {
-    expect(colors.background).toBe('#F5F7F3');
-    expect(colors.surface).toBe('#FFFFFF');
-    expect(colors.surfaceElevated).toBe('#ECEEED');
-    expect(colors.surfaceHigh).toBe('#FFFFFF');
+  it('exports dark forest-floor background ramp', () => {
+    expect(colors.background).toBe('#0E1512');
+    expect(colors.surface).toBe('#161F1A');
+    expect(colors.surfaceElevated).toBe('#1E2B23');
+    expect(colors.surfaceHigh).toBe('#1E2B23');
   });
 
   it('exports spacing scale', () => {

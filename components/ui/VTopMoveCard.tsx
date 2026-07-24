@@ -95,7 +95,7 @@ export function VTopMoveCard({ move, index, onPress }: VTopMoveCardProps) {
       >
         <View style={styles.heroBorder}>
           <LinearGradient
-            colors={['rgba(27,107,66,0.30)', 'rgba(27,107,66,0.08)', 'rgba(27,107,66,0.20)']}
+            colors={['rgba(95,168,118,0.30)', 'rgba(95,168,118,0.08)', 'rgba(95,168,118,0.20)']}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
             style={StyleSheet.absoluteFillObject}

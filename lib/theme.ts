@@ -1,48 +1,58 @@
 import { Platform } from 'react-native';
 import { Easing } from 'react-native-reanimated';
 
+// ─────────────────────────────────────────────────────────────────────────────
+// UNDERSTORY — dark, editorial, forest-floor palette (Sprint F redesign).
+// See docs/DESIGN_DIRECTION.md. Dark-first, matching the already-declared
+// UIUserInterfaceStyle: Dark. Category hues retain their identity but are
+// lifted ~15% in luminance so they read against the near-black "soil" bg.
+// ─────────────────────────────────────────────────────────────────────────────
+
 export const colors = {
-  // Backgrounds
-  background:      '#F5F7F3',
-  surface:         '#FFFFFF',
-  surfaceElevated: '#ECEEED',
-  surfaceHigh:     '#FFFFFF',
+  // Backgrounds — "soil" ramp (near-black, warm-green undertone)
+  background:      '#0E1512',
+  surface:         '#161F1A',
+  surfaceElevated: '#1E2B23',
+  surfaceHigh:     '#1E2B23',
 
-  // Borders
-  border:          'rgba(0,0,0,0.08)',
-  borderStrong:    'rgba(0,0,0,0.15)',
+  // Borders — hairlines on dark
+  border:          'rgba(255,255,255,0.06)',
+  borderStrong:    'rgba(255,255,255,0.12)',
 
-  // Track (rings / bars on light)
-  trackOnDark:     'rgba(0,0,0,0.08)',
+  // Track (rings / bars on dark)
+  trackOnDark:     'rgba(255,255,255,0.08)',
 
-  // Primary — deep forest green
-  primary:         '#1B6B42',
-  primaryDeep:     '#134F31',
-  primaryDim:      '#236B45',
-  primaryGlow:     'rgba(27,107,66,0.14)',
-  primaryGlowSoft: 'rgba(27,107,66,0.07)',
-  primaryLight:    '#1B6B42',
+  // Primary — moss (brighter than the old #1B6B42 so it reads on dark)
+  primary:         '#5FA876',
+  primaryDeep:     '#3D7A54',
+  primaryDim:      '#4E8F64',
+  primaryGlow:     'rgba(95,168,118,0.16)',
+  primaryGlowSoft: 'rgba(95,168,118,0.08)',
+  primaryLight:    '#5FA876',
 
-  // Category colors — readable on white
-  food:            '#C0392B',
-  transport:       '#1A6FA8',
-  energy:          '#C47D16',
-  shopping:        '#7C5295',
+  // Accent — lichen light (amber warmth counterpoint, avoids all-green monotone)
+  accentAmber:     '#E0B15C',
 
-  // Category bg tints
-  foodGlow:        'rgba(192,57,43,0.07)',
-  transportGlow:   'rgba(26,111,168,0.07)',
-  energyGlow:      'rgba(196,125,22,0.07)',
-  shoppingGlow:    'rgba(124,82,149,0.07)',
+  // Category colors — hues retained, luminance lifted ~15% for dark-bg contrast
+  food:            '#E0655A',
+  transport:       '#4A97D1',
+  energy:          '#E0A02E',
+  shopping:        '#A87FC4',
 
-  // Budget-state system (light mode)
-  glowCalm:        'rgba(27,107,66,0.07)',
-  glowWatch:       'rgba(196,125,22,0.07)',
-  glowOver:        'rgba(192,57,43,0.07)',
+  // Category bg tints (glows on dark)
+  foodGlow:        'rgba(224,101,90,0.12)',
+  transportGlow:   'rgba(74,151,209,0.12)',
+  energyGlow:      'rgba(224,160,46,0.12)',
+  shoppingGlow:    'rgba(168,127,196,0.12)',
 
-  successGlow:     'rgba(27,107,66,0.10)',
-  warningGlow:     'rgba(196,125,22,0.10)',
-  dangerGlow:      'rgba(192,57,43,0.10)',
+  // Budget-state system (dark mode) — calm/watch/over retuned for dark surface
+  glowCalm:        'rgba(95,168,118,0.12)',
+  glowWatch:       'rgba(224,177,92,0.12)',
+  glowOver:        'rgba(224,101,90,0.12)',
+
+  successGlow:     'rgba(95,168,118,0.16)',
+  warningGlow:     'rgba(224,177,92,0.16)',
+  dangerGlow:      'rgba(224,101,90,0.16)',
 
   // Spend-based ("estimated") chip treatment — Sprint D. Deliberately NOT
   // successGlow/primary (that's reserved for celebratory zero-emission
@@ -50,31 +60,31 @@ export const colors = {
   // measured convention) — a muted neutral pill so an estimate never reads
   // as a confident, precise sensor number (NORTH_STAR.md §5 — false
   // precision is a documented churn driver).
-  estimatedGlow:   'rgba(92,114,101,0.12)',
+  estimatedGlow:   'rgba(155,168,158,0.14)',
 
   // Status
-  success:         '#1B6B42',
-  warning:         '#C47D16',
-  warningBg:       '#FEF3C7',
-  danger:          '#C0392B',
+  success:         '#5FA876',
+  warning:         '#E0B15C',
+  warningBg:       'rgba(224,177,92,0.14)',
+  danger:          '#E0655A',
 
-  // Text
-  textPrimary:     '#111C16',
-  textSecondary:   '#5C7265',
-  textTertiary:    '#9EB5A4',
+  // Text — parchment, not pure white
+  textPrimary:     '#F2F0E8',
+  textSecondary:   '#9BA89E',
+  textTertiary:    '#5E6B62',
 
-  // Legacy aliases
-  primaryContainer: '#E2F0E8',
-  error:            '#C0392B',
-  errorLight:       '#FEE2E2',
-  errorBorder:      '#FECACA',
-  foodBg:           '#FEF2F0',
-  transportBg:      '#EFF6FF',
-  energyBg:         '#FFFBEB',
-  shoppingBg:       '#F5F0F9',
-  successBg:        '#F0FBF4',
-  divider:          'rgba(0,0,0,0.08)',
-  mist:             '#F5F7F3',
+  // Legacy aliases (retuned for dark)
+  primaryContainer: 'rgba(95,168,118,0.16)',
+  error:            '#E0655A',
+  errorLight:       'rgba(224,101,90,0.14)',
+  errorBorder:      'rgba(224,101,90,0.30)',
+  foodBg:           'rgba(224,101,90,0.10)',
+  transportBg:      'rgba(74,151,209,0.10)',
+  energyBg:         'rgba(224,160,46,0.10)',
+  shoppingBg:       'rgba(168,127,196,0.10)',
+  successBg:        'rgba(95,168,118,0.12)',
+  divider:          'rgba(255,255,255,0.06)',
+  mist:             '#0E1512',
 } as const;
 
 export type BudgetState = 'calm' | 'watch' | 'over';
@@ -89,22 +99,22 @@ export const budgetStateColors: Record<
   BudgetState,
   { glow: string; accent: string; ring: readonly [string, string] }
 > = {
-  calm:  { glow: colors.glowCalm,  accent: colors.primary,  ring: ['#2E9E62', '#1B6B42'] },
-  watch: { glow: colors.glowWatch, accent: colors.warning,  ring: ['#E8A020', '#C47D16'] },
-  over:  { glow: colors.glowOver,  accent: colors.danger,   ring: ['#E05246', '#C0392B'] },
+  calm:  { glow: colors.glowCalm,  accent: colors.primaryLight, ring: ['#6FB886', '#5FA876'] },
+  watch: { glow: colors.glowWatch, accent: colors.warning,      ring: ['#E8C070', '#E0B15C'] },
+  over:  { glow: colors.glowOver,  accent: colors.danger,       ring: ['#E8776A', '#E0655A'] },
 } as const;
 
 export const gradients = {
-  primaryCTA:   ['#2E9E62', '#1B6B42', '#134F31'],
-  ringCalm:     ['#2E9E62', '#1B6B42'],
-  ringWatch:    ['#E8A020', '#C47D16'],
-  ringOver:     ['#E05246', '#C0392B'],
-  aurora:       ['#F5F7F3', '#EEF2EC', '#F5F7F3'],
-  food:         ['#D4554A', '#C0392B'],
-  transport:    ['#2E8FCC', '#1A6FA8'],
-  energy:       ['#DFA030', '#C47D16'],
-  shimmer:      ['transparent', 'rgba(0,0,0,0.03)', 'transparent'],
-  cardSheen:    ['rgba(255,255,255,0.8)', 'rgba(255,255,255,0)'],
+  primaryCTA:   ['#6FB886', '#5FA876', '#3D7A54'],
+  ringCalm:     ['#6FB886', '#5FA876'],
+  ringWatch:    ['#E8C070', '#E0B15C'],
+  ringOver:     ['#E8776A', '#E0655A'],
+  aurora:       ['#0E1512', '#161F1A', '#0E1512'],
+  food:         ['#E8776A', '#E0655A'],
+  transport:    ['#63A9DB', '#4A97D1'],
+  energy:       ['#E8B14A', '#E0A02E'],
+  shimmer:      ['transparent', 'rgba(255,255,255,0.04)', 'transparent'],
+  cardSheen:    ['rgba(255,255,255,0.05)', 'rgba(255,255,255,0)'],
 } as const;
 
 export const spacing = {
@@ -119,7 +129,14 @@ export const spacing = {
 } as const;
 
 export const typography = {
+  // Body/UI face — keep system default (San Francisco) for legibility and
+  // platform-native feel. DESIGN_DIRECTION.md is explicit that ONLY hero/display
+  // headline numbers use Fraunces; body/UI stays system default. This token is
+  // referenced by ~20 body/UI styles today, so it must NOT be repointed to a serif.
   fontFamilyDefault: undefined as string | undefined,
+  // Display/headline face — Fraunces, for hero numbers only (see fontFamilyDisplay
+  // usage in redesigned hero components). Registered in app/_layout.tsx.
+  fontFamilyDisplay: 'Fraunces_600SemiBold' as string,
   fontFamilyMono:    Platform.select({ ios: 'Menlo', default: 'monospace' }) as string,
   sizes: {
     xs:      11,
@@ -139,7 +156,9 @@ export const typography = {
     heavy:    '800' as const,
   },
   letterSpacing: {
-    tight:   -0.8,
+    // Tighter tracking on large Fraunces headlines so serif type reads as
+    // deliberate rather than default (DESIGN_DIRECTION.md typography).
+    tight:   -1.2,
     snug:    -0.3,
     normal:   0,
     wide:     0.6,
@@ -169,63 +188,64 @@ export const shadows = {
   sm: {
     shadowColor: '#000000',
     shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.06,
+    shadowOpacity: 0.20,
     shadowRadius: 4,
     elevation: 2,
   },
   md: {
     shadowColor: '#000000',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
+    shadowOpacity: 0.28,
     shadowRadius: 8,
     elevation: 3,
   },
   lg: {
     shadowColor: '#000000',
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.10,
+    shadowOpacity: 0.36,
     shadowRadius: 16,
     elevation: 5,
   },
   card: {
     shadowColor: '#000000',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.07,
+    shadowOpacity: 0.24,
     shadowRadius: 8,
     elevation: 3,
   },
+  // Card elevation via soft moss glow, not a light-mode drop shadow.
   hero: {
-    shadowColor: '#1B6B42',
+    shadowColor: '#5FA876',
     shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.12,
+    shadowOpacity: 0.24,
     shadowRadius: 20,
     elevation: 6,
   },
   glowPrimary: {
-    shadowColor: '#1B6B42',
+    shadowColor: '#5FA876',
     shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.15,
+    shadowOpacity: 0.28,
     shadowRadius: 16,
     elevation: 6,
   },
   glowFood: {
-    shadowColor: '#C0392B',
+    shadowColor: '#E0655A',
     shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.10,
+    shadowOpacity: 0.22,
     shadowRadius: 12,
     elevation: 4,
   },
   glowTransport: {
-    shadowColor: '#1A6FA8',
+    shadowColor: '#4A97D1',
     shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.10,
+    shadowOpacity: 0.22,
     shadowRadius: 12,
     elevation: 4,
   },
   glowEnergy: {
-    shadowColor: '#C47D16',
+    shadowColor: '#E0A02E',
     shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.10,
+    shadowOpacity: 0.22,
     shadowRadius: 12,
     elevation: 4,
   },

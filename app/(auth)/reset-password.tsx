@@ -1,8 +1,6 @@
 import {
   View,
   Text,
-  TextInput,
-  TouchableOpacity,
   StyleSheet,
   KeyboardAvoidingView,
   Platform,
@@ -12,7 +10,8 @@ import { router } from 'expo-router';
 import { useLinkingURL } from 'expo-linking';
 import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
-import { colors } from '@/lib/theme';
+import { colors, typography } from '@/lib/theme';
+import { VInput, VButton, VToast, VIcon } from '@/components/ui';
 
 type ParsedAuthLink =
   | { kind: 'pkce'; code: string }
@@ -93,9 +92,12 @@ export default function ResetPasswordScreen() {
       <View style={styles.successContainer}>
         <Text style={styles.successTitle}>Password updated</Text>
         <Text style={styles.successBody}>You can now sign in with your new password.</Text>
-        <TouchableOpacity style={styles.backButton} onPress={() => router.replace('/(auth)/login')}>
-          <Text style={styles.backButtonText}>Back to Sign In</Text>
-        </TouchableOpacity>
+        <VButton
+          label="Back to Sign In"
+          variant="secondary"
+          onPress={() => router.replace('/(auth)/login')}
+          style={styles.backButton}
+        />
       </View>
     );
   }
@@ -106,9 +108,12 @@ export default function ResetPasswordScreen() {
         <Text style={styles.successTitle}>Link expired</Text>
         <Text style={styles.successBody}>{sessionError}</Text>
         <Text selectable style={styles.debugUrl}>{url ?? '(no url captured)'}</Text>
-        <TouchableOpacity style={styles.backButton} onPress={() => router.replace('/(auth)/forgot-password')}>
-          <Text style={styles.backButtonText}>Request New Link</Text>
-        </TouchableOpacity>
+        <VButton
+          label="Request New Link"
+          variant="secondary"
+          onPress={() => router.replace('/(auth)/forgot-password')}
+          style={styles.backButton}
+        />
       </View>
     );
   }
@@ -130,52 +135,45 @@ export default function ResetPasswordScreen() {
         <Text style={styles.title}>Set New Password</Text>
         <Text style={styles.subtitle}>Choose a new password for your account.</Text>
 
-        <View style={styles.field}>
-          <Text style={styles.label}>New Password</Text>
-          <TextInput
-            style={styles.input}
+        <View style={styles.form}>
+          <VInput
+            label="New Password"
             value={password}
             onChangeText={(v) => { setPassword(v); setError(null); }}
             placeholder="••••••••"
-            placeholderTextColor={colors.textTertiary}
             secureTextEntry
             autoCapitalize="none"
             textContentType="newPassword"
           />
-        </View>
 
-        <View style={styles.field}>
-          <Text style={styles.label}>Confirm Password</Text>
-          <TextInput
-            style={styles.input}
+          <VInput
+            label="Confirm Password"
             value={confirmPassword}
             onChangeText={(v) => { setConfirmPassword(v); setError(null); }}
             placeholder="••••••••"
-            placeholderTextColor={colors.textTertiary}
             secureTextEntry
             autoCapitalize="none"
             textContentType="newPassword"
           />
+
+          {error ? (
+            <VToast
+              message={error}
+              tone="error"
+              icon={<VIcon name="close" size={16} color={colors.danger} strokeWidth={2} />}
+              onDismiss={() => setError(null)}
+            />
+          ) : null}
+
+          <VButton
+            label="Update Password"
+            variant="primary"
+            fullWidth
+            loading={loading}
+            onPress={handleSubmit}
+            style={styles.primaryButton}
+          />
         </View>
-
-        {error ? (
-          <View style={styles.errorBox}>
-            <Text style={styles.errorText}>{error}</Text>
-          </View>
-        ) : null}
-
-        <TouchableOpacity
-          style={[styles.primaryButton, loading && styles.buttonDisabled]}
-          onPress={handleSubmit}
-          disabled={loading}
-          activeOpacity={0.8}
-        >
-          {loading ? (
-            <ActivityIndicator color={colors.textPrimary} />
-          ) : (
-            <Text style={styles.primaryButtonText}>Update Password</Text>
-          )}
-        </TouchableOpacity>
       </View>
     </KeyboardAvoidingView>
   );
@@ -184,38 +182,10 @@ export default function ResetPasswordScreen() {
 const styles = StyleSheet.create({
   flex: { flex: 1, backgroundColor: colors.background },
   container: { flex: 1, padding: 24, paddingTop: 60 },
-  title: { fontSize: 28, fontWeight: '700', color: colors.textPrimary, marginBottom: 8 },
+  title: { fontFamily: typography.fontFamilyDisplay, fontSize: 28, fontWeight: typography.weights.semibold, color: colors.textPrimary, marginBottom: 8, letterSpacing: typography.letterSpacing.tight },
   subtitle: { fontSize: 15, color: colors.textSecondary, marginBottom: 32, lineHeight: 22 },
-  field: { gap: 6, marginBottom: 16 },
-  label: { fontSize: 13, fontWeight: '600', color: colors.textPrimary },
-  input: {
-    height: 48,
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: 12,
-    paddingHorizontal: 16,
-    fontSize: 15,
-    color: colors.textPrimary,
-    backgroundColor: colors.surface,
-  },
-  errorBox: {
-    backgroundColor: colors.errorLight,
-    borderRadius: 8,
-    padding: 12,
-    borderWidth: 1,
-    borderColor: colors.errorBorder,
-    marginBottom: 16,
-  },
-  errorText: { fontSize: 13, color: colors.error },
-  primaryButton: {
-    height: 52,
-    backgroundColor: colors.primary,
-    borderRadius: 12,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  buttonDisabled: { opacity: 0.6 },
-  primaryButtonText: { fontSize: 16, fontWeight: '700', color: colors.textPrimary },
+  form: { gap: 16 },
+  primaryButton: { marginTop: 4 },
   successContainer: {
     flex: 1,
     alignItems: 'center',
@@ -226,14 +196,5 @@ const styles = StyleSheet.create({
   successTitle: { fontSize: 24, fontWeight: '700', color: colors.textPrimary, marginBottom: 12 },
   successBody: { fontSize: 15, color: colors.textSecondary, textAlign: 'center', lineHeight: 22 },
   debugUrl: { fontSize: 11, color: colors.textTertiary, textAlign: 'center', marginTop: 16, paddingHorizontal: 8 },
-  backButton: {
-    marginTop: 24,
-    height: 52,
-    width: 240,
-    backgroundColor: colors.primary,
-    borderRadius: 12,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  backButtonText: { fontSize: 15, fontWeight: '600', color: colors.textPrimary },
+  backButton: { marginTop: 24, width: 240 },
 });

@@ -1,12 +1,12 @@
 // Register background location task before any navigation renders
 import '@/tasks/locationTask';
-import { Stack, useRouter } from 'expo-router';
+import { Stack } from 'expo-router';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
 import * as SplashScreen from 'expo-splash-screen';
-import { ShareIntentProvider, useShareIntentContext } from 'expo-share-intent';
+import { useFonts, Fraunces_600SemiBold, Fraunces_700Bold } from '@expo-google-fonts/fraunces';
 import { useAuthStore } from '@/stores/authStore';
 import { useOnboardingStore } from '@/stores/useOnboardingStore';
 import { queryClient } from '@/lib/queryClient';
@@ -23,23 +23,11 @@ SplashScreen.preventAutoHideAsync();
 function AppNavigator() {
   const { session, user } = useAuthStore();
   const { onboardingComplete } = useOnboardingStore();
-  const router = useRouter();
-  const { hasShareIntent } = useShareIntentContext();
   useEmissionRealtime(user?.id);
   useNotifications(user?.id);
   const { mutateAsync } = useCreateEntry();
   useOfflineQueue(mutateAsync);
   // PLSH-04: Font loading occurs in child layouts (parallel with auth init) — no blocking sequential await
-
-  // Sprint E Stage R3: a share-intent arriving while the app is already
-  // running (or one queued from a cold launch) navigates straight to the
-  // import screen's preview+confirm step — only once signed in, since the
-  // share is meaningless before auth resolves.
-  useEffect(() => {
-    if (hasShareIntent && session) {
-      router.push('/import');
-    }
-  }, [hasShareIntent, session]);
 
   return (
     <TripsProvider userId={user?.id}>
@@ -66,6 +54,10 @@ function AppNavigator() {
 export default function RootLayout() {
   const { isLoading, initialize } = useAuthStore();
   const { isChecked, initialize: initOnboarding } = useOnboardingStore();
+  // Understory display face (Fraunces) — loaded in parallel with auth/onboarding
+  // init; splash stays up until fonts are ready too so hero headlines never
+  // flash a system-serif fallback on first paint.
+  const [fontsLoaded] = useFonts({ Fraunces_600SemiBold, Fraunces_700Bold });
 
   useEffect(() => {
     // Fire both init calls in parallel — splash stays until both resolve
@@ -74,22 +66,20 @@ export default function RootLayout() {
   }, []);
 
   useEffect(() => {
-    if (!isLoading && isChecked) {
+    if (!isLoading && isChecked && fontsLoaded) {
       SplashScreen.hideAsync();
     }
-  }, [isLoading, isChecked]);
+  }, [isLoading, isChecked, fontsLoaded]);
 
-  if (isLoading || !isChecked) return null;
+  if (isLoading || !isChecked || !fontsLoaded) return null;
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
-      <ShareIntentProvider options={{ resetOnBackground: true }}>
-        <QueryClientProvider client={queryClient}>
-          <StatusBar style="light" />
-          <VOfflineBanner />
-          <AppNavigator />
-        </QueryClientProvider>
-      </ShareIntentProvider>
+      <QueryClientProvider client={queryClient}>
+        <StatusBar style="light" />
+        <VOfflineBanner />
+        <AppNavigator />
+      </QueryClientProvider>
     </GestureHandlerRootView>
   );
 }

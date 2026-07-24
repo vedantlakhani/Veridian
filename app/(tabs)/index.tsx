@@ -90,6 +90,18 @@ const CATEGORY_COLORS: Record<EmissionCategory, string> = {
   shopping: colors.shopping,
 };
 
+// Hero photo scrim — fades the forest photo into the "soil" background rather
+// than the old light-mode off-white (#F5F7F3). Derived from colors.background
+// (#0E1512 → rgb(14,21,18)) so it stays a real theme reference, not a
+// standalone hardcoded hex, even though LinearGradient needs raw rgba strings
+// for the alpha ramp.
+const BG_R = 14, BG_G = 21, BG_B = 18;
+const heroScrim = [
+  `rgba(${BG_R},${BG_G},${BG_B},0.05)`,
+  `rgba(${BG_R},${BG_G},${BG_B},0.78)`,
+  `rgba(${BG_R},${BG_G},${BG_B},1.0)`,
+] as const;
+
 // One quiet, efficacy-first line under the ring — never red-as-shame; the "over"
 // copy points forward, not down (NORTH_STAR.md §8.4 anti-guilt).
 const EFFICACY_COPY: Record<BudgetState, string> = {
@@ -97,6 +109,45 @@ const EFFICACY_COPY: Record<BudgetState, string> = {
   watch: 'Tracking a touch high — one light choice keeps you in band',
   over: "Over today's band — tomorrow's a fresh start",
 };
+
+// ─── The signature hero motion (DESIGN_DIRECTION.md "Motion") ─────────────────
+// The one moment Veridian repeats everywhere the footprint number can change:
+// count up with a subtle spring overshoot (never a linear tween) plus a brief
+// primaryGlow pulse behind the digits — Veridian's answer to Flighty's kinetic
+// countdown numbers. Fraunces (fontFamilyDisplay) at large size, per the
+// typography brief that Fraunces is reserved for hero/display numbers only.
+function HeroFootprintNumber({ value }: { value: number }) {
+  const glowOpacity = useSharedValue(0);
+
+  useEffect(() => {
+    glowOpacity.value = withSequence(
+      withTiming(1, { duration: motion.timingFast, easing: motion.easeOut }),
+      withSpring(0, motion.springGentle),
+    );
+    // Fires on every mount *and* every subsequent value change — the pulse is
+    // the tell that the number just moved, not just a one-time mount flourish.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [value]);
+
+  const glowStyle = useAnimatedStyle(() => ({
+    opacity: glowOpacity.value,
+  }));
+
+  return (
+    <View style={ringStyles.heroNumberStack}>
+      <Animated.View
+        pointerEvents="none"
+        style={[ringStyles.heroGlow, glowStyle]}
+      />
+      <VCountUp
+        value={value}
+        decimals={1}
+        spring
+        style={ringStyles.bigNumber}
+      />
+    </View>
+  );
+}
 
 // ─── The Ring — hero anchor; flips to reveal today's category split ──────────
 function BudgetRingHero({
@@ -142,9 +193,10 @@ function BudgetRingHero({
             strokeWidth={15}
             gradient={stateStyle.ring}
             animationDuration={900}
+            glow
           >
             <View style={ringStyles.center}>
-              <VCountUp value={todayKg} decimals={1} duration={900} style={ringStyles.bigNumber} />
+              <HeroFootprintNumber value={todayKg} />
               <VText variant="label" style={ringStyles.ringCaption}>
                 {`of ${DAILY_CARBON_BUDGET_KG} kg`}
               </VText>
@@ -202,10 +254,24 @@ const ringStyles = StyleSheet.create({
     gap: spacing.sm,
   },
   center: { alignItems: 'center' },
+  heroNumberStack: { alignItems: 'center', justifyContent: 'center' },
+  // Ambient primaryGlow pulse behind the hero number — card/number elevation
+  // via a soft colored glow, never a light-mode drop shadow (DESIGN_DIRECTION.md
+  // "Atmosphere"). Sized generously so the pulse reads as ambient light, not a
+  // hard-edged badge.
+  heroGlow: {
+    position: 'absolute',
+    width: 160,
+    height: 160,
+    borderRadius: radii.full,
+    backgroundColor: colors.primaryGlow,
+  },
   bigNumber: {
+    fontFamily: typography.fontFamilyDisplay,
     fontSize: 52,
     lineHeight: 58,
-    letterSpacing: -1,
+    letterSpacing: typography.letterSpacing.tight,
+    fontWeight: typography.weights.semibold,
     color: colors.textPrimary,
     textAlign: 'center',
   },
@@ -1151,7 +1217,7 @@ export default function HomeScreen() {
           contentFit="cover"
         />
         <LinearGradient
-          colors={['rgba(245,247,243,0.18)', 'rgba(245,247,243,0.82)', 'rgba(245,247,243,1.0)']}
+          colors={heroScrim}
           locations={[0, 0.58, 1]}
           style={StyleSheet.absoluteFill}
           pointerEvents="none"

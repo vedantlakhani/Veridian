@@ -18,7 +18,7 @@ import { colors, typography, radii, gradients, spacing } from '@/lib/theme';
 // fixed-layout loading state (no width jump).
 // ─────────────────────────────────────────────────────────────────────────────
 
-type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'destructive';
+type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'destructive' | 'apple';
 type ButtonSize = 'sm' | 'md' | 'lg';
 
 interface VButtonProps {
@@ -42,6 +42,7 @@ const variantStyles: Record<ButtonVariant, { bg: string; text: string; border: s
   secondary:   { bg: colors.surfaceElevated, text: colors.primaryLight, border: colors.borderStrong },
   ghost:       { bg: 'transparent', text: colors.primaryLight, border: 'transparent' },
   destructive: { bg: 'transparent', text: colors.danger, border: 'rgba(255,92,92,0.35)' },
+  apple:       { bg: '#000000', text: '#FFFFFF', border: '#000000' },
 };
 
 const sizeStyles: Record<ButtonSize, { height: number; fontSize: number; paddingH: number; iconSize: number }> = {

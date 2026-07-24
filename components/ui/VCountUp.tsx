@@ -4,6 +4,7 @@ import {
   useSharedValue,
   useAnimatedReaction,
   withTiming,
+  withSpring,
   runOnJS,
 } from 'react-native-reanimated';
 import { colors, typography, motion } from '@/lib/theme';
@@ -27,6 +28,13 @@ interface VCountUpProps {
   duration?: number;
   suffix?: string;
   style?: StyleProp<TextStyle>;
+  /**
+   * Understory "signature hero motion" (DESIGN_DIRECTION.md): counts up with a
+   * subtle spring overshoot instead of a linear/eased tween. Opt-in — the
+   * default tween is left untouched for every non-hero readout already relying
+   * on it (VMetricCard, recap/passport secondary numbers, etc).
+   */
+  spring?: boolean;
 }
 
 export function VCountUp({
@@ -35,13 +43,16 @@ export function VCountUp({
   duration = motion.timingSlow,
   suffix = '',
   style,
+  spring = false,
 }: VCountUpProps) {
   const animated = useSharedValue(0);
   const [display, setDisplay] = useState(() => `${(0).toFixed(decimals)}${suffix}`);
 
   useEffect(() => {
-    animated.value = withTiming(value, { duration, easing: motion.easeOut });
-  }, [value, duration, animated]);
+    animated.value = spring
+      ? withSpring(value, motion.springBouncy)
+      : withTiming(value, { duration, easing: motion.easeOut });
+  }, [value, duration, spring, animated]);
 
   useAnimatedReaction(
     () => animated.value,

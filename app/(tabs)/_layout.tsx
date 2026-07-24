@@ -90,7 +90,7 @@ export default function TabLayout() {
         tabBarActiveTintColor: colors.primaryLight,
         tabBarInactiveTintColor: colors.textTertiary,
         tabBarStyle: {
-          backgroundColor: '#FFFFFF',
+          backgroundColor: colors.surface,
           borderTopWidth: 1,
           borderTopColor: colors.border,
           height: 64,

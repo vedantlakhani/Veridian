@@ -12,6 +12,7 @@ import {
   VText,
   VIcon,
   VCountUp,
+  VHeroCountUp,
   VPressable,
   VEmptyState,
   type VIconName,
@@ -69,7 +70,13 @@ function HeroPage({
         </VText>
       </Animated.View>
       <Animated.View entering={FadeInDown.duration(400).delay(80)} style={styles.heroNumberWrap}>
-        <VCountUp value={totalKg} decimals={1} duration={1100} style={styles.heroNumber} />
+        <VHeroCountUp
+          value={totalKg}
+          decimals={1}
+          duration={1100}
+          style={styles.heroNumber}
+          pulseKey={rangeLabel}
+        />
         <VText variant="label" style={styles.heroUnit}>
           kg CO₂e this week
         </VText>
@@ -172,9 +179,13 @@ function SummaryPage({
           {rangeLabel}
         </VText>
         <View style={styles.cardNumberRow}>
-          <VText variant="display" style={styles.cardNumber}>
-            {totalKg.toFixed(1)}
-          </VText>
+          <VHeroCountUp
+            value={totalKg}
+            decimals={1}
+            duration={1100}
+            style={styles.cardNumber}
+            pulseKey={rangeLabel}
+          />
           <VText variant="label" style={styles.cardUnit}>
             kg CO₂e
           </VText>
@@ -421,9 +432,10 @@ const styles = StyleSheet.create({
     marginBottom: spacing.lg,
   },
   heroNumber: {
+    fontFamily: typography.fontFamilyDisplay,
     fontSize: 88,
     lineHeight: 96,
-    letterSpacing: -2,
+    letterSpacing: typography.letterSpacing.tight,
     color: colors.textPrimary,
     textAlign: 'center',
   },
@@ -496,9 +508,10 @@ const styles = StyleSheet.create({
     marginBottom: spacing.md,
   },
   cardNumber: {
+    fontFamily: typography.fontFamilyDisplay,
     fontSize: 68,
     lineHeight: 74,
-    letterSpacing: -2,
+    letterSpacing: typography.letterSpacing.tight,
     color: colors.textPrimary,
   },
   cardUnit: {

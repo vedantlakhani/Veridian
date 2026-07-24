@@ -24,6 +24,7 @@ import {
   VText,
   VIcon,
   VCountUp,
+  VHeroCountUp,
   VPressable,
   VProgressBar,
   SwipeableEntryRow,
@@ -34,6 +35,7 @@ import {
   typography,
   radii,
   motion,
+  shadows,
   budgetStateFor,
   budgetStateColors,
 } from '@/lib/theme';
@@ -136,7 +138,7 @@ function StoryCard({
           {filter === 'today' ? 'Today' : filter === 'week' ? 'This week' : 'This month'}
         </VText>
         <View style={storyStyles.totalRow}>
-          <VCountUp value={periodTotal} decimals={1} style={storyStyles.total} />
+          <VHeroCountUp value={periodTotal} decimals={1} style={storyStyles.total} pulseKey={filter} />
           <VText variant="caption" style={storyStyles.totalUnit}>
             kg CO₂e
           </VText>
@@ -185,11 +187,7 @@ const storyStyles = StyleSheet.create({
     borderColor: colors.border,
     borderLeftColor: colors.primary,
     borderLeftWidth: 4,
-    shadowColor: '#000000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.07,
-    shadowRadius: 8,
-    elevation: 3,
+    ...shadows.glowPrimary,
   },
   inner: { padding: spacing.lg },
   periodLabel: { marginBottom: spacing.xs, color: colors.textSecondary },
@@ -199,9 +197,10 @@ const storyStyles = StyleSheet.create({
     gap: spacing.sm,
   },
   total: {
+    fontFamily: typography.fontFamilyDisplay,
     fontSize: 40,
     lineHeight: 46,
-    letterSpacing: -1,
+    letterSpacing: typography.letterSpacing.tight,
     color: colors.textPrimary,
   },
   totalUnit: { fontSize: typography.sizes.md, color: colors.textSecondary },
@@ -252,11 +251,7 @@ const recordStyles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.border,
     padding: spacing.md,
-    shadowColor: '#000000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.06,
-    shadowRadius: 4,
-    elevation: 2,
+    ...shadows.sm,
   },
   label: { fontSize: 9, color: colors.textSecondary },
   valueRow: {

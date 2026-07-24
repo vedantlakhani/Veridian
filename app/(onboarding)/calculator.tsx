@@ -1,32 +1,80 @@
 import {
   View,
   Text,
+  Image,
   StyleSheet,
   SafeAreaView,
   Dimensions,
   TouchableOpacity,
-  TextInput,
   ScrollView,
 } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
-  useAnimatedProps,
   withTiming,
   Easing,
   runOnJS,
+  FadeIn,
 } from 'react-native-reanimated';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { useOnboardingStore } from '@/stores/useOnboardingStore';
 import { useAuthStore } from '@/stores/authStore';
 import { useBaseline } from '@/hooks/useBaseline';
-import { colors, spacing, typography, radii } from '@/lib/theme';
+import { VCountUp } from '@/components/ui';
+import { colors, spacing, typography, radii, shadows } from '@/lib/theme';
 
-// ─── Animated TextInput component for CO₂ counter ────────────────────────────
-
-const AnimatedTextInput = Animated.createAnimatedComponent(TextInput);
 const SCREEN_WIDTH = Dimensions.get('window').width;
+
+// Full-bleed category photography behind the question card — same licensed
+// hero-*.jpg set used in (onboarding)/index.tsx (assets/images/PHOTO_CREDITS.md).
+const CATEGORY_HERO_IMAGES: Record<string, number> = {
+  Transport: require('@/assets/images/hero-transport.jpg'),
+  Food: require('@/assets/images/hero-food.jpg'),
+  Home: require('@/assets/images/hero-home.jpg'),
+  Shopping: require('@/assets/images/hero-shopping.jpg'),
+};
+
+function CategoryHero({ category }: { category: string }) {
+  const image = CATEGORY_HERO_IMAGES[category] ?? CATEGORY_HERO_IMAGES.Transport;
+  return (
+    <Animated.View
+      key={category}
+      entering={FadeIn.duration(400)}
+      style={heroStyles.wrap}
+      pointerEvents="none"
+    >
+      <Image source={image} style={heroStyles.image} resizeMode="cover" />
+      <LinearGradient
+        colors={['rgba(14,21,18,0.45)', 'transparent', 'rgba(14,21,18,0.6)', colors.background]}
+        locations={[0, 0.22, 0.55, 1]}
+        style={heroStyles.scrim}
+      />
+    </Animated.View>
+  );
+}
+
+const heroStyles = StyleSheet.create({
+  wrap: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: '38%',
+  },
+  image: {
+    width: '100%',
+    height: '100%',
+  },
+  scrim: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 0,
+    height: '100%',
+  },
+});
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -273,9 +321,9 @@ function QuestionCard({ question, selectedId, onSelect }: QuestionCardProps) {
                 </Text>
                 <Text style={cardStyles.optionHint}>{option.hint}</Text>
               </View>
-              {isSelected && (
-                <Text style={cardStyles.checkmark}>✓</Text>
-              )}
+              <View style={[cardStyles.radio, isSelected && cardStyles.radioSelected]}>
+                {isSelected && <View style={cardStyles.radioDot} />}
+              </View>
             </TouchableOpacity>
           );
         })}
@@ -314,6 +362,7 @@ const cardStyles = StyleSheet.create({
   optionSelected: {
     backgroundColor: PRIMARY_CONTAINER,
     borderColor: colors.primary,
+    ...shadows.glowPrimary,
   },
   optionIcon: {
     fontSize: 28,
@@ -338,33 +387,38 @@ const cardStyles = StyleSheet.create({
     color: colors.textSecondary,
     marginTop: 2,
   },
-  checkmark: {
-    fontSize: 18,
-    color: colors.primary,
-    fontWeight: typography.weights.bold,
+  radio: {
+    width: 22,
+    height: 22,
+    borderRadius: radii.full,
+    borderWidth: 2,
+    borderColor: colors.borderStrong,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  radioSelected: {
+    borderColor: colors.primary,
+  },
+  radioDot: {
+    width: 11,
+    height: 11,
+    borderRadius: radii.full,
+    backgroundColor: colors.primary,
   },
 });
 
 // ─── FooterCounter ────────────────────────────────────────────────────────────
 
 interface FooterCounterProps {
-  co2Value: ReturnType<typeof useSharedValue<number>>;
+  totalKg: number;
 }
 
-function FooterCounter({ co2Value }: FooterCounterProps) {
-  const animatedProps = useAnimatedProps(() => ({
-    value: `${co2Value.value.toFixed(0)} kg CO\u2082e / year`,
-  }));
-
+function FooterCounter({ totalKg }: FooterCounterProps) {
   return (
     <View style={footerStyles.container}>
       <Text style={footerStyles.label}>Your estimated footprint</Text>
-      <AnimatedTextInput
-        animatedProps={animatedProps}
-        editable={false}
-        style={footerStyles.counter}
-        // minWidth prevents iOS ellipsis clipping bug #6752
-      />
+      <VCountUp value={totalKg} decimals={0} style={footerStyles.counter} />
+      <Text style={footerStyles.unit}>kg CO₂e / year</Text>
     </View>
   );
 }
@@ -391,7 +445,13 @@ const footerStyles = StyleSheet.create({
     fontWeight: typography.weights.bold,
     color: colors.textPrimary,
     textAlign: 'center',
-    minWidth: 200,
+    minWidth: 90,
+  },
+  unit: {
+    fontFamily: typography.fontFamilyDefault,
+    fontSize: typography.sizes.sm,
+    color: colors.textSecondary,
+    marginTop: spacing.xxs,
   },
 });
 
@@ -449,7 +509,7 @@ function ResultsScreen({ answers, totalKg }: ResultsScreenProps) {
       {/* Primary metric */}
       <View style={resultsStyles.metricBlock}>
         <Text style={resultsStyles.metricValue}>{totalTonnes}t</Text>
-        <Text style={resultsStyles.metricUnit}>CO\u2082e per year</Text>
+        <Text style={resultsStyles.metricUnit}>CO₂e per year</Text>
       </View>
 
       {/* Comparison chips */}
@@ -511,12 +571,13 @@ const resultsStyles = StyleSheet.create({
     alignItems: 'center',
   },
   heading: {
-    fontFamily: typography.fontFamilyDefault,
+    fontFamily: typography.fontFamilyDisplay,
     fontSize: typography.sizes.xxl,
-    fontWeight: typography.weights.bold,
+    fontWeight: typography.weights.semibold,
     color: colors.textPrimary,
     textAlign: 'center',
     marginBottom: spacing.lg,
+    letterSpacing: typography.letterSpacing.tight,
   },
   metricBlock: {
     alignItems: 'center',
@@ -675,7 +736,6 @@ export default function CalculatorScreen() {
   const [answers, setAnswers] = useState<Partial<Record<AnswerKey, string>>>({});
   const [phase, setPhase] = useState<Phase>('questions');
 
-  const co2Value = useSharedValue(0);
   const slideX = useSharedValue(0);
 
   const slideStyle = useAnimatedStyle(() => ({
@@ -686,17 +746,10 @@ export default function CalculatorScreen() {
   const advanceStep = (optionId: string) => {
     const newAnswers = { ...answers, [QUESTIONS[step].id]: optionId };
     setAnswers(newAnswers);
-    const newTotal = calcFootprint(newAnswers);
 
     // Slide in from right
     slideX.value = SCREEN_WIDTH;
     slideX.value = withTiming(0, { duration: 200, easing: Easing.out(Easing.ease) });
-
-    // Animate the CO₂ counter to new total
-    co2Value.value = withTiming(newTotal, {
-      duration: 600,
-      easing: Easing.out(Easing.cubic),
-    });
 
     if (step >= QUESTIONS.length - 1) {
       setPhase('results');
@@ -729,10 +782,14 @@ export default function CalculatorScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
+      <CategoryHero category={currentQuestion?.category ?? 'Transport'} />
+
       {/* Progress header */}
       <View style={styles.header}>
-        <Text style={styles.categoryLabel}>{getCategoryProgress(step)}</Text>
-        <ProgressDots step={step} total={QUESTIONS.length} />
+        <View style={styles.headerChip}>
+          <Text style={styles.categoryLabel}>{getCategoryProgress(step)}</Text>
+          <ProgressDots step={step} total={QUESTIONS.length} />
+        </View>
       </View>
 
       {/* Question card with slide animation */}
@@ -752,7 +809,7 @@ export default function CalculatorScreen() {
       </Animated.View>
 
       {/* Animated CO₂ footer counter */}
-      <FooterCounter co2Value={co2Value} />
+      <FooterCounter totalKg={calcFootprint(answers)} />
     </SafeAreaView>
   );
 }
@@ -771,11 +828,19 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: spacing.sm,
   },
+  headerChip: {
+    backgroundColor: 'rgba(14,21,18,0.55)',
+    borderRadius: radii.full,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    alignItems: 'center',
+    gap: spacing.sm,
+  },
   categoryLabel: {
     fontFamily: typography.fontFamilyDefault,
     fontSize: typography.sizes.sm,
     fontWeight: typography.weights.semibold,
-    color: colors.primary,
+    color: colors.primaryLight,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
   },

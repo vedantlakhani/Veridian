@@ -1,9 +1,16 @@
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { View, StyleSheet, Dimensions, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
-import Animated, { FadeIn, FadeInDown } from 'react-native-reanimated';
+import Animated, {
+  FadeIn,
+  FadeInDown,
+  useSharedValue,
+  useAnimatedStyle,
+  withSequence,
+  withSpring,
+} from 'react-native-reanimated';
 import { useAuthStore } from '@/stores/authStore';
 import { useCarbonPassport, type PassportPeriod } from '@/hooks/useCarbonPassport';
 import { winCopy } from '@/lib/recap';
@@ -17,12 +24,117 @@ import {
   VEmptyState,
   type VIconName,
 } from '@/components/ui';
-import { colors, spacing, typography, radii, shadows } from '@/lib/theme';
+import { colors, spacing, typography, radii, shadows, motion } from '@/lib/theme';
 import type { EmissionCategory, TripMode } from '@/types/emission';
 import type { ModeSplitEntry } from '@/lib/recap';
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
+const SCREEN_HEIGHT = Dimensions.get('window').height;
 const PAGE_COUNT = 5;
+
+// ─── Atmosphere — a static, battery-cheap grain overlay ────────────────────────
+// Procedural dot-grid rather than an image asset: a fixed, memoized scatter of
+// ~90 hairline dots at ~3% opacity on `background`. Computed once per mount,
+// never animated — this is texture, not motion.
+function NoiseOverlay() {
+  const dots = useMemo(() => {
+    const count = 90;
+    const seeded: { left: number; top: number; size: number; opacity: number }[] = [];
+    let seed = 42;
+    const rand = () => {
+      seed = (seed * 9301 + 49297) % 233280;
+      return seed / 233280;
+    };
+    for (let i = 0; i < count; i++) {
+      seeded.push({
+        left: rand() * SCREEN_WIDTH,
+        top: rand() * SCREEN_HEIGHT,
+        size: rand() > 0.6 ? 2 : 1,
+        opacity: 0.02 + rand() * 0.02,
+      });
+    }
+    return seeded;
+  }, []);
+
+  return (
+    <View pointerEvents="none" style={styles.noiseOverlay}>
+      {dots.map((d, i) => (
+        <View
+          key={i}
+          style={{
+            position: 'absolute',
+            left: d.left,
+            top: d.top,
+            width: d.size,
+            height: d.size,
+            borderRadius: d.size,
+            backgroundColor: colors.textPrimary,
+            opacity: d.opacity,
+          }}
+        />
+      ))}
+    </View>
+  );
+}
+
+// ─── Hero count-up-with-glow — Veridian's signature motion pattern ─────────────
+// Every headline metric on the two "story" screens uses this: the number
+// counts up (VCountUp, unchanged) while a soft primaryGlow halo behind it
+// overshoots and settles via spring — never a flat tween.
+function HeroGlowNumber({
+  value,
+  decimals = 1,
+  duration = 1100,
+  style,
+  glowSize = 220,
+}: {
+  value: number;
+  decimals?: number;
+  duration?: number;
+  style?: object;
+  glowSize?: number;
+}) {
+  const glowScale = useSharedValue(0.8);
+  const glowOpacity = useSharedValue(0);
+
+  useEffect(() => {
+    glowOpacity.value = withSequence(
+      withSpring(1, motion.springBouncy),
+      withSpring(0.6, motion.springGentle),
+    );
+    glowScale.value = withSequence(
+      withSpring(1.12, motion.springBouncy),
+      withSpring(1, motion.springGentle),
+    );
+  }, [value, glowOpacity, glowScale]);
+
+  const glowStyle = useAnimatedStyle(() => ({
+    opacity: glowOpacity.value,
+    transform: [{ scale: glowScale.value }],
+  }));
+
+  return (
+    <View style={styles.glowWrap}>
+      <Animated.View
+        pointerEvents="none"
+        style={[
+          styles.glowHalo,
+          {
+            width: glowSize,
+            height: glowSize,
+            borderRadius: glowSize / 2,
+            top: '50%',
+            left: '50%',
+            marginLeft: -glowSize / 2,
+            marginTop: -glowSize / 2,
+          },
+          glowStyle,
+        ]}
+      />
+      <VCountUp value={value} decimals={decimals} duration={duration} style={style} />
+    </View>
+  );
+}
 
 const CATEGORY_COLORS: Record<EmissionCategory, string> = {
   food: colors.food,
@@ -120,7 +232,7 @@ function HeroPage({
         </VText>
       </Animated.View>
       <Animated.View entering={FadeInDown.duration(400).delay(80)} style={styles.heroNumberWrap}>
-        <VCountUp value={totalKg} decimals={1} duration={1100} style={styles.heroNumber} />
+        <HeroGlowNumber value={totalKg} decimals={1} duration={1100} style={styles.heroNumber} />
         <VText variant="label" style={styles.heroUnit}>
           kg CO₂e
         </VText>
@@ -177,7 +289,13 @@ function ModePage({
         </VText>
       </Animated.View>
       <Animated.View entering={FadeInDown.duration(400).delay(80)} style={styles.tripsStatWrap}>
-        <VCountUp value={tripsTrackedThemselves} decimals={0} duration={900} style={styles.tripsStatNumber} />
+        <HeroGlowNumber
+          value={tripsTrackedThemselves}
+          decimals={0}
+          duration={900}
+          style={styles.tripsStatNumber}
+          glowSize={160}
+        />
         <VText variant="body" style={styles.tripsStatLabel}>
           trips tracked themselves
         </VText>
@@ -285,7 +403,7 @@ function PassportCard({
 
           <View style={styles.passportHeaderRow}>
             <View style={styles.passportMarkWrap}>
-              <VIcon name="leaf" size={16} color="#FFFFFF" strokeWidth={2} />
+              <VIcon name="leaf" size={16} color={colors.textPrimary} strokeWidth={2} />
             </View>
             <VText style={styles.passportWordmark}>Veridian</VText>
           </View>
@@ -296,7 +414,13 @@ function PassportCard({
           <VText style={styles.passportRange}>{rangeLabel}</VText>
 
           <View style={styles.passportHeroRow}>
-            <VText style={styles.passportHeroNumber}>{totalKg.toFixed(1)}</VText>
+            <HeroGlowNumber
+              value={totalKg}
+              decimals={1}
+              duration={1000}
+              style={styles.passportHeroNumber}
+              glowSize={180}
+            />
             <VText style={styles.passportHeroUnit}>kg CO₂e</VText>
           </View>
 
@@ -355,6 +479,7 @@ export default function PassportScreen() {
   if (!passport.isReady) {
     return (
       <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
+        <NoiseOverlay />
         <View style={styles.headerRow}>
           <View style={{ flex: 1 }} />
           <VPressable
@@ -408,6 +533,7 @@ export default function PassportScreen() {
 
   return (
     <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
+      <NoiseOverlay />
       <View style={styles.headerRow}>
         {index > 0 ? (
           <VPressable
@@ -498,6 +624,18 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     backgroundColor: colors.background,
   },
+  noiseOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    zIndex: 0,
+  },
+  glowWrap: {
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  glowHalo: {
+    position: 'absolute',
+    backgroundColor: colors.primaryGlow,
+  },
   headerRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -576,9 +714,11 @@ const styles = StyleSheet.create({
     marginBottom: spacing.lg,
   },
   heroNumber: {
-    fontSize: 88,
-    lineHeight: 96,
-    letterSpacing: -2,
+    fontFamily: typography.fontFamilyDisplay,
+    fontSize: 104,
+    lineHeight: 108,
+    letterSpacing: typography.letterSpacing.tight,
+    fontWeight: typography.weights.semibold,
     color: colors.textPrimary,
     textAlign: 'center',
   },
@@ -613,9 +753,11 @@ const styles = StyleSheet.create({
     marginBottom: spacing.xl,
   },
   tripsStatNumber: {
-    fontSize: 56,
-    lineHeight: 62,
-    letterSpacing: -1.5,
+    fontFamily: typography.fontFamilyDisplay,
+    fontSize: 64,
+    lineHeight: 70,
+    letterSpacing: typography.letterSpacing.tight,
+    fontWeight: typography.weights.semibold,
     color: colors.textPrimary,
   },
   tripsStatLabel: {
@@ -711,7 +853,7 @@ const styles = StyleSheet.create({
     height: 260,
     borderRadius: 130,
     borderWidth: 28,
-    borderColor: 'rgba(255,255,255,0.06)',
+    borderColor: colors.border,
     top: -90,
     right: -80,
   },
@@ -725,7 +867,7 @@ const styles = StyleSheet.create({
     width: 24,
     height: 24,
     borderRadius: radii.full,
-    backgroundColor: 'rgba(255,255,255,0.16)',
+    backgroundColor: colors.borderStrong,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -733,7 +875,7 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: '800',
     letterSpacing: 0.4,
-    color: '#FFFFFF',
+    color: colors.textPrimary,
   },
   passportKicker: {
     fontSize: typography.sizes.xs,
@@ -755,11 +897,12 @@ const styles = StyleSheet.create({
     marginBottom: spacing.lg,
   },
   passportHeroNumber: {
-    fontSize: 64,
-    lineHeight: 68,
-    letterSpacing: -2,
-    fontWeight: '800',
-    color: '#FFFFFF',
+    fontFamily: typography.fontFamilyDisplay,
+    fontSize: 72,
+    lineHeight: 76,
+    letterSpacing: typography.letterSpacing.tight,
+    fontWeight: typography.weights.semibold,
+    color: colors.textPrimary,
   },
   passportHeroUnit: {
     fontSize: typography.sizes.lg,
@@ -780,9 +923,10 @@ const styles = StyleSheet.create({
     marginBottom: spacing.md,
   },
   passportStatNumber: {
+    fontFamily: typography.fontFamilyDisplay,
     fontSize: 32,
-    fontWeight: '800',
-    color: '#FFFFFF',
+    fontWeight: typography.weights.semibold,
+    color: colors.textPrimary,
   },
   passportStatLabel: {
     fontSize: typography.sizes.md,

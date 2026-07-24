@@ -15,6 +15,7 @@ export { VText } from './VText';
 export { VPressable } from './VPressable';
 export { VIcon } from './VIcon';
 export { VCountUp } from './VCountUp';
+export { VHeroCountUp } from './VHeroCountUp';
 export { VSparkline } from './VSparkline';
 export { VToast } from './VToast';
 export { SwipeableEntryRow } from './SwipeableEntryRow';

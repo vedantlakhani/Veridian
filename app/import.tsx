@@ -2,47 +2,36 @@
  * app/import.tsx — Sprint E Stage R3: the receipt import screen.
  *
  * Modal route (mirrors app/link-bank.tsx / app/recap.tsx's registration
- * pattern in app/_layout.tsx). Reachable two ways, per the task spec:
- *  (1) the OS share sheet, via expo-share-intent's hook (wired in
- *      app/_layout.tsx, which pushes here when hasShareIntent is true) —
- *      shows a preview + confirm step, then calls receipt-parse.
- *  (2) manually, from Profile's "Import receipts" row — offering
- *      share-a-receipt instructions plus two file-import options
- *      (Amazon / DoorDash CSV backfill) via expo-document-picker.
+ * pattern in app/_layout.tsx). Reachable manually, from Profile's "Import
+ * receipts" row — two file-import options (Amazon / DoorDash CSV backfill)
+ * via expo-document-picker.
+ *
+ * SCOPE NOTE: the OS share-sheet path (expo-share-intent) was removed —
+ * that library requires an iOS App Group entitlement, which a free Apple
+ * personal-team account cannot be granted (same restriction that blocks
+ * Sprint E's Ambient half). Deferred alongside Ambient until/unless a paid
+ * Apple Developer account is added; the CSV backfill path below needs no
+ * such entitlement and is fully functional today.
  *
  * NOTE ON THE ZIP FILES: no zip-extraction library is in this round's
- * approved dependency list (only expo-share-intent + expo-document-picker
- * were pre-approved) — so this screen asks the user to unzip Amazon's
+ * approved dependency list — so this screen asks the user to unzip Amazon's
  * "Request My Data" / DoorDash's export on-device first and pick the CSV
  * file directly (e.g. "Retail.OrderHistory.1.csv") out of Files, rather
  * than picking the .zip itself.
  */
-import { useEffect, useMemo, useState } from 'react';
+import { useState } from 'react';
 import { View, StyleSheet, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import * as FileSystem from 'expo-file-system/legacy';
 import * as DocumentPicker from 'expo-document-picker';
-import { useShareIntentContext } from 'expo-share-intent';
 import Animated, { FadeIn, FadeInDown } from 'react-native-reanimated';
-import { useAuthStore } from '@/stores/authStore';
-import { useParseSharedReceipt, useImportCsvOrders, type CsvImportProgress } from '@/hooks/useReceiptImport';
+import { useImportCsvOrders, type CsvImportProgress } from '@/hooks/useReceiptImport';
 import { parseAmazonOrderHistoryCsv, parseDoorDashOrderExportCsv } from '@/lib/importParsers';
-import { VText, VIcon, VButton, VPressable, VCard, VToast, type VIconName } from '@/components/ui';
+import { VText, VIcon, VPressable, VCard, VToast } from '@/components/ui';
 import { colors, spacing, typography, radii, shadows } from '@/lib/theme';
 
 type ImportSource = 'amazon' | 'doordash';
-
-function InstructionRow({ icon, children }: { icon: VIconName; children: string }) {
-  return (
-    <View style={styles.instructionRow}>
-      <VIcon name={icon} size={15} color={colors.textSecondary} strokeWidth={2} />
-      <VText variant="caption" style={styles.instructionText}>
-        {children}
-      </VText>
-    </View>
-  );
-}
 
 function ImportOptionRow({
   label,
@@ -71,55 +60,14 @@ function ImportOptionRow({
 }
 
 export default function ImportScreen() {
-  const { user } = useAuthStore();
-  const { hasShareIntent, shareIntent, resetShareIntent } = useShareIntentContext();
-
-  const parseShared = useParseSharedReceipt();
   const importCsv = useImportCsvOrders();
 
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [csvProgress, setCsvProgress] = useState<CsvImportProgress | null>(null);
-  const [confirmedShare, setConfirmedShare] = useState(false);
 
   const dismiss = () => {
-    if (hasShareIntent) resetShareIntent();
     if (router.canGoBack()) router.back();
-  };
-
-  // ─── Share-intent preview data ─────────────────────────────────────────
-  const sharedImageFile = useMemo(
-    () => shareIntent?.files?.find((f) => f.mimeType.startsWith('image/')) ?? null,
-    [shareIntent],
-  );
-  const sharedText = shareIntent?.text ?? null;
-
-  const handleConfirmShare = async () => {
-    if (!user) return;
-    setError(null);
-    try {
-      let payload: { content?: string; imageBase64?: string };
-      if (sharedImageFile) {
-        const base64 = await FileSystem.readAsStringAsync(sharedImageFile.path, {
-          encoding: FileSystem.EncodingType.Base64,
-        });
-        payload = { imageBase64: base64 };
-      } else if (sharedText) {
-        payload = { content: sharedText };
-      } else {
-        setError('Nothing to import from this share.');
-        return;
-      }
-      const result = await parseShared.mutateAsync(payload);
-      setConfirmedShare(true);
-      setNotice(
-        result.receipt.parse_status === 'parsed'
-          ? `Logged ${result.receipt.merchant ?? 'that receipt'} — added to your history.`
-          : "Couldn't read that receipt clearly — try a clearer photo or forward the text instead.",
-      );
-    } catch {
-      setError("Couldn't reach the server — try again in a moment.");
-    }
   };
 
   // ─── Manual CSV backfill ────────────────────────────────────────────────
@@ -159,17 +107,6 @@ export default function ImportScreen() {
     }
   };
 
-  useEffect(() => {
-    // A share intent with nothing usable (e.g. shared a plain URL with no
-    // text/image) still opens this screen — surface that rather than a
-    // blank confirm step.
-    if (hasShareIntent && !sharedImageFile && !sharedText) {
-      setError('Nothing shareable found — try sharing a photo of a receipt or the order confirmation text.');
-    }
-  }, [hasShareIntent, sharedImageFile, sharedText]);
-
-  const showSharePreview = hasShareIntent && !confirmedShare;
-
   return (
     <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
       <VPressable
@@ -185,14 +122,14 @@ export default function ImportScreen() {
 
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <Animated.View entering={FadeIn.duration(400)} style={styles.heroIconWrap}>
-          <VIcon name="share" size={28} color={colors.primary} />
+          <VIcon name="arrow-down" size={28} color={colors.primary} />
         </Animated.View>
         <Animated.View entering={FadeInDown.duration(400).delay(60)}>
           <VText variant="title" style={styles.headline}>
             Import receipts
           </VText>
           <VText variant="body" style={styles.subhead}>
-            Add item-level detail your bank feed can&apos;t see — from a shared receipt or an old order history file.
+            Add item-level detail your bank feed can&apos;t see — from an old order history file.
           </VText>
         </Animated.View>
 
@@ -212,46 +149,6 @@ export default function ImportScreen() {
             onDismiss={() => setNotice(null)}
           />
         )}
-
-        {showSharePreview && (
-          <Animated.View entering={FadeInDown.duration(360).delay(120)}>
-            <VCard elevation="sm" style={styles.previewCard}>
-              <VText variant="heading" style={styles.sectionTitle}>
-                Shared just now
-              </VText>
-              {sharedImageFile && (
-                <VText variant="caption" style={styles.previewMeta}>
-                  Photo receipt · {sharedImageFile.fileName}
-                </VText>
-              )}
-              {sharedText && !sharedImageFile && (
-                <VText variant="body" numberOfLines={4} style={styles.previewText}>
-                  {sharedText}
-                </VText>
-              )}
-              <VButton
-                variant="primary"
-                label="Confirm and log it"
-                fullWidth
-                loading={parseShared.isPending}
-                onPress={() => void handleConfirmShare()}
-                style={{ marginTop: spacing.md }}
-              />
-            </VCard>
-          </Animated.View>
-        )}
-
-        {/* Share-a-receipt instructions */}
-        <Animated.View entering={FadeInDown.duration(400).delay(180)}>
-          <VCard elevation="sm" style={styles.trustCard}>
-            <VText variant="heading" style={styles.sectionTitle}>
-              Share a receipt
-            </VText>
-            <InstructionRow icon="share">Open any order confirmation email or photo</InstructionRow>
-            <InstructionRow icon="arrow-right">Tap Share, then choose Veridian</InstructionRow>
-            <InstructionRow icon="check">Confirm here — it lands on the right day automatically</InstructionRow>
-          </VCard>
-        </Animated.View>
 
         {/* Manual backfill import */}
         <Animated.View entering={FadeInDown.duration(400).delay(240)}>
