@@ -35,7 +35,11 @@ Receipts (forward)  ──┘    MCC→NAICS→kgCO₂e/$        + trip/txn link
 
 ## Design
 
-Every screen follows a named direction, **"Understory"**: a dark, editorial, forest-floor palette (the layer of a forest beneath the canopy, where the quiet automatic work happens) with a Fraunces serif for hero numbers, moss-green accents, and full-bleed photography instead of generic icon tiles. See [`docs/DESIGN_DIRECTION.md`](docs/DESIGN_DIRECTION.md) and [`docs/USER_JOURNEY.md`](docs/USER_JOURNEY.md) for the full spec and the branching screen map it's applied against.
+Every screen follows a named direction, **"Clearing"**: light, precise, and quiet. A near-white ground, a deep evergreen accent used sparingly, tabular figures on every number, and a custom line-illustration set in place of icon tiles. The reference is Copilot Money rather than the usual climate-app playbook, for a reason documented below.
+
+The direction was rebooted in July 2026. A prior dark/serif direction ("Understory") was scrapped after research found it was designed for the wrong user: the audience that responds to typical climate-app aesthetics is measurably the least likely to subscribe, while the people who pay for this exact product shape (passive capture, daily confirm loop, subscription) are Copilot/Flighty/Whoop buyers who purchase craft and precision, not virtue.
+
+See [`docs/DESIGN_DIRECTION.md`](docs/DESIGN_DIRECTION.md) for the full token spec and execution plan, [`docs/DESIGN_RESEARCH.md`](docs/DESIGN_RESEARCH.md) for the competitor teardown and persona evidence behind it, and [`docs/USER_JOURNEY.md`](docs/USER_JOURNEY.md) for the branching screen map.
 
 ## Tech stack
 
@@ -47,7 +51,9 @@ Every screen follows a named direction, **"Understory"**: a dark, editorial, for
 
 ## Status
 
-Sprints A through E are complete: ledger schema, iOS/Android sensor tracking, the Plaid money layer, receipt parsing + Carbon Passport, and a full visual redesign pass (Understory). What's deferred and why is tracked in [`docs/SPRINT_D_SPEC.md`](docs/SPRINT_D_SPEC.md) and [`docs/SPRINT_E_SPEC.md`](docs/SPRINT_E_SPEC.md). Notably, ambient widgets/Live Activities and the OS share-sheet receipt path both require a paid Apple Developer account and are on hold until then.
+Sprints A through E are complete: ledger schema, iOS/Android sensor tracking, the Plaid money layer, and receipt parsing + Carbon Passport. What's deferred and why is tracked in [`docs/SPRINT_D_SPEC.md`](docs/SPRINT_D_SPEC.md) and [`docs/SPRINT_E_SPEC.md`](docs/SPRINT_E_SPEC.md). Notably, ambient widgets/Live Activities and the OS share-sheet receipt path both require a paid Apple Developer account and are on hold until then.
+
+The design reboot ("Clearing") is currently specced but not yet built. The screenshots above show the superseded Understory build.
 
 ## Running it locally
 
