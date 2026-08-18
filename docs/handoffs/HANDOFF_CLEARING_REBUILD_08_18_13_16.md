@@ -3,12 +3,15 @@
 **Created:** 2026-08-18 13:16
 **Branch:** main
 **Session Duration:** One long session (~$150+ in API cost, spanning design rebuild, live UAT, deep UX research, and PM documentation — genuinely multi-hour)
+**Status as of this update: SESSION COMPLETE. Working tree clean. Nothing pending.**
 
 ---
 
 ## Summary
 
-Executed the full "Clearing" design rebuild (all 5 phases of `docs/DESIGN_DIRECTION.md`), verified it live on the iOS Simulator, then — based on the user's hands-on testing feedback — ran deep research into why manual logging felt broken, root-caused and fixed every issue found, and finally produced an updated PRD, a Design Requirements doc, and a website-content outline documenting the whole project honestly (including its pivots and open questions). Everything is committed (`bb7988d`). Two background workflows for the PM docs' adversarial review may still be finishing — check before continuing.
+Executed the full "Clearing" design rebuild (all 5 phases of `docs/DESIGN_DIRECTION.md`), verified it live on the iOS Simulator, then — based on the user's hands-on testing feedback — ran deep research into why manual logging felt broken, root-caused and fixed every issue found, and finally produced an updated PRD, a Design Requirements doc, and a website-content outline documenting the whole project honestly (including its pivots and open questions). Everything is committed across three commits: `bb7988d` (the rebuild + logging overhaul), `f7d7e06` (this handoff, first version), `dfb465e` (the 3 PM docs, final).
+
+**Update:** the rigor-review retry workflow (`wohv8dg3t`) failed a second time on all three Opus calls (genuine server-side 529 outage, not transient) — rather than retry a third time, I read all three PM docs myself directly against the same rubric (specificity, honesty about open questions, authentic voice, internal consistency, completeness). All three passed. I found and fixed one real issue myself in the process: `WEBSITE_STRUCTURE.md`'s Build Notes section claimed `docs/DESIGN_REQUIREMENTS.md` "doesn't exist" — stale, because it was written in the same parallel batch and existed by the time I read it. Fixed and committed in `dfb465e`.
 
 ---
 
@@ -29,8 +32,8 @@ Executed the full "Clearing" design rebuild (all 5 phases of `docs/DESIGN_DIRECT
 - [x] Wrote `docs/SNAP_A_PLATE_SPEC.md` — a full proposal for a food-photo AI logging feature (photo → Claude vision → identify → one-tap log), reusing the existing `receipt-parse` edge function's proven pattern. **Spec only — awaiting your approval, no code written for it.**
 - [x] **Committed everything** in `bb7988d` — working tree was clean as of this handoff
 - [x] Wrote `docs/PRD.md`, `docs/DESIGN_REQUIREMENTS.md`, `docs/WEBSITE_STRUCTURE.md` via a multi-agent "graph" (parallel draft → adversarial fact-check/rigor review → fix loop), grounded in the real ~5-month git history (gamified Klima-clone MVP → founder-taste light pivot → research-driven "autopilot" pivot → dark "Understory" → research-driven "Clearing" pivot)
-- [ ] **NOT YET DONE**: `docs/PRD.md`/`DESIGN_REQUIREMENTS.md`/`WEBSITE_STRUCTURE.md` are written and fact-checked, but a retry workflow for the *qualitative rigor/authenticity* review (the first attempt hit a server-side 529 overload on all three Opus review calls) was launched right before this handoff and **its result has not been read yet** — check task id `wohv8dg3t` first thing in the new session
-- [ ] The 3 new/updated PM docs are **not yet committed** — do that after confirming the rigor-retry's fixes landed cleanly
+- [x] Rigor/authenticity review completed manually (the automated retry failed twice on Opus server outages) — all 3 docs read and passed; one self-caught inconsistency fixed in `WEBSITE_STRUCTURE.md`
+- [x] The 3 PM docs are committed (`dfb465e`)
 
 ### Key Decisions
 
@@ -121,11 +124,10 @@ Executed the full "Clearing" design rebuild (all 5 phases of `docs/DESIGN_DIRECT
 ### What's Working
 - Full Clearing rebuild — verified live on-device, all 5 `DESIGN_DIRECTION.md` phases complete
 - Manual logging UX overhaul — all diagnosed bugs (chip wrap, NAICS labels, no carbon literacy, confusing Shopping mental model, accent-rail pattern) fixed and adversarially verified in a second pass
-- `docs/PRD.md`, `docs/DESIGN_REQUIREMENTS.md`, `docs/WEBSITE_STRUCTURE.md` — drafted, fact-checked, and fixed once already
+- `docs/PRD.md`, `docs/DESIGN_REQUIREMENTS.md`, `docs/WEBSITE_STRUCTURE.md` — drafted, fact-checked, manually rigor-reviewed, one self-caught fix applied, and committed
 
 ### What's Not Working / Unfinished
-- The qualitative "rigor/authenticity" review pass for the 3 PM docs failed on its first attempt (API 529 overload on all three Opus calls) and was retried in workflow `wohv8dg3t` — **result not yet checked**
-- The 3 PM docs are not committed yet
+- Nothing. Working tree is clean (`git status --short` returns empty) as of commit `dfb465e`.
 
 ### Tests
 - All green as of last check (see above)
@@ -135,10 +137,7 @@ Executed the full "Clearing" design rebuild (all 5 phases of `docs/DESIGN_DIRECT
 ## Next Steps
 
 ### Immediate (Start Here)
-1. Check workflow `wohv8dg3t` (the rigor-review retry for `docs/PRD.md`, `docs/DESIGN_REQUIREMENTS.md`, `docs/WEBSITE_STRUCTURE.md`) — use `TaskOutput({task_id: "wohv8dg3t", block: false})` or wait for its completion notification if it's still running.
-2. If it found issues and a fix agent already applied them, re-read the affected file(s) to confirm quality, then run `npx tsc --noEmit && npx jest --ci` once more as a final sanity check (these docs don't affect app code, but confirm nothing else drifted).
-3. Commit the 3 PM docs (`docs/PRD.md`, `docs/DESIGN_REQUIREMENTS.md`, `docs/WEBSITE_STRUCTURE.md`) plus this handoff file with a clear message.
-4. Report the final state of all three documents to the user for their review — they explicitly want to read these before anything further happens (e.g. before building the actual showcase website, which was explicitly scoped as "structure only, don't build yet" this session).
+There is no pending work from this session. If picking this up fresh, start by reading `docs/PRD.md` for current product state, then ask the user what they want next — the two most likely directions are (a) building the actual showcase website from `docs/WEBSITE_STRUCTURE.md`, or (b) a decision on `docs/SNAP_A_PLATE_SPEC.md`.
 
 ### Subsequent
 - If the user wants to proceed with the showcase website itself, `docs/WEBSITE_STRUCTURE.md`'s own "Build notes" section has a recommendation (Replit Design or similar, seeded with real screenshots + `docs/DESIGN_REQUIREMENTS.md`).
@@ -146,7 +145,7 @@ Executed the full "Clearing" design rebuild (all 5 phases of `docs/DESIGN_DIRECT
 - The "hard outcome" monetization hook (`NORTH_STAR.md` §9/§11) remains the single most-flagged open strategic question across every doc written this session — don't invent an answer for it without the user explicitly deciding.
 
 ### Blocked On
-- Nothing code-side. The only blocker is confirming the rigor-retry workflow's outcome before committing the PM docs.
+- Nothing. Session complete.
 
 ---
 
