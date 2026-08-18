@@ -149,10 +149,8 @@ const styles = StyleSheet.create({
     marginBottom: spacing.md,
   },
   suggestionRow: {
-    backgroundColor: colors.surface,
+    backgroundColor: colors.accentSoft,
     borderRadius: radii.sm,
-    borderLeftWidth: 2,
-    borderLeftColor: colors.primaryLight,
     padding: spacing.md,
   },
   suggestionLabel: {

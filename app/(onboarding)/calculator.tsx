@@ -23,6 +23,8 @@ import { useOnboardingStore } from '@/stores/useOnboardingStore';
 import { useAuthStore } from '@/stores/authStore';
 import { useBaseline } from '@/hooks/useBaseline';
 import { VCountUp } from '@/components/ui';
+import { Illustration, type IllustrationName } from '@/components/illustrations';
+import { globalAverageComparisonCaption } from '@/lib/impactCopy';
 import { colors, spacing, typography, radii, shadows } from '@/lib/theme';
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
@@ -46,8 +48,9 @@ function CategoryHero({ category }: { category: string }) {
       pointerEvents="none"
     >
       <Image source={image} style={heroStyles.image} resizeMode="cover" />
+      <View style={heroStyles.wash} />
       <LinearGradient
-        colors={['rgba(14,21,18,0.45)', 'transparent', 'rgba(14,21,18,0.6)', colors.background]}
+        colors={['rgba(13,17,23,0.35)', 'transparent', 'rgba(13,17,23,0.15)', colors.background]}
         locations={[0, 0.22, 0.55, 1]}
         style={heroStyles.scrim}
       />
@@ -67,6 +70,12 @@ const heroStyles = StyleSheet.create({
     width: '100%',
     height: '100%',
   },
+  // Pending real re-shoots for a light ground (DESIGN_DIRECTION.md open
+  // question), a low-opacity white wash lifts these dark-graded photos.
+  wash: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(255,255,255,0.14)',
+  },
   scrim: {
     position: 'absolute',
     left: 0,
@@ -81,7 +90,7 @@ const heroStyles = StyleSheet.create({
 const GLOBAL_AVG_KG = 4700;   // 4.7 tCO₂e/year
 const PARIS_TARGET_KG = 2500; // 2.5 tCO₂e/year
 
-// Selected card background — soft emerald glow on dark (was a light-theme tint)
+// Selected card background — soft evergreen tint on the light canvas
 const PRIMARY_CONTAINER = colors.primaryGlowSoft;
 
 // ─── Question data ────────────────────────────────────────────────────────────
@@ -180,7 +189,10 @@ export function calcFootprint(answers: Partial<Record<AnswerKey, string>>): numb
 interface QuestionOption {
   id: string;
   label: string;
-  icon: string;
+  /** Line-illustration name (components/illustrations); omitted for pure
+   * frequency/size gradations that have no matching object glyph — no emoji,
+   * ever (DESIGN_DIRECTION.md — "What Clearing is NOT"). */
+  icon?: IllustrationName;
   hint: string;
 }
 
@@ -197,11 +209,11 @@ const QUESTIONS: Question[] = [
     category: 'Transport',
     question: 'How do you usually travel?',
     options: [
-      { id: 'walk_cycle', label: 'Walk / Cycle', icon: '🚴', hint: '~0 kg/yr' },
-      { id: 'transit', label: 'Public Transit', icon: '🚌', hint: '~500 kg/yr' },
-      { id: 'petrol_car', label: 'Petrol / Diesel Car', icon: '🚗', hint: '~2,500 kg/yr' },
-      { id: 'electric_car', label: 'Electric Car', icon: '⚡', hint: '~800 kg/yr' },
-      { id: 'flights', label: 'Frequent Flights', icon: '✈️', hint: '~3,500 kg/yr' },
+      { id: 'walk_cycle', label: 'Walk / Cycle', icon: 'transport.bike', hint: '~0 kg/yr' },
+      { id: 'transit', label: 'Public Transit', icon: 'transport.transit', hint: '~500 kg/yr' },
+      { id: 'petrol_car', label: 'Petrol / Diesel Car', icon: 'transport.car', hint: '~2,500 kg/yr' },
+      { id: 'electric_car', label: 'Electric Car', icon: 'transport.car', hint: '~800 kg/yr' },
+      { id: 'flights', label: 'Frequent Flights', hint: '~3,500 kg/yr' },
     ],
   },
   {
@@ -209,10 +221,10 @@ const QUESTIONS: Question[] = [
     category: 'Transport',
     question: 'Roughly how far do you travel each week?',
     options: [
-      { id: 'under_50', label: 'Under 50 km', icon: '📍', hint: 'Short distances' },
-      { id: 'km_50_200', label: '50–200 km', icon: '🗺️', hint: 'Average commuter' },
-      { id: 'km_200_500', label: '200–500 km', icon: '🛣️', hint: 'Long commuter' },
-      { id: 'over_500', label: 'Over 500 km', icon: '🌍', hint: 'Very high mileage' },
+      { id: 'under_50', label: 'Under 50 km', hint: 'Short distances' },
+      { id: 'km_50_200', label: '50–200 km', hint: 'Average commuter' },
+      { id: 'km_200_500', label: '200–500 km', hint: 'Long commuter' },
+      { id: 'over_500', label: 'Over 500 km', hint: 'Very high mileage' },
     ],
   },
   {
@@ -220,11 +232,11 @@ const QUESTIONS: Question[] = [
     category: 'Food',
     question: "What's your diet?",
     options: [
-      { id: 'vegan', label: 'Vegan', icon: '🌱', hint: '~900 kg/yr' },
-      { id: 'vegetarian', label: 'Vegetarian', icon: '🥕', hint: '~1,200 kg/yr' },
-      { id: 'flexitarian', label: 'Flexitarian', icon: '🥗', hint: '~1,700 kg/yr' },
-      { id: 'omnivore', label: 'Omnivore', icon: '🍖', hint: '~2,200 kg/yr' },
-      { id: 'meat_daily', label: 'Meat Every Meal', icon: '🥩', hint: '~3,300 kg/yr' },
+      { id: 'vegan', label: 'Vegan', icon: 'food.vegan', hint: '~900 kg/yr' },
+      { id: 'vegetarian', label: 'Vegetarian', icon: 'food.vegetarian', hint: '~1,200 kg/yr' },
+      { id: 'flexitarian', label: 'Flexitarian', icon: 'food.flexitarian', hint: '~1,700 kg/yr' },
+      { id: 'omnivore', label: 'Omnivore', icon: 'food.omnivore', hint: '~2,200 kg/yr' },
+      { id: 'meat_daily', label: 'Meat Every Meal', icon: 'food.omnivore', hint: '~3,300 kg/yr' },
     ],
   },
   {
@@ -232,10 +244,10 @@ const QUESTIONS: Question[] = [
     category: 'Food',
     question: 'How often do you eat beef or lamb?',
     options: [
-      { id: 'never', label: 'Never', icon: '🚫', hint: 'No adjustment' },
-      { id: 'weekly', label: 'Once a week', icon: '📅', hint: '+20%' },
-      { id: 'few_per_week', label: 'A few times a week', icon: '🍽️', hint: '+50%' },
-      { id: 'daily', label: 'Daily', icon: '🔥', hint: '+100%' },
+      { id: 'never', label: 'Never', hint: 'No adjustment' },
+      { id: 'weekly', label: 'Once a week', hint: '+20%' },
+      { id: 'few_per_week', label: 'A few times a week', hint: '+50%' },
+      { id: 'daily', label: 'Daily', hint: '+100%' },
     ],
   },
   {
@@ -243,10 +255,10 @@ const QUESTIONS: Question[] = [
     category: 'Home',
     question: 'What heats your home?',
     options: [
-      { id: 'heat_pump', label: 'Heat Pump / Solar', icon: '☀️', hint: '~400 kg/yr' },
-      { id: 'gas', label: 'Gas Central Heating', icon: '🔥', hint: '~2,400 kg/yr' },
-      { id: 'oil', label: 'Oil / Coal', icon: '⛽', hint: '~3,500 kg/yr' },
-      { id: 'electric_storage', label: 'Electric Storage Heaters', icon: '💡', hint: '~1,800 kg/yr' },
+      { id: 'heat_pump', label: 'Heat Pump / Solar', icon: 'energy.solar', hint: '~400 kg/yr' },
+      { id: 'gas', label: 'Gas Central Heating', icon: 'energy.gas', hint: '~2,400 kg/yr' },
+      { id: 'oil', label: 'Oil / Coal', icon: 'energy.gas', hint: '~3,500 kg/yr' },
+      { id: 'electric_storage', label: 'Electric Storage Heaters', icon: 'energy.grid', hint: '~1,800 kg/yr' },
     ],
   },
   {
@@ -254,9 +266,9 @@ const QUESTIONS: Question[] = [
     category: 'Home',
     question: 'How big is your home?',
     options: [
-      { id: 'small', label: 'Studio / 1-bed', icon: '🏠', hint: '×0.7' },
-      { id: 'medium', label: '2–3 bed', icon: '🏡', hint: '×1.0' },
-      { id: 'large', label: '4+ bed', icon: '🏘️', hint: '×1.5' },
+      { id: 'small', label: 'Studio / 1-bed', hint: '×0.7' },
+      { id: 'medium', label: '2–3 bed', hint: '×1.0' },
+      { id: 'large', label: '4+ bed', hint: '×1.5' },
     ],
   },
   {
@@ -264,10 +276,10 @@ const QUESTIONS: Question[] = [
     category: 'Shopping',
     question: 'How often do you buy new clothes?',
     options: [
-      { id: 'secondhand', label: 'Mostly second-hand', icon: '♻️', hint: '~100 kg/yr' },
-      { id: 'seasonal', label: 'A few items per season', icon: '🛍️', hint: '~300 kg/yr' },
-      { id: 'regular', label: 'Regular shopping trips', icon: '🛒', hint: '~600 kg/yr' },
-      { id: 'frequent', label: 'Frequent buyer', icon: '📦', hint: '~1,000 kg/yr' },
+      { id: 'secondhand', label: 'Mostly second-hand', icon: 'shopping.minimal', hint: '~100 kg/yr' },
+      { id: 'seasonal', label: 'A few items per season', icon: 'shopping.minimal', hint: '~300 kg/yr' },
+      { id: 'regular', label: 'Regular shopping trips', icon: 'shopping.moderate', hint: '~600 kg/yr' },
+      { id: 'frequent', label: 'Frequent buyer', icon: 'shopping.heavy', hint: '~1,000 kg/yr' },
     ],
   },
   {
@@ -275,9 +287,9 @@ const QUESTIONS: Question[] = [
     category: 'Shopping',
     question: 'How often do you buy new electronics or appliances?',
     options: [
-      { id: 'rarely', label: 'Rarely — every few years', icon: '🖥️', hint: '~150 kg/yr' },
-      { id: 'occasional', label: 'Occasionally', icon: '📱', hint: '~400 kg/yr' },
-      { id: 'frequently', label: 'Frequently — often upgrading', icon: '🔄', hint: '~800 kg/yr' },
+      { id: 'rarely', label: 'Rarely — every few years', icon: 'shopping.minimal', hint: '~150 kg/yr' },
+      { id: 'occasional', label: 'Occasionally', icon: 'shopping.moderate', hint: '~400 kg/yr' },
+      { id: 'frequently', label: 'Frequently — often upgrading', icon: 'shopping.heavy', hint: '~800 kg/yr' },
     ],
   },
 ];
@@ -301,6 +313,10 @@ interface QuestionCardProps {
 }
 
 function QuestionCard({ question, selectedId, onSelect }: QuestionCardProps) {
+  // Homogeneous per question — either every option has a matching object
+  // glyph (transport mode, diet, energy source, shopping volume) or none do
+  // (pure frequency/size gradations have nothing to illustrate).
+  const hasIcons = question.options.some((o) => o.icon);
   return (
     <View style={cardStyles.container}>
       <Text style={cardStyles.questionText}>{question.question}</Text>
@@ -314,7 +330,7 @@ function QuestionCard({ question, selectedId, onSelect }: QuestionCardProps) {
               onPress={() => onSelect(option.id)}
               activeOpacity={0.75}
             >
-              <Text style={cardStyles.optionIcon}>{option.icon}</Text>
+              {hasIcons && option.icon && <Illustration name={option.icon} size={40} />}
               <View style={cardStyles.optionTextBlock}>
                 <Text style={[cardStyles.optionLabel, isSelected && cardStyles.optionLabelSelected]}>
                   {option.label}
@@ -363,11 +379,6 @@ const cardStyles = StyleSheet.create({
     backgroundColor: PRIMARY_CONTAINER,
     borderColor: colors.primary,
     ...shadows.glowPrimary,
-  },
-  optionIcon: {
-    fontSize: 28,
-    width: 40,
-    textAlign: 'center',
   },
   optionTextBlock: {
     flex: 1,
@@ -510,6 +521,9 @@ function ResultsScreen({ answers, totalKg }: ResultsScreenProps) {
       <View style={resultsStyles.metricBlock}>
         <Text style={resultsStyles.metricValue}>{totalTonnes}t</Text>
         <Text style={resultsStyles.metricUnit}>CO₂e per year</Text>
+        <Text style={resultsStyles.comparisonCaption}>
+          {globalAverageComparisonCaption(parseFloat(totalTonnes), parseFloat(globalAvgTonnes))}
+        </Text>
       </View>
 
       {/* Comparison chips */}
@@ -527,14 +541,16 @@ function ResultsScreen({ answers, totalKg }: ResultsScreenProps) {
       {/* Category breakdown */}
       <View style={resultsStyles.breakdown}>
         <Text style={resultsStyles.breakdownTitle}>Breakdown by category</Text>
-        {[
-          { label: 'Transport', icon: '🚗', kg: transportKg },
-          { label: 'Food', icon: '🍽️', kg: foodKg },
-          { label: 'Home', icon: '🏠', kg: homeKg },
-          { label: 'Shopping', icon: '🛍️', kg: shoppingKg },
-        ].map(({ label, icon, kg }) => (
+        {(
+          [
+            { label: 'Transport', icon: 'transport.car' as const, kg: transportKg },
+            { label: 'Food', icon: 'food.omnivore' as const, kg: foodKg },
+            { label: 'Home', icon: 'energy.grid' as const, kg: homeKg },
+            { label: 'Shopping', icon: 'shopping.moderate' as const, kg: shoppingKg },
+          ]
+        ).map(({ label, icon, kg }) => (
           <View key={label} style={resultsStyles.breakdownRow}>
-            <Text style={resultsStyles.breakdownIcon}>{icon}</Text>
+            <Illustration name={icon} size={28} />
             <Text style={resultsStyles.breakdownLabel}>{label}</Text>
             <Text style={resultsStyles.breakdownKg}>
               {kg.toFixed(0)} kg
@@ -596,6 +612,12 @@ const resultsStyles = StyleSheet.create({
     color: colors.textSecondary,
     marginTop: spacing.xs,
   },
+  comparisonCaption: {
+    fontFamily: typography.fontFamilyDefault,
+    fontSize: typography.sizes.sm,
+    color: colors.textSecondary,
+    marginTop: spacing.xs,
+  },
   chipRow: {
     flexDirection: 'row',
     gap: spacing.sm,
@@ -647,11 +669,6 @@ const resultsStyles = StyleSheet.create({
     borderTopWidth: StyleSheet.hairlineWidth,
     borderTopColor: colors.divider,
     gap: spacing.sm,
-  },
-  breakdownIcon: {
-    fontSize: 20,
-    width: 32,
-    textAlign: 'center',
   },
   breakdownLabel: {
     flex: 1,
@@ -829,7 +846,7 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
   },
   headerChip: {
-    backgroundColor: 'rgba(14,21,18,0.55)',
+    backgroundColor: 'rgba(13,17,23,0.55)',
     borderRadius: radii.full,
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm,

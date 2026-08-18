@@ -52,8 +52,6 @@ export default function LeaderboardRow({ entry, isCurrentUser }: LeaderboardRowP
 
   return (
     <View style={[styles.row, isCurrentUser && styles.rowCurrent]}>
-      {isCurrentUser && <View style={styles.currentAccent} />}
-
       {/* Rank — gold / silver / bronze medal chips for the podium */}
       {medal ? (
         <View style={[styles.medal, { backgroundColor: medal.bg }]}>
@@ -102,14 +100,6 @@ const styles = StyleSheet.create({
   },
   rowCurrent: {
     backgroundColor: colors.primaryGlowSoft,
-  },
-  currentAccent: {
-    position: 'absolute',
-    left: 0,
-    top: 0,
-    bottom: 0,
-    width: 3,
-    backgroundColor: colors.primaryLight,
   },
   rank: {
     width: 28,

@@ -2,89 +2,104 @@ import { Platform } from 'react-native';
 import { Easing } from 'react-native-reanimated';
 
 // ─────────────────────────────────────────────────────────────────────────────
-// UNDERSTORY — dark, editorial, forest-floor palette (Sprint F redesign).
-// See docs/DESIGN_DIRECTION.md. Dark-first, matching the already-declared
-// UIUserInterfaceStyle: Dark. Category hues retain their identity but are
-// lifted ~15% in luminance so they read against the near-black "soil" bg.
+// CLEARING — light, precise, persona-led (design reboot, docs/DESIGN_DIRECTION.md).
+// Supersedes Understory (dark, editorial, Fraunces). Model is Copilot Money, not
+// Klima: a light instrument calm enough to trust with your bank account, exact
+// enough to argue with. Canonical tokens follow the naming in DESIGN_DIRECTION.md
+// §Color tokens. Legacy keys below (background, primary, textPrimary, …) are
+// aliases onto the canonical values so the ~50 screens consuming `colors` today
+// pick up the new palette without a synchronized rewrite — per-screen migration
+// to canonical names happens in Phases 1–5, not here in Phase 0.
 // ─────────────────────────────────────────────────────────────────────────────
 
 export const colors = {
-  // Backgrounds — "soil" ramp (near-black, warm-green undertone)
-  background:      '#0E1512',
-  surface:         '#161F1A',
-  surfaceElevated: '#1E2B23',
-  surfaceHigh:     '#1E2B23',
+  // ── Neutrals ──────────────────────────────────────────────────────────────
+  canvas:        '#FCFCFD',
+  surface:       '#FFFFFF',
+  surfaceSunken: '#F4F5F7',
+  border:        'rgba(13,17,23,0.08)',
+  borderStrong:  'rgba(13,17,23,0.14)',
+  ink:           '#0D1117',
+  inkSecondary:  '#5A6470',
+  inkTertiary:   '#8B95A1',
 
-  // Borders — hairlines on dark
-  border:          'rgba(255,255,255,0.06)',
-  borderStrong:    'rgba(255,255,255,0.12)',
+  // ── Accents — two-tier, per Klima's technique (DESIGN_DIRECTION.md) ────────
+  accent:           '#0F6B41',
+  accentSoft:       'rgba(15,107,65,0.08)',
+  accentSecondary:  '#3D5A80',
+  accentSecondarySoft: 'rgba(61,90,128,0.08)',
 
-  // Track (rings / bars on dark)
-  trackOnDark:     'rgba(255,255,255,0.08)',
+  // ── Semantic — separate from accent, per data-viz convention ───────────────
+  calm:      '#0F6B41',
+  watch:     '#B47714',
+  over:      '#B0442F',
+  estimated: '#8B95A1',
 
-  // Primary — moss (brighter than the old #1B6B42 so it reads on dark)
-  primary:         '#5FA876',
-  primaryDeep:     '#3D7A54',
-  primaryDim:      '#4E8F64',
-  primaryGlow:     'rgba(95,168,118,0.16)',
-  primaryGlowSoft: 'rgba(95,168,118,0.08)',
-  primaryLight:    '#5FA876',
+  // ── Category (charts, entry rows) — desaturated for a light ground ─────────
+  food:      '#B0442F',
+  transport: '#2C6E9B',
+  energy:    '#B47714',
+  shopping:  '#6B4E8C',
 
-  // Accent — lichen light (amber warmth counterpoint, avoids all-green monotone)
-  accentAmber:     '#E0B15C',
+  // Category tints (light fills behind icons/rows, not glows)
+  foodGlow:      'rgba(176,68,47,0.08)',
+  transportGlow: 'rgba(44,110,155,0.08)',
+  energyGlow:    'rgba(180,119,20,0.08)',
+  shoppingGlow:  'rgba(107,78,140,0.08)',
 
-  // Category colors — hues retained, luminance lifted ~15% for dark-bg contrast
-  food:            '#E0655A',
-  transport:       '#4A97D1',
-  energy:          '#E0A02E',
-  shopping:        '#A87FC4',
+  // Budget-state tints (ring track / row backgrounds)
+  glowCalm:  'rgba(15,107,65,0.08)',
+  glowWatch: 'rgba(180,119,20,0.08)',
+  glowOver:  'rgba(176,68,47,0.08)',
 
-  // Category bg tints (glows on dark)
-  foodGlow:        'rgba(224,101,90,0.12)',
-  transportGlow:   'rgba(74,151,209,0.12)',
-  energyGlow:      'rgba(224,160,46,0.12)',
-  shoppingGlow:    'rgba(168,127,196,0.12)',
+  successGlow: 'rgba(15,107,65,0.10)',
+  warningGlow: 'rgba(180,119,20,0.10)',
+  dangerGlow:  'rgba(176,68,47,0.10)',
 
-  // Budget-state system (dark mode) — calm/watch/over retuned for dark surface
-  glowCalm:        'rgba(95,168,118,0.12)',
-  glowWatch:       'rgba(224,177,92,0.12)',
-  glowOver:        'rgba(224,101,90,0.12)',
-
-  successGlow:     'rgba(95,168,118,0.16)',
-  warningGlow:     'rgba(224,177,92,0.16)',
-  dangerGlow:      'rgba(224,101,90,0.16)',
-
-  // Spend-based ("estimated") chip treatment — Sprint D. Deliberately NOT
-  // successGlow/primary (that's reserved for celebratory zero-emission
-  // "saved" chips) and NOT a plain unstyled kg value (that's the sensor-
-  // measured convention) — a muted neutral pill so an estimate never reads
-  // as a confident, precise sensor number (NORTH_STAR.md §5 — false
-  // precision is a documented churn driver).
-  estimatedGlow:   'rgba(155,168,158,0.14)',
+  // Spend-based ("estimated") chip treatment — deliberately neutral, never a
+  // confident color, so an estimate never reads as a precise sensor value
+  // (NORTH_STAR.md §5 — false precision is a documented churn driver).
+  estimatedGlow: 'rgba(139,149,161,0.12)',
 
   // Status
-  success:         '#5FA876',
-  warning:         '#E0B15C',
-  warningBg:       'rgba(224,177,92,0.14)',
-  danger:          '#E0655A',
+  success:   '#0F6B41',
+  warning:   '#B47714',
+  warningBg: 'rgba(180,119,20,0.10)',
+  danger:    '#B0442F',
 
-  // Text — parchment, not pure white
-  textPrimary:     '#F2F0E8',
-  textSecondary:   '#9BA89E',
-  textTertiary:    '#5E6B62',
+  // ── Legacy aliases (Understory-era key names, retargeted to Clearing) ──────
+  background:      '#FCFCFD',
+  surfaceElevated: '#FFFFFF',
+  surfaceHigh:     '#FFFFFF',
 
-  // Legacy aliases (retuned for dark)
-  primaryContainer: 'rgba(95,168,118,0.16)',
-  error:            '#E0655A',
-  errorLight:       'rgba(224,101,90,0.14)',
-  errorBorder:      'rgba(224,101,90,0.30)',
-  foodBg:           'rgba(224,101,90,0.10)',
-  transportBg:      'rgba(74,151,209,0.10)',
-  energyBg:         'rgba(224,160,46,0.10)',
-  shoppingBg:       'rgba(168,127,196,0.10)',
-  successBg:        'rgba(95,168,118,0.12)',
-  divider:          'rgba(255,255,255,0.06)',
-  mist:             '#0E1512',
+  // Progress-ring / bar track — was a light-on-dark hairline, now a light-on-
+  // light one. Name kept for compatibility; value now reads on a white surface.
+  trackOnDark: 'rgba(13,17,23,0.08)',
+
+  primary:         '#0F6B41',
+  primaryDeep:     '#0B5934',
+  primaryDim:      '#3D8362',
+  primaryGlow:     'rgba(15,107,65,0.16)',
+  primaryGlowSoft: 'rgba(15,107,65,0.08)',
+  primaryLight:    '#0F6B41',
+
+  accentAmber: '#B47714',
+
+  textPrimary:   '#0D1117',
+  textSecondary: '#5A6470',
+  textTertiary:  '#8B95A1',
+
+  primaryContainer: 'rgba(15,107,65,0.08)',
+  error:            '#B0442F',
+  errorLight:       'rgba(176,68,47,0.10)',
+  errorBorder:      'rgba(176,68,47,0.30)',
+  foodBg:           'rgba(176,68,47,0.08)',
+  transportBg:      'rgba(44,110,155,0.08)',
+  energyBg:         'rgba(180,119,20,0.08)',
+  shoppingBg:       'rgba(107,78,140,0.08)',
+  successBg:        'rgba(15,107,65,0.08)',
+  divider:          'rgba(13,17,23,0.08)',
+  mist:             '#FCFCFD',
 } as const;
 
 export type BudgetState = 'calm' | 'watch' | 'over';
@@ -99,22 +114,22 @@ export const budgetStateColors: Record<
   BudgetState,
   { glow: string; accent: string; ring: readonly [string, string] }
 > = {
-  calm:  { glow: colors.glowCalm,  accent: colors.primaryLight, ring: ['#6FB886', '#5FA876'] },
-  watch: { glow: colors.glowWatch, accent: colors.warning,      ring: ['#E8C070', '#E0B15C'] },
-  over:  { glow: colors.glowOver,  accent: colors.danger,       ring: ['#E8776A', '#E0655A'] },
+  calm:  { glow: colors.glowCalm,  accent: colors.calm,  ring: ['#17864F', '#0F6B41'] },
+  watch: { glow: colors.glowWatch, accent: colors.watch, ring: ['#CE8B1C', '#B47714'] },
+  over:  { glow: colors.glowOver,  accent: colors.over,  ring: ['#C55238', '#B0442F'] },
 } as const;
 
 export const gradients = {
-  primaryCTA:   ['#6FB886', '#5FA876', '#3D7A54'],
-  ringCalm:     ['#6FB886', '#5FA876'],
-  ringWatch:    ['#E8C070', '#E0B15C'],
-  ringOver:     ['#E8776A', '#E0655A'],
-  aurora:       ['#0E1512', '#161F1A', '#0E1512'],
-  food:         ['#E8776A', '#E0655A'],
-  transport:    ['#63A9DB', '#4A97D1'],
-  energy:       ['#E8B14A', '#E0A02E'],
-  shimmer:      ['transparent', 'rgba(255,255,255,0.04)', 'transparent'],
-  cardSheen:    ['rgba(255,255,255,0.05)', 'rgba(255,255,255,0)'],
+  primaryCTA:   ['#17864F', '#0F6B41', '#0B5934'],
+  ringCalm:     ['#17864F', '#0F6B41'],
+  ringWatch:    ['#CE8B1C', '#B47714'],
+  ringOver:     ['#C55238', '#B0442F'],
+  aurora:       ['#FCFCFD', '#F4F5F7', '#FCFCFD'],
+  food:         ['#C55238', '#B0442F'],
+  transport:    ['#3A80B0', '#2C6E9B'],
+  energy:       ['#CE8B1C', '#B47714'],
+  shimmer:      ['transparent', 'rgba(13,17,23,0.04)', 'transparent'],
+  cardSheen:    ['rgba(255,255,255,0.6)', 'rgba(255,255,255,0)'],
 } as const;
 
 export const spacing = {
@@ -129,14 +144,13 @@ export const spacing = {
 } as const;
 
 export const typography = {
-  // Body/UI face — keep system default (San Francisco) for legibility and
-  // platform-native feel. DESIGN_DIRECTION.md is explicit that ONLY hero/display
-  // headline numbers use Fraunces; body/UI stays system default. This token is
-  // referenced by ~20 body/UI styles today, so it must NOT be repointed to a serif.
+  // Body/UI face — system default (SF Pro on iOS). Clearing spends its
+  // distinctiveness budget on spacing, tabular figures and illustration, not
+  // an exotic display face (DESIGN_DIRECTION.md — Typography). No serif
+  // anywhere in the product; this token is intentionally `undefined` so every
+  // consumer falls through to the platform system font.
   fontFamilyDefault: undefined as string | undefined,
-  // Display/headline face — Fraunces, for hero numbers only (see fontFamilyDisplay
-  // usage in redesigned hero components). Registered in app/_layout.tsx.
-  fontFamilyDisplay: 'Fraunces_600SemiBold' as string,
+  fontFamilyDisplay: undefined as string | undefined,
   fontFamilyMono:    Platform.select({ ios: 'Menlo', default: 'monospace' }) as string,
   sizes: {
     xs:      11,
@@ -155,9 +169,10 @@ export const typography = {
     bold:     '700' as const,
     heavy:    '800' as const,
   },
+  // Display tracking runs −4% to −6% of font size (Klima's ratio, adopted
+  // verbatim per DESIGN_DIRECTION.md). Body sits at default tracking — the
+  // contrast between tight display and normal body is the typographic system.
   letterSpacing: {
-    // Tighter tracking on large Fraunces headlines so serif type reads as
-    // deliberate rather than default (DESIGN_DIRECTION.md typography).
     tight:   -1.2,
     snug:    -0.3,
     normal:   0,
@@ -174,7 +189,11 @@ export const typography = {
 export const motion = {
   springSnappy:  { damping: 28, stiffness: 350 },
   springGentle:  { damping: 18, stiffness: 160 },
-  springBouncy:  { damping: 14, stiffness: 220 },
+  // Signature motion: numbers settle with high damping and minimal overshoot —
+  // an instrument doesn't bounce (DESIGN_DIRECTION.md — Motion). Understory's
+  // bouncy count-up used damping:14/stiffness:220; this key name is kept for
+  // compatibility but its values now match the Clearing spec exactly.
+  springBouncy:  { damping: 30, stiffness: 220 },
   timingFast:    180,
   timingBase:    280,
   timingSlow:    600,
@@ -186,68 +205,69 @@ export const motion = {
 
 export const shadows = {
   sm: {
-    shadowColor: '#000000',
+    shadowColor: '#0D1117',
     shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.20,
-    shadowRadius: 4,
-    elevation: 2,
+    shadowOpacity: 0.06,
+    shadowRadius: 3,
+    elevation: 1,
   },
   md: {
-    shadowColor: '#000000',
+    shadowColor: '#0D1117',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.28,
+    shadowOpacity: 0.08,
     shadowRadius: 8,
-    elevation: 3,
+    elevation: 2,
   },
   lg: {
-    shadowColor: '#000000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.36,
-    shadowRadius: 16,
-    elevation: 5,
+    shadowColor: '#0D1117',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.10,
+    shadowRadius: 20,
+    elevation: 4,
   },
   card: {
-    shadowColor: '#000000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.24,
-    shadowRadius: 8,
+    shadowColor: '#0D1117',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.06,
+    shadowRadius: 6,
+    elevation: 2,
+  },
+  // Hero elevation on a light ground reads as a soft neutral lift, not a
+  // colored glow — glows were an Understory-on-dark device.
+  hero: {
+    shadowColor: '#0D1117',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.08,
+    shadowRadius: 16,
     elevation: 3,
   },
-  // Card elevation via soft moss glow, not a light-mode drop shadow.
-  hero: {
-    shadowColor: '#5FA876',
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.24,
-    shadowRadius: 20,
-    elevation: 6,
-  },
   glowPrimary: {
-    shadowColor: '#5FA876',
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.28,
-    shadowRadius: 16,
-    elevation: 6,
+    shadowColor: '#0F6B41',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.14,
+    shadowRadius: 14,
+    elevation: 3,
   },
   glowFood: {
-    shadowColor: '#E0655A',
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.22,
-    shadowRadius: 12,
-    elevation: 4,
+    shadowColor: '#B0442F',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.10,
+    shadowRadius: 10,
+    elevation: 2,
   },
   glowTransport: {
-    shadowColor: '#4A97D1',
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.22,
-    shadowRadius: 12,
-    elevation: 4,
+    shadowColor: '#2C6E9B',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.10,
+    shadowRadius: 10,
+    elevation: 2,
   },
   glowEnergy: {
-    shadowColor: '#E0A02E',
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.22,
-    shadowRadius: 12,
-    elevation: 4,
+    shadowColor: '#B47714',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.10,
+    shadowRadius: 10,
+    elevation: 2,
   },
 } as const;
 

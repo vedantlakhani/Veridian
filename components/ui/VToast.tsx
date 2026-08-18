@@ -68,8 +68,12 @@ export function VToast({
       accessibilityLiveRegion="polite"
     >
       <Pressable onPress={onDismiss}>
-        <View style={[styles.toast, { borderLeftColor: toneAccent[tone] }]}>
-          {icon ? <View style={styles.iconSlot}>{icon}</View> : null}
+        <View style={styles.toast}>
+          {icon ? (
+            <View style={styles.iconSlot}>{icon}</View>
+          ) : (
+            <View style={[styles.toneDot, { backgroundColor: toneAccent[tone] }]} />
+          )}
           <Text style={styles.message} numberOfLines={2}>
             {message}
           </Text>
@@ -94,13 +98,19 @@ const styles = StyleSheet.create({
     borderRadius: radii.md,
     borderWidth: 1,
     borderColor: colors.borderStrong,
-    borderLeftWidth: 3,
     padding: spacing.md,
     ...shadows.lg,
   },
   iconSlot: {
     width: 22,
     alignItems: 'center',
+  },
+  // Tone shows as a small dot when there's no icon, not a card-edge rail
+  // (DESIGN_DIRECTION.md — "No accent rail on rounded cards").
+  toneDot: {
+    width: 8,
+    height: 8,
+    borderRadius: radii.full,
   },
   message: {
     flex: 1,

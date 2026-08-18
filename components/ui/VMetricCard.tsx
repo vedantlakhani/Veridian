@@ -7,9 +7,9 @@ import { VSparkline } from './VSparkline';
 import { colors, typography, spacing } from '@/lib/theme';
 
 // Category accent colors map to VCard's fixed glow variants so a metric card's
-// elevation reads as an ambient colored glow (Understory) rather than a
-// light-mode drop shadow. Falls back to the primary moss glow for any accent
-// that isn't one of the three category hues.
+// elevation reads as a soft category-tinted lift rather than a flat neutral
+// shadow. Falls back to the primary evergreen glow for any accent that isn't
+// one of the three category hues.
 const GLOW_BY_ACCENT: Record<string, 'food' | 'transport' | 'energy'> = {
   [colors.food]: 'food',
   [colors.transport]: 'transport',
@@ -61,7 +61,7 @@ export function VMetricCard({
   const glow = GLOW_BY_ACCENT[accentColor] ?? 'primary';
 
   return (
-    <VCard glow={glow} style={styles.card} accentColor={accentColor} onPress={onPress}>
+    <VCard glow={glow} style={styles.card} onPress={onPress}>
       <View style={styles.labelRow}>
         {icon}
         <Text style={styles.label}>{label}</Text>
@@ -157,6 +157,7 @@ const styles = StyleSheet.create({
   trend: {
     fontSize: typography.sizes.xs,
     fontWeight: '600',
+    fontVariant: ['tabular-nums'],
   },
   sparklineWrap: {
     marginTop: spacing.sm,

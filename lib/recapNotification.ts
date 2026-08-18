@@ -1,7 +1,7 @@
 /**
  * lib/recapNotification.ts — the weekly recap local notification
  *
- * Schedules a single repeating Sunday-evening nudge ("Your week is ready ✨")
+ * Schedules a single repeating Sunday-evening nudge ("Your week is ready")
  * that deep-invites the user into the Weekly Recap story (NORTH_STAR.md §8
  * pattern 9). Isolated here (not in useNotifications) so the no-duplicate logic
  * is unit-testable without mocking the whole notifications hook graph.
@@ -44,7 +44,7 @@ export async function scheduleWeeklyRecapNotification(): Promise<void> {
   await Notifications.scheduleNotificationAsync({
     identifier: WEEKLY_RECAP_IDENTIFIER,
     content: {
-      title: 'Your week is ready ✨',
+      title: 'Your week is ready',
       body: 'See your carbon story for the week.',
     },
     trigger: {

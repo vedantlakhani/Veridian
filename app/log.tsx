@@ -10,6 +10,7 @@ import {
   Alert,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import Animated, {
   useSharedValue,
@@ -29,6 +30,7 @@ import {
   VPressable,
   VCountUp,
   VProgressBar,
+  VChip,
   SwipeableEntryRow,
   type VIconName,
 } from '@/components/ui';
@@ -51,6 +53,8 @@ import {
   budgetStateColors,
 } from '@/lib/theme';
 import { humanizeSubcategory } from '@/lib/format';
+import { groupLabelForFactor } from '@/lib/naicsGroups';
+import { drivingComparisonCaption } from '@/lib/impactCopy';
 import { DAILY_CARBON_BUDGET_KG } from '@/types/emission';
 import type { EmissionCategory, EmissionFactor, DetectedTrip, TripMode } from '@/types/emission';
 
@@ -241,6 +245,7 @@ const slotStyles = StyleSheet.create({
 // ─── Log screen ───────────────────────────────────────────────────────────────
 export default function LogScreen() {
   const { user } = useAuthStore();
+  const router = useRouter();
   const insets = useSafeAreaInsets();
   const createEntry = useCreateEntry();
   const durableCreateEntry = useDurableCreateEntry();
@@ -340,15 +345,22 @@ export default function LogScreen() {
   }, [allEntries]);
 
   // ── Factors for active category, filtered by search, grouped ──
+  // Grouping KEY collapses NAICS-coded subcategories into their human group
+  // (see lib/naicsGroups.ts) so the picker doesn't render ~49 one-item groups
+  // headed by a raw NAICS number; non-NAICS subcategories keep their raw key,
+  // matching prior behavior. The raw subcategory is retained per-group so the
+  // display LABEL can be recomputed cleanly rather than re-humanizing an
+  // already-human group label (which would mangle its capitalization).
   const grouped = useMemo(() => {
     if (!activeCategory) return {};
     const q = search.trim().toLowerCase();
-    const map: Record<string, EmissionFactor[]> = {};
+    const map: Record<string, { subcategory: string; items: EmissionFactor[] }> = {};
     for (const f of factors) {
       if (f.category !== activeCategory) continue;
       if (q && !f.item.toLowerCase().includes(q) && !f.subcategory.toLowerCase().includes(q)) continue;
-      if (!map[f.subcategory]) map[f.subcategory] = [];
-      map[f.subcategory].push(f);
+      const key = groupLabelForFactor(f.subcategory) ?? f.subcategory;
+      if (!map[key]) map[key] = { subcategory: f.subcategory, items: [] };
+      map[key].items.push(f);
     }
     return map;
   }, [factors, activeCategory, search]);
@@ -417,6 +429,12 @@ export default function LogScreen() {
   const selectedMeta = selectedFactor
     ? CATEGORY_META[selectedFactor.category as EmissionCategory]
     : null;
+  // Shopping's USD-unit factors are spend-based estimates, not a physical
+  // quantity the user actually measured — the sheet reframes around "how
+  // much did you spend" and flags the result as an estimate throughout,
+  // matching the "~" + estimated convention lib/feedCopy.ts already uses for
+  // spend-derived feed entries.
+  const isUsdSpend = selectedFactor?.unit === 'USD';
   const co2Kg =
     selectedFactor && parseFloat(quantity) > 0
       ? selectedFactor.kg_co2e * parseFloat(quantity)
@@ -468,9 +486,20 @@ export default function LogScreen() {
 
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
-      {/* ── Header — this screen is now the manual escape hatch; autopilot
-          handles the common cases (NORTH_STAR.md §8.1). ── */}
+      {/* ── Header — the manual escape hatch, reached via the "+" on Today.
+          Autopilot handles the common cases (NORTH_STAR.md §8.1); this is a
+          modal now, not a tab, so it needs its own close affordance. ── */}
       <View style={styles.header}>
+        <VPressable
+          onPress={() => router.back()}
+          haptic="light"
+          hitSlop={8}
+          style={styles.closeButton}
+          accessibilityRole="button"
+          accessibilityLabel="Close"
+        >
+          <VIcon name="close" size={20} color={colors.textSecondary} />
+        </VPressable>
         <View style={styles.headerText}>
           <VText variant="title">Add manually</VText>
           <VText variant="caption" style={styles.headerSub}>
@@ -583,37 +612,33 @@ export default function LogScreen() {
           </View>
         )}
 
-        {/* ── Category segmented row ── */}
-        <View style={styles.categoryRow}>
+        {/* ── Category segmented row — horizontally scrollable so chips size to
+            their own content instead of being squeezed into equal-width slots
+            (which truncated "Transport"/"Shopping" on narrower screens) ── */}
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.categoryRow}
+        >
           {availableCategories.map((cat) => {
             const meta = CATEGORY_META[cat];
             const active = activeCategory === cat;
             return (
-              <VPressable
+              <VChip
                 key={cat}
+                label={meta.label}
+                icon={meta.icon}
+                selected={active}
+                activeColor={meta.color}
+                activeBg={meta.bg}
                 onPress={() => {
                   setActiveCategory((prev) => (prev === cat ? null : cat));
                   setSearch('');
                 }}
-                haptic="light"
-                style={[
-                  styles.categoryChip,
-                  active && { borderColor: meta.color, backgroundColor: meta.bg },
-                ]}
-                accessibilityRole="button"
-                accessibilityState={{ selected: active }}
-              >
-                <VIcon name={meta.icon} size={16} color={active ? meta.color : colors.textSecondary} />
-                <VText
-                  variant="caption"
-                  style={[styles.categoryChipText, active && { color: meta.color, fontWeight: '700' }]}
-                >
-                  {meta.label}
-                </VText>
-              </VPressable>
+              />
             );
           })}
-        </View>
+        </ScrollView>
 
         {/* ── Factor list with search ── */}
         {activeCategory && (
@@ -640,14 +665,16 @@ export default function LogScreen() {
                 <VSkeleton key={i} width="100%" height={60} style={{ marginBottom: spacing.sm }} />
               ))
             ) : (
-              Object.entries(grouped).map(([subcategory, items]) => {
+              Object.entries(grouped).map(([key, group]) => {
                 const { color } = CATEGORY_META[activeCategory];
+                const groupLabel =
+                  groupLabelForFactor(group.subcategory) ?? humanizeSubcategory(group.subcategory);
                 return (
-                  <View key={subcategory} style={styles.group}>
+                  <View key={key} style={styles.group}>
                     <VText variant="label" style={[styles.groupLabel, { color }]}>
-                      {humanizeSubcategory(subcategory)}
+                      {groupLabel}
                     </VText>
-                    {items.map((factor) => {
+                    {group.items.map((factor) => {
                       const count = weekCounts.get(factor.id) ?? 0;
                       return (
                         <VPressable
@@ -658,7 +685,7 @@ export default function LogScreen() {
                           accessibilityRole="button"
                           accessibilityLabel={factor.item}
                         >
-                          <View style={[styles.accentBar, { backgroundColor: color }]} />
+                          <View style={[styles.accentDot, { backgroundColor: color }]} />
                           <View style={styles.factorContent}>
                             <VText variant="body" style={styles.factorItem} numberOfLines={1}>
                               {factor.item}
@@ -788,7 +815,7 @@ export default function LogScreen() {
                     {selectedFactor.item}
                   </VText>
                   <VBadge
-                    label={selectedFactor.category}
+                    label={isUsdSpend ? 'Shopping · estimate' : selectedFactor.category}
                     variant={selectedFactor.category as EmissionCategory}
                   />
                 </View>
@@ -798,6 +825,14 @@ export default function LogScreen() {
                   style={[sheet.preview, { borderColor: `${selectedMeta?.color ?? colors.primary}30` }]}
                 >
                   <View style={sheet.previewValueRow}>
+                    {isUsdSpend && (
+                      <VText
+                        variant="mono"
+                        style={[sheet.previewValue, { color: selectedMeta?.color ?? colors.primary }]}
+                      >
+                        ~
+                      </VText>
+                    )}
                     <VCountUp
                       value={co2Kg}
                       decimals={2}
@@ -820,6 +855,11 @@ export default function LogScreen() {
                       }
                       animationDuration={400}
                     />
+                    {co2Kg > 0 && (
+                      <VText variant="caption" style={sheet.budgetContextText}>
+                        {drivingComparisonCaption(co2Kg)}
+                      </VText>
+                    )}
                     <VText variant="caption" style={sheet.budgetContextText}>
                       {co2Kg > 0
                         ? `This is ${budgetPct}% of today's budget`
@@ -830,8 +870,13 @@ export default function LogScreen() {
 
                 {/* Quick-pick quantities */}
                 <VText variant="label" style={sheet.qtyLabel}>
-                  Quantity ({selectedFactor.unit})
+                  {isUsdSpend ? 'How much did you spend?' : `Quantity (${selectedFactor.unit})`}
                 </VText>
+                {isUsdSpend && (
+                  <VText variant="caption" style={sheet.usdEstimateCaption}>
+                    Estimated from typical spending in this category — not from what you bought.
+                  </VText>
+                )}
                 <View style={sheet.quickRow}>
                   {quickPicks.map((v) => {
                     const selected = quantity === String(v);
@@ -847,14 +892,22 @@ export default function LogScreen() {
                         accessibilityRole="button"
                         accessibilityState={{ selected }}
                       >
-                        <Text style={[sheet.quickBtnText, selected && { color: '#FFFFFF' }]}>
-                          {v}
-                        </Text>
-                        <Text
-                          style={[sheet.quickBtnUnit, selected && { color: 'rgba(255,255,255,0.7)' }]}
-                        >
-                          {selectedFactor.unit}
-                        </Text>
+                        {isUsdSpend ? (
+                          <Text style={[sheet.quickBtnText, selected && { color: '#FFFFFF' }]}>
+                            ${v}
+                          </Text>
+                        ) : (
+                          <>
+                            <Text style={[sheet.quickBtnText, selected && { color: '#FFFFFF' }]}>
+                              {v}
+                            </Text>
+                            <Text
+                              style={[sheet.quickBtnUnit, selected && { color: 'rgba(255,255,255,0.7)' }]}
+                            >
+                              {selectedFactor.unit}
+                            </Text>
+                          </>
+                        )}
                       </VPressable>
                     );
                   })}
@@ -924,6 +977,14 @@ const styles = StyleSheet.create({
     paddingTop: spacing.sm,
     paddingBottom: spacing.sm,
   },
+  closeButton: {
+    width: 32,
+    height: 32,
+    borderRadius: radii.full,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.surfaceSunken,
+  },
   headerText: {
     flex: 1,
   },
@@ -978,8 +1039,6 @@ const styles = StyleSheet.create({
     borderRadius: radii.md,
     borderWidth: 1,
     borderColor: `${colors.transport}30`,
-    borderLeftWidth: 3,
-    borderLeftColor: colors.transport,
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm,
     marginBottom: 6,
@@ -1005,22 +1064,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: spacing.sm,
     marginBottom: spacing.md,
-  },
-  categoryChip: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: spacing.xs,
-    height: 44,
-    borderRadius: radii.full,
-    borderWidth: 1.5,
-    borderColor: colors.border,
-    backgroundColor: colors.surfaceElevated,
-  },
-  categoryChipText: {
-    fontWeight: '600',
-    color: colors.textSecondary,
   },
 
   searchRow: {
@@ -1050,6 +1093,7 @@ const styles = StyleSheet.create({
   factorCard: {
     flexDirection: 'row',
     alignItems: 'center',
+    gap: spacing.sm,
     backgroundColor: colors.surface,
     borderRadius: radii.md,
     marginBottom: spacing.sm,
@@ -1057,16 +1101,20 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.border,
     minHeight: 60,
+    paddingLeft: spacing.md,
     ...shadows.card,
   },
-  accentBar: {
-    width: 3,
-    alignSelf: 'stretch',
+  // Category color reads as a small dot, not a card-edge rail
+  // (DESIGN_DIRECTION.md — "No accent rail on rounded cards").
+  accentDot: {
+    width: 8,
+    height: 8,
+    borderRadius: radii.full,
   },
   factorContent: {
     flex: 1,
     paddingVertical: spacing.sm,
-    paddingHorizontal: spacing.md,
+    paddingRight: spacing.md,
   },
   factorItem: {
     fontWeight: '600',
@@ -1195,6 +1243,10 @@ const sheet = StyleSheet.create({
     textAlign: 'center',
   },
   qtyLabel: { marginBottom: spacing.sm },
+  usdEstimateCaption: {
+    marginTop: -spacing.xs,
+    marginBottom: spacing.sm,
+  },
   quickRow: {
     flexDirection: 'row',
     gap: spacing.sm,

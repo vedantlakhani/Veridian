@@ -23,6 +23,9 @@ interface VEmptyStateProps {
   icon?: ReactNode;
   /** Fill available space (old flex:1 behavior) */
   fill?: boolean;
+  /** Button visual weight — defaults to 'primary'; use 'secondary' where the
+   *  empty state shouldn't read as the screen's headline action. */
+  ctaVariant?: 'primary' | 'secondary';
 }
 
 export function VEmptyState({
@@ -32,6 +35,7 @@ export function VEmptyState({
   onCta,
   icon,
   fill = false,
+  ctaVariant = 'primary',
 }: VEmptyStateProps) {
   const scale = useSharedValue(0.92);
   const opacity = useSharedValue(0);
@@ -63,7 +67,7 @@ export function VEmptyState({
       <Text style={styles.body}>{body}</Text>
       {ctaLabel && onCta ? (
         <View style={styles.ctaWrapper}>
-          <VButton label={ctaLabel} onPress={onCta} />
+          <VButton label={ctaLabel} onPress={onCta} variant={ctaVariant} />
         </View>
       ) : null}
     </Animated.View>

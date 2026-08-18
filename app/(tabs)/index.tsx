@@ -1,7 +1,5 @@
 import { ScrollView, View, StyleSheet, Pressable } from 'react-native';
 import { useMemo, useEffect, useRef, useState } from 'react';
-import { LinearGradient } from 'expo-linear-gradient';
-import { Image } from 'expo-image';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { useQuery } from '@tanstack/react-query';
@@ -90,18 +88,6 @@ const CATEGORY_COLORS: Record<EmissionCategory, string> = {
   shopping: colors.shopping,
 };
 
-// Hero photo scrim — fades the forest photo into the "soil" background rather
-// than the old light-mode off-white (#F5F7F3). Derived from colors.background
-// (#0E1512 → rgb(14,21,18)) so it stays a real theme reference, not a
-// standalone hardcoded hex, even though LinearGradient needs raw rgba strings
-// for the alpha ramp.
-const BG_R = 14, BG_G = 21, BG_B = 18;
-const heroScrim = [
-  `rgba(${BG_R},${BG_G},${BG_B},0.05)`,
-  `rgba(${BG_R},${BG_G},${BG_B},0.78)`,
-  `rgba(${BG_R},${BG_G},${BG_B},1.0)`,
-] as const;
-
 // One quiet, efficacy-first line under the ring — never red-as-shame; the "over"
 // copy points forward, not down (NORTH_STAR.md §8.4 anti-guilt).
 const EFFICACY_COPY: Record<BudgetState, string> = {
@@ -112,10 +98,9 @@ const EFFICACY_COPY: Record<BudgetState, string> = {
 
 // ─── The signature hero motion (DESIGN_DIRECTION.md "Motion") ─────────────────
 // The one moment Veridian repeats everywhere the footprint number can change:
-// count up with a subtle spring overshoot (never a linear tween) plus a brief
-// primaryGlow pulse behind the digits — Veridian's answer to Flighty's kinetic
-// countdown numbers. Fraunces (fontFamilyDisplay) at large size, per the
-// typography brief that Fraunces is reserved for hero/display numbers only.
+// count up with high damping and minimal overshoot — an instrument doesn't
+// bounce — plus a brief accentSoft pulse behind the digits. System font
+// (fontFamilyDisplay) at large size with tight tracking; no serif anywhere.
 function HeroFootprintNumber({ value }: { value: number }) {
   const glowOpacity = useSharedValue(0);
 
@@ -288,7 +273,7 @@ const ringStyles = StyleSheet.create({
 function WeekStrip({ days }: { days: { date: string; state: BudgetState | 'empty'; isToday: boolean }[] }) {
   return (
     <VPressable
-      onPress={() => router.push('/(tabs)/insights')}
+      onPress={() => router.push('/(tabs)/trends')}
       haptic="light"
       style={weekStyles.row}
       accessibilityRole="button"
@@ -433,8 +418,6 @@ const tripStyles = StyleSheet.create({
     borderRadius: radii.lg,
     borderWidth: 1,
     borderColor: colors.border,
-    borderLeftWidth: 3,
-    borderLeftColor: colors.transport,
     padding: spacing.md,
     marginHorizontal: spacing.md,
     marginBottom: spacing.md,
@@ -1209,19 +1192,10 @@ export default function HomeScreen() {
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.background }}>
-      {/* ── Hero: nature photo + the ring anchor ── */}
+      {/* ── Hero: the ring anchor. No photography here — full-bleed imagery is
+           reserved for emotional moments (Passport, Recap, onboarding), not
+           everyday chrome (DESIGN_DIRECTION.md — Illustration). ── */}
       <View style={styles.heroOuter}>
-        <Image
-          source={require('@/assets/images/hero-forest.jpg')}
-          style={styles.heroPhoto}
-          contentFit="cover"
-        />
-        <LinearGradient
-          colors={heroScrim}
-          locations={[0, 0.58, 1]}
-          style={StyleSheet.absoluteFill}
-          pointerEvents="none"
-        />
         <SafeAreaView style={styles.heroContainer} edges={['top']}>
           <View style={styles.heroContent}>
             {/* Greeting + momentum band */}
@@ -1285,10 +1259,25 @@ export default function HomeScreen() {
           </VPressable>
         )}
 
-        {/* ── The "Today" feed ── */}
-        <VText variant="label" style={styles.feedLabel}>
-          Today
-        </VText>
+        {/* ── The "Today" feed — Log is demoted from a tab to this "+"
+             affordance (DESIGN_DIRECTION.md — Information architecture):
+             manual entry stays fully available without being presented as a
+             primary mode of use. ── */}
+        <View style={styles.feedHeaderRow}>
+          <VText variant="label" style={styles.feedLabelInline}>
+            Today
+          </VText>
+          <VPressable
+            onPress={() => router.push('/log')}
+            haptic="light"
+            hitSlop={8}
+            style={styles.addButton}
+            accessibilityRole="button"
+            accessibilityLabel="Add something manually"
+          >
+            <VIcon name="plus" size={16} color={colors.accent} strokeWidth={2.25} />
+          </VPressable>
+        </View>
         {todayLoading ? (
           <View style={{ paddingHorizontal: spacing.md, gap: spacing.sm }}>
             <VSkeleton width="100%" height={60} borderRadius={radii.md} />
@@ -1300,7 +1289,7 @@ export default function HomeScreen() {
             title="Your day, auto-written"
             body="Your day writes itself here as you move — take a walk, we'll notice."
             ctaLabel="Add something manually"
-            onCta={() => router.push('/(tabs)/log')}
+            onCta={() => router.push('/log')}
           />
         ) : (
           feedItems.map((item, i) => <FeedRow key={item.id} item={item} index={i} />)
@@ -1398,13 +1387,9 @@ export default function HomeScreen() {
 
 const styles = StyleSheet.create({
   heroOuter: {
-    overflow: 'hidden',
+    backgroundColor: colors.surface,
     borderBottomWidth: 1,
     borderBottomColor: colors.border,
-  },
-  heroPhoto: {
-    ...StyleSheet.absoluteFillObject,
-    opacity: 0.22,
   },
   heroContainer: {
     backgroundColor: 'transparent',
@@ -1443,25 +1428,28 @@ const styles = StyleSheet.create({
     paddingTop: spacing.md,
     paddingBottom: spacing.xxl,
   },
+  // The confirm queue is the screen's single most important state when it's
+  // non-empty (DESIGN_DIRECTION.md — Information architecture): an accentSoft
+  // fill, not a white card, is what makes it read as the thing to act on
+  // before anything else on Today.
   reviewCard: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.sm,
-    backgroundColor: colors.surface,
+    backgroundColor: colors.accentSoft,
     borderRadius: radii.lg,
     borderWidth: 1,
-    borderColor: `${colors.primaryLight}33`,
+    borderColor: `${colors.accent}26`,
     marginHorizontal: spacing.md,
     marginBottom: spacing.md,
     paddingHorizontal: spacing.md,
     paddingVertical: 14,
-    ...shadows.card,
   },
   reviewIcon: {
     width: 34,
     height: 34,
     borderRadius: radii.full,
-    backgroundColor: colors.primaryGlow,
+    backgroundColor: colors.surface,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -1470,6 +1458,24 @@ const styles = StyleSheet.create({
   feedLabel: {
     paddingHorizontal: spacing.md,
     marginBottom: spacing.sm,
+  },
+  feedHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: spacing.md,
+    marginBottom: spacing.sm,
+  },
+  feedLabelInline: {
+    marginBottom: 0,
+  },
+  addButton: {
+    width: 28,
+    height: 28,
+    borderRadius: radii.full,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.accentSoft,
   },
   earlierSection: {
     marginTop: spacing.lg,

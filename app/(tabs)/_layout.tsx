@@ -108,28 +108,21 @@ export default function TabLayout() {
       <Tabs.Screen
         name="index"
         options={{
-          title: 'Home',
+          title: 'Today',
           tabBarIcon: ({ focused }) => <TabIcon name="home" focused={focused} dotColor={dotColor} />,
         }}
       />
       <Tabs.Screen
-        name="log"
+        name="trends"
         options={{
-          title: 'Log',
-          tabBarIcon: ({ focused }) => <TabIcon name="leaf" focused={focused} dotColor={dotColor} />,
-        }}
-      />
-      <Tabs.Screen
-        name="insights"
-        options={{
-          title: 'Insights',
+          title: 'Trends',
           tabBarIcon: ({ focused }) => <TabIcon name="chart" focused={focused} dotColor={dotColor} />,
         }}
       />
       <Tabs.Screen
         name="profile"
         options={{
-          title: 'Profile',
+          title: 'You',
           tabBarIcon: ({ focused }) => <TabIcon name="person" focused={focused} dotColor={dotColor} />,
         }}
       />

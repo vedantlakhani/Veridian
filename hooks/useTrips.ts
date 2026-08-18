@@ -432,7 +432,7 @@ export function useTrips(userId: string | undefined) {
             queuedEntryIdsRef.current.add(trip.id);
           } else {
             await fireNotification(
-              '🚗 Trip logged',
+              'Trip logged',
               `${trip.distanceKm.toFixed(1)} km drive · ${result.kg_co2e_total.toFixed(2)} kg CO₂e`,
             );
             queryClient.invalidateQueries({ queryKey: TRIP_KEYS.recentAutoLogs(userId) });
@@ -608,7 +608,7 @@ export function useTrips(userId: string | undefined) {
         if (status === 'auto_confirmed' && (trip.mode === 'walk' || trip.mode === 'cycling')) {
           const savedKg = roundedKm * CAR_KG_PER_KM;
           await fireNotification(
-            trip.mode === 'cycling' ? '🚲 Great choice!' : '🚶 Nice walk!',
+            trip.mode === 'cycling' ? 'Great choice!' : 'Nice walk!',
             `${roundedKm.toFixed(1)} km ${trip.mode === 'cycling' ? 'by bike' : 'on foot'} · You avoided ${savedKg.toFixed(2)} kg CO₂`,
           );
         }

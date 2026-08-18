@@ -39,7 +39,6 @@ import {
   spacing,
   typography,
   radii,
-  gradients,
   budgetStateFor,
   budgetStateColors,
 } from '@/lib/theme';
@@ -322,20 +321,7 @@ export default function ProfileScreen() {
     >
       {/* ── The Grove — hero panel ── */}
       <View style={[styles.heroPanel, { paddingTop: insets.top + spacing.md }]}>
-        <LinearGradient
-          colors={gradients.aurora}
-          locations={[0, 0.5, 1]}
-          start={{ x: 0.1, y: 0 }}
-          end={{ x: 0.9, y: 1 }}
-          style={StyleSheet.absoluteFillObject}
-        />
         <Grove avoidedKg={avoidedKg} width={groveWidth} />
-        <LinearGradient
-          colors={['transparent', colors.background]}
-          locations={[0.6, 1]}
-          style={StyleSheet.absoluteFillObject}
-          pointerEvents="none"
-        />
 
         <View style={styles.header}>
           <VPressable onPress={() => void handleAvatarTap()} haptic="light">
@@ -499,7 +485,8 @@ export default function ProfileScreen() {
               body="Race a friend to a smaller footprint"
               ctaLabel="Get started"
               onCta={() => setSheetMode('select')}
-              icon={<VIcon name="trophy" size={36} color={colors.textTertiary} />}
+              icon={<VIcon name="chart" size={32} color={colors.textTertiary} />}
+              ctaVariant="secondary"
             />
           ) : (
             participantRows.map((cp) => (
@@ -796,10 +783,12 @@ export default function ProfileScreen() {
 
       {/* ── Toasts ── */}
       {toastBadge && (
+        // Quiet record, not a trophy moment — neutral tone, plain checkmark,
+        // no "unlocked!"/verdict framing.
         <VToast
-          message={`Badge unlocked: ${toastBadge.name}`}
-          icon={<VIcon name="trophy" size={18} color={colors.primaryLight} />}
-          tone="success"
+          message={`${toastBadge.name} — added to your record`}
+          icon={<VIcon name="check" size={18} color={colors.textSecondary} />}
+          tone="neutral"
           onDismiss={() => setToastBadge(null)}
         />
       )}
@@ -829,6 +818,9 @@ const styles = StyleSheet.create({
   heroPanel: {
     paddingBottom: spacing.xl,
     overflow: 'hidden',
+    backgroundColor: colors.surface,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
   },
   header: {
     flexDirection: 'row',

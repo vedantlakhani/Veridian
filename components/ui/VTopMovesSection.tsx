@@ -19,7 +19,7 @@ interface VTopMovesSectionProps {
 
 export function VTopMovesSection({ moves }: VTopMovesSectionProps) {
   const handlePress = () => {
-    router.push('/(tabs)/log');
+    router.push('/log');
   };
 
   // Footer: shown when ≥2 moves and at least one has a weeklyPercent

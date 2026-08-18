@@ -6,7 +6,6 @@ import { QueryClientProvider } from '@tanstack/react-query';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
 import * as SplashScreen from 'expo-splash-screen';
-import { useFonts, Fraunces_600SemiBold, Fraunces_700Bold } from '@expo-google-fonts/fraunces';
 import { useAuthStore } from '@/stores/authStore';
 import { useOnboardingStore } from '@/stores/useOnboardingStore';
 import { queryClient } from '@/lib/queryClient';
@@ -38,6 +37,7 @@ function AppNavigator() {
         <Stack.Protected guard={!!session}>
           <Stack.Screen name="(tabs)" />
           <Stack.Screen name="carbon-calculator" />
+          <Stack.Screen name="log" options={{ presentation: 'modal' }} />
           <Stack.Screen name="recap" options={{ presentation: 'modal' }} />
           <Stack.Screen name="passport" options={{ presentation: 'modal' }} />
           <Stack.Screen name="link-bank" options={{ presentation: 'modal' }} />
@@ -54,10 +54,6 @@ function AppNavigator() {
 export default function RootLayout() {
   const { isLoading, initialize } = useAuthStore();
   const { isChecked, initialize: initOnboarding } = useOnboardingStore();
-  // Understory display face (Fraunces) — loaded in parallel with auth/onboarding
-  // init; splash stays up until fonts are ready too so hero headlines never
-  // flash a system-serif fallback on first paint.
-  const [fontsLoaded] = useFonts({ Fraunces_600SemiBold, Fraunces_700Bold });
 
   useEffect(() => {
     // Fire both init calls in parallel — splash stays until both resolve
@@ -66,17 +62,17 @@ export default function RootLayout() {
   }, []);
 
   useEffect(() => {
-    if (!isLoading && isChecked && fontsLoaded) {
+    if (!isLoading && isChecked) {
       SplashScreen.hideAsync();
     }
-  }, [isLoading, isChecked, fontsLoaded]);
+  }, [isLoading, isChecked]);
 
-  if (isLoading || !isChecked || !fontsLoaded) return null;
+  if (isLoading || !isChecked) return null;
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <QueryClientProvider client={queryClient}>
-        <StatusBar style="light" />
+        <StatusBar style="dark" />
         <VOfflineBanner />
         <AppNavigator />
       </QueryClientProvider>

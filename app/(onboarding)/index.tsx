@@ -32,12 +32,19 @@ const HERO_IMAGES = [
   require('@/assets/images/hero-mountain.jpg'),
 ];
 
+// The hero-*.jpg set was shot/graded for the dark Understory treatment
+// (docs/DESIGN_DIRECTION.md — open question: photography needs re-selection
+// or re-grading for a light ground). Pending real re-shoots, a low-opacity
+// white wash lifts the image's overall tone so it reads as graded for a light
+// UI instead of a straight dark-mode holdover; the ink scrim still does the
+// text-legibility work at the bottom edge.
 function SlideHero({ image }: { image: number }) {
   return (
     <Animated.View entering={FadeIn.duration(500)} style={styles.heroWrap} pointerEvents="none">
       <Image source={image} style={styles.heroImage} resizeMode="cover" />
+      <View style={styles.heroWash} />
       <LinearGradient
-        colors={['transparent', 'rgba(14,21,18,0.55)', colors.background]}
+        colors={['transparent', 'rgba(13,17,23,0.4)', colors.background]}
         locations={[0, 0.6, 1]}
         style={styles.heroScrim}
       />
@@ -297,6 +304,10 @@ const styles = StyleSheet.create({
   heroImage: {
     width: '100%',
     height: '100%',
+  },
+  heroWash: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(255,255,255,0.14)',
   },
   heroScrim: {
     position: 'absolute',

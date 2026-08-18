@@ -87,6 +87,12 @@ export function VText({ variant = 'body', color, style, children, ...props }: VT
   );
 }
 
+// Tabular figures on every number in the app, without exception — digits must
+// never shift width as values change (DESIGN_DIRECTION.md — Typography). Set
+// on the base style so it applies to every VText variant, not only mono/monoLg;
+// it's a no-op on non-digit glyphs so applying it unconditionally is safe.
 const styles = StyleSheet.create({
-  base: {},
+  base: {
+    fontVariant: ['tabular-nums'],
+  },
 });

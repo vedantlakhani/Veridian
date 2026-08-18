@@ -1,13 +1,16 @@
 import { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
+import { View, StyleSheet, ActivityIndicator } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, router } from 'expo-router';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import { useUpdateEntry } from '@/hooks/useEmissionEntries';
 import { useAuthStore } from '@/stores/authStore';
-import { VInput, VButton, VBadge, VCard } from '@/components/ui';
+import { VInput, VButton, VBadge, VCard, VText, VIcon, VPressable } from '@/components/ui';
 import type { EmissionEntryWithFactor } from '@/types/emission';
-import { colors, spacing, typography } from '@/lib/theme';
+import { colors, spacing } from '@/lib/theme';
+import { humanizeSubcategory } from '@/lib/format';
+import { groupLabelForFactor } from '@/lib/naicsGroups';
 
 export default function EditEntryScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -57,80 +60,114 @@ export default function EditEntryScreen() {
 
   if (isLoading || !entry) {
     return (
-      <View style={styles.centered}>
+      <SafeAreaView style={styles.centered} edges={['top', 'bottom']}>
         <ActivityIndicator color={colors.primary} />
-      </View>
+      </SafeAreaView>
     );
   }
 
   const canSave = parseFloat(quantity) > 0 && !updateEntry.isPending;
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.heading}>Edit Entry</Text>
+    <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
+      <View style={styles.header}>
+        <VText variant="title">Edit entry</VText>
+        <VPressable
+          onPress={() => router.back()}
+          haptic="light"
+          hitSlop={12}
+          style={styles.closeButton}
+          accessibilityRole="button"
+          accessibilityLabel="Close"
+        >
+          <VIcon name="close" size={20} color={colors.textSecondary} />
+        </VPressable>
+      </View>
 
-      <VCard elevation="sm" style={styles.detailCard}>
-        <VBadge
-          label={entry.emission_factors.category}
-          variant={entry.emission_factors.category}
+      <View style={styles.content}>
+        <VCard elevation="sm" style={styles.detailCard}>
+          <VBadge
+            label={entry.emission_factors.category}
+            variant={entry.emission_factors.category}
+          />
+          <VText variant="heading" style={styles.itemName}>
+            {entry.emission_factors.item}
+          </VText>
+          <VText variant="caption" style={styles.subcategory}>
+            {groupLabelForFactor(entry.emission_factors.subcategory) ??
+              humanizeSubcategory(entry.emission_factors.subcategory)}
+          </VText>
+        </VCard>
+
+        <VInput
+          label={`Quantity (${entry.emission_factors.unit})`}
+          value={quantity}
+          onChangeText={setQuantity}
+          keyboardType="decimal-pad"
+          placeholder="0.0"
+          style={styles.input}
         />
-        <Text style={styles.itemName}>{entry.emission_factors.item}</Text>
-        <Text style={styles.subcategory}>{entry.emission_factors.subcategory}</Text>
-      </VCard>
 
-      <VInput
-        label={`Quantity (${entry.emission_factors.unit})`}
-        value={quantity}
-        onChangeText={setQuantity}
-        keyboardType="decimal-pad"
-        placeholder="0.0"
-        style={styles.input}
-      />
+        <VText variant="body" style={styles.previewLabel}>
+          Estimated:{' '}
+          <VText variant="mono" style={styles.previewValue}>
+            {(parseFloat(quantity || '0') * entry.emission_factors.kg_co2e).toFixed(3)} kg CO&#8322;e
+          </VText>
+        </VText>
 
-      <Text style={styles.previewLabel}>
-        Estimated:{' '}
-        <Text style={styles.previewValue}>
-          {(parseFloat(quantity || '0') * entry.emission_factors.kg_co2e).toFixed(3)} kg CO&#8322;e
-        </Text>
-      </Text>
+        <VButton
+          label="Save changes"
+          loading={updateEntry.isPending}
+          onPress={handleSave}
+          disabled={!canSave}
+          style={styles.saveButton}
+        />
 
-      <VButton
-        label="Save Changes"
-        loading={updateEntry.isPending}
-        onPress={handleSave}
-        disabled={!canSave}
-        style={styles.saveButton}
-      />
-
-      <TouchableOpacity onPress={() => router.back()} style={styles.cancelButton}>
-        <Text style={styles.cancelText}>Cancel</Text>
-      </TouchableOpacity>
-    </View>
+        <VPressable onPress={() => router.back()} haptic="light" style={styles.cancelButton}>
+          <VText variant="body" style={styles.cancelText}>
+            Cancel
+          </VText>
+        </VPressable>
+      </View>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.background, padding: spacing.lg },
+  container: { flex: 1, backgroundColor: colors.background },
   centered: { flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.background },
-  heading: {
-    fontSize: typography.sizes.xxl, fontWeight: '700',
-    color: colors.textPrimary, marginBottom: spacing.lg,
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: spacing.lg,
+    paddingTop: spacing.sm,
+    paddingBottom: spacing.md,
   },
+  closeButton: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.surfaceSunken,
+  },
+  content: { flex: 1, paddingHorizontal: spacing.lg },
   detailCard: { marginBottom: spacing.lg },
   itemName: {
-    fontSize: typography.sizes.lg, fontWeight: '600',
-    color: colors.textPrimary, marginTop: spacing.sm,
+    marginTop: spacing.sm,
   },
-  subcategory: { fontSize: typography.sizes.sm, color: colors.textSecondary, marginTop: 4 },
+  subcategory: { marginTop: 4 },
   input: { marginBottom: spacing.sm },
   previewLabel: {
-    fontSize: typography.sizes.sm, color: colors.textSecondary,
+    color: colors.textSecondary,
     marginBottom: spacing.lg,
   },
   previewValue: {
-    fontFamily: typography.fontFamilyMono, fontWeight: '600', color: colors.textPrimary,
+    fontWeight: '600',
+    color: colors.textPrimary,
   },
   saveButton: { marginBottom: spacing.md },
   cancelButton: { alignItems: 'center', paddingVertical: spacing.sm },
-  cancelText: { fontSize: typography.sizes.md, color: colors.textSecondary },
+  cancelText: { color: colors.textSecondary },
 });

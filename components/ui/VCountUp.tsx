@@ -29,10 +29,11 @@ interface VCountUpProps {
   suffix?: string;
   style?: StyleProp<TextStyle>;
   /**
-   * Understory "signature hero motion" (DESIGN_DIRECTION.md): counts up with a
-   * subtle spring overshoot instead of a linear/eased tween. Opt-in — the
-   * default tween is left untouched for every non-hero readout already relying
-   * on it (VMetricCard, recap/passport secondary numbers, etc).
+   * Clearing's signature hero motion (DESIGN_DIRECTION.md — Motion): counts up
+   * with high damping and minimal overshoot — an instrument doesn't bounce —
+   * instead of a linear/eased tween. Opt-in — the default tween is left
+   * untouched for every non-hero readout already relying on it (VMetricCard,
+   * recap/passport secondary numbers, etc).
    */
   spring?: boolean;
 }

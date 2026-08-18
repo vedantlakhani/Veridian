@@ -21,7 +21,7 @@ interface SwipeableEntryRowProps {
   children: ReactNode;
   onDelete: () => void;
   onPress?: () => void;
-  /** Category accent bar on the left edge */
+  /** Category color, shown as a small dot (not an accent bar/rail) */
   accentColor?: string;
 }
 
@@ -72,8 +72,9 @@ export function SwipeableEntryRow({
           <Pressable
             onPress={onPress}
             disabled={!onPress}
-            style={[styles.rowCard, { borderLeftColor: accentColor }]}
+            style={styles.rowCard}
           >
+            <View style={[styles.accentDot, { backgroundColor: accentColor }]} />
             {children}
           </Pressable>
         </Animated.View>
@@ -111,13 +112,20 @@ const styles = StyleSheet.create({
   rowCard: {
     flexDirection: 'row',
     alignItems: 'center',
+    gap: spacing.sm,
     backgroundColor: colors.surface,
     borderRadius: radii.md,
     borderWidth: 1,
     borderColor: colors.border,
-    borderLeftWidth: 3,
     paddingVertical: spacing.sm,
     paddingHorizontal: spacing.md,
     minHeight: 56,
+  },
+  // Category color reads as a small dot, not a card-edge rail
+  // (DESIGN_DIRECTION.md — "No accent rail on rounded cards").
+  accentDot: {
+    width: 8,
+    height: 8,
+    borderRadius: radii.full,
   },
 });

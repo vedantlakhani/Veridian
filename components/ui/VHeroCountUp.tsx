@@ -11,9 +11,9 @@ import { VCountUp } from './VCountUp';
 import { colors, motion } from '@/lib/theme';
 
 // ─────────────────────────────────────────────────────────────────────────────
-// VHeroCountUp — Understory's signature "hero" motion (DESIGN_DIRECTION.md
-// §Motion): the footprint number counts up, then a spring overshoot settles
-// it into place while a brief primaryGlow pulse breathes behind it. Reserved
+// VHeroCountUp — Clearing's signature "hero" motion (DESIGN_DIRECTION.md
+// §Motion): the footprint number counts up, then settles with high damping
+// and minimal overshoot while a brief accentSoft pulse breathes behind it. Reserved
 // for the one big number per screen (recap/passport hero totals, the daily
 // story-card total) — everything else stays a plain VCountUp.
 // ─────────────────────────────────────────────────────────────────────────────

@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import Svg, { Circle, G, Path, Defs, LinearGradient, Stop } from 'react-native-svg';
+import Svg, { Circle, G, Path } from 'react-native-svg';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -38,19 +38,20 @@ interface AchievementBadgeProps {
 export default function AchievementBadge({
   achievement,
   earned,
-  size = 56,
+  size = 40,
   justEarned = false,
   progressHint,
 }: AchievementBadgeProps) {
   const iconPath =
     BADGE_ICONS[achievement.criteria_type as AchievementCriteriaType] ?? FALLBACK_ICON;
-  const gradientId = `badge-${achievement.id}`;
 
-  const pop = useSharedValue(justEarned ? 0.3 : 1);
+  // Presence stays a gentle fade-in rather than a bouncy "prize" pop — this
+  // shelf is a quiet personal record, not a trophy case.
+  const pop = useSharedValue(justEarned ? 0.85 : 1);
 
   useEffect(() => {
     if (justEarned) {
-      pop.value = withSpring(1, motion.springBouncy);
+      pop.value = withSpring(1, motion.springGentle);
     }
   }, [justEarned, pop]);
 
@@ -60,21 +61,16 @@ export default function AchievementBadge({
 
   return (
     <View style={[styles.wrap, { marginRight: spacing.sm }]}>
-      <Animated.View style={[earned && styles.earnedGlow, popStyle]}>
+      <Animated.View style={[earned && styles.earnedLift, popStyle]}>
         <Svg width={size} height={size} viewBox="0 0 56 56">
-          <Defs>
-            <LinearGradient id={gradientId} x1="0" y1="0" x2="1" y2="1">
-              <Stop offset="0" stopColor={colors.primaryLight} />
-              <Stop offset="1" stopColor={colors.primaryDeep} />
-            </LinearGradient>
-          </Defs>
-
-          {/* Background circle — gradient for earned, dim surface for locked */}
+          {/* Background circle — muted tint for earned, dim surface for
+              locked. Deliberately not a bright/saturated fill: this is a
+              record, not a medal. */}
           <Circle
             cx={28}
             cy={28}
             r={26}
-            fill={earned ? `url(#${gradientId})` : colors.surfaceElevated}
+            fill={earned ? colors.primaryContainer : colors.surfaceElevated}
             stroke={earned ? colors.primaryLight : colors.border}
             strokeWidth={1}
           />
@@ -126,8 +122,11 @@ export default function AchievementBadge({
 
 const styles = StyleSheet.create({
   wrap: { alignItems: 'center' },
-  earnedGlow: {
-    ...shadows.glowPrimary,
+  // A plain, neutral lift — matching the rest of the screen's card elevation
+  // rather than a colored "prize" glow — so an earned badge doesn't outrank
+  // the surrounding UI.
+  earnedLift: {
+    ...shadows.sm,
     borderRadius: 28,
   },
   name: {

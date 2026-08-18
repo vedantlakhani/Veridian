@@ -24,6 +24,10 @@ interface VChipProps {
   iconColor?: string;
   /** Equal-width behavior in a row */
   grow?: boolean;
+  /** Override the selected-state border/text color (defaults to colors.primaryLight) */
+  activeColor?: string;
+  /** Override the selected-state background color (defaults to colors.primaryGlow) */
+  activeBg?: string;
 }
 
 export function VChip({
@@ -34,6 +38,8 @@ export function VChip({
   icon,
   iconColor,
   grow = false,
+  activeColor,
+  activeBg,
 }: VChipProps) {
   const selection = useSharedValue(selected ? 1 : 0);
 
@@ -45,16 +51,16 @@ export function VChip({
     backgroundColor: interpolateColor(
       selection.value,
       [0, 1],
-      [colors.surfaceElevated, colors.primaryGlow],
+      [colors.surfaceElevated, activeBg ?? colors.primaryGlow],
     ),
     borderColor: interpolateColor(
       selection.value,
       [0, 1],
-      ['rgba(255,255,255,0.06)', colors.primaryLight],
+      [colors.border, activeColor ?? colors.primaryLight],
     ),
   }));
 
-  const contentColor = selected ? colors.primaryLight : colors.textSecondary;
+  const contentColor = selected ? (activeColor ?? colors.primaryLight) : colors.textSecondary;
 
   return (
     <VPressable

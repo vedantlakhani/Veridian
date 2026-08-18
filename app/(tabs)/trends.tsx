@@ -185,8 +185,6 @@ const storyStyles = StyleSheet.create({
     backgroundColor: colors.surface,
     borderWidth: 1,
     borderColor: colors.border,
-    borderLeftColor: colors.primary,
-    borderLeftWidth: 4,
     ...shadows.glowPrimary,
   },
   inner: { padding: spacing.lg },
@@ -264,8 +262,8 @@ const recordStyles = StyleSheet.create({
   unit: { fontSize: 10 },
 });
 
-// ─── Insights screen ──────────────────────────────────────────────────────────
-export default function InsightsScreen() {
+// ─── Trends screen ────────────────────────────────────────────────────────────
+export default function TrendsScreen() {
   const { user } = useAuthStore();
   const { width } = useWindowDimensions();
   const insets = useSafeAreaInsets();
@@ -378,7 +376,7 @@ export default function InsightsScreen() {
       showsVerticalScrollIndicator={false}
     >
       <VText variant="title" style={styles.heading}>
-        Insights
+        Trends
       </VText>
       <VText variant="caption" style={styles.subheading}>
         Your carbon, decoded.

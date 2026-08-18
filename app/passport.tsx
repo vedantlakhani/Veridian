@@ -403,7 +403,7 @@ function PassportCard({
 
           <View style={styles.passportHeaderRow}>
             <View style={styles.passportMarkWrap}>
-              <VIcon name="leaf" size={16} color={colors.textPrimary} strokeWidth={2} />
+              <VIcon name="leaf" size={16} color="#FFFFFF" strokeWidth={2} />
             </View>
             <VText style={styles.passportWordmark}>Veridian</VText>
           </View>
@@ -847,13 +847,19 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.lg,
     overflow: 'hidden',
   },
+  // This card is a deliberate dark evergreen surface — a passport cover, the
+  // one permitted exception to the light canvas (DESIGN_DIRECTION.md — full-
+  // bleed treatment reserved for emotional/shareable moments). Its on-card
+  // text and icon colors are explicit whites, NOT colors.textPrimary/border —
+  // those tokens mean near-black ink / dark hairlines under Clearing and
+  // would be invisible against this gradient.
   passportRingGhost: {
     position: 'absolute',
     width: 260,
     height: 260,
     borderRadius: 130,
     borderWidth: 28,
-    borderColor: colors.border,
+    borderColor: 'rgba(255,255,255,0.12)',
     top: -90,
     right: -80,
   },
@@ -867,7 +873,7 @@ const styles = StyleSheet.create({
     width: 24,
     height: 24,
     borderRadius: radii.full,
-    backgroundColor: colors.borderStrong,
+    backgroundColor: 'rgba(255,255,255,0.18)',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -875,7 +881,7 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: '800',
     letterSpacing: 0.4,
-    color: colors.textPrimary,
+    color: '#FFFFFF',
   },
   passportKicker: {
     fontSize: typography.sizes.xs,
@@ -902,7 +908,7 @@ const styles = StyleSheet.create({
     lineHeight: 76,
     letterSpacing: typography.letterSpacing.tight,
     fontWeight: typography.weights.semibold,
-    color: colors.textPrimary,
+    color: '#FFFFFF',
   },
   passportHeroUnit: {
     fontSize: typography.sizes.lg,
@@ -926,7 +932,7 @@ const styles = StyleSheet.create({
     fontFamily: typography.fontFamilyDisplay,
     fontSize: 32,
     fontWeight: typography.weights.semibold,
-    color: colors.textPrimary,
+    color: '#FFFFFF',
   },
   passportStatLabel: {
     fontSize: typography.sizes.md,

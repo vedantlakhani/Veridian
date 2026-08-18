@@ -47,28 +47,28 @@ const MEAL_NOTIFICATIONS: {
 }[] = [
   {
     identifier: 'veridian-meal-breakfast',
-    title: 'Morning check-in 🌿',
+    title: 'Morning check-in',
     body: "What's fuelling your day? Log breakfast in two taps.",
     hour: 8,
     minute: 30,
   },
   {
     identifier: 'veridian-meal-lunch',
-    title: 'Midday moment 🥗',
+    title: 'Midday moment',
     body: 'Log lunch and keep your carbon story going.',
     hour: 12,
     minute: 30,
   },
   {
     identifier: 'veridian-meal-dinner',
-    title: 'Evening wind-down 🍽️',
+    title: 'Evening wind-down',
     body: 'Dinner time — a quick log keeps your streak alive.',
     hour: 19,
     minute: 0,
   },
   {
     identifier: 'veridian-momentum-nudge',
-    title: 'Evening nudge 🌿',
+    title: 'Evening nudge',
     body: 'Log just one thing before midnight to keep your momentum building.',
     hour: 21,
     minute: 0,
