@@ -194,12 +194,22 @@ async function scheduleIfEnabled(userId: string): Promise<void> {
  * enabled, and registers push token. Re-runs whenever the app returns to
  * the foreground.
  */
+// scheduleIfEnabled makes a real Supabase network call (notification_preferences
+// select) with no try/catch of its own. Fired bare with `void`, a network-level
+// failure there becomes an unhandled promise rejection — which in dev surfaces
+// as a persistent LogBox toast that can intercept touches, and re-fires on every
+// AppState 'active' transition. Notifications are a courtesy, not load-bearing,
+// so a failure here is swallowed rather than left to surface as an app-level error.
+function runScheduleIfEnabled(userId: string): void {
+  void scheduleIfEnabled(userId).catch(() => {});
+}
+
 export function useNotifications(userId: string | undefined): void {
   useEffect(() => {
     if (!userId) return;
-    void scheduleIfEnabled(userId);
+    runScheduleIfEnabled(userId);
     const sub = AppState.addEventListener('change', (state) => {
-      if (state === 'active') void scheduleIfEnabled(userId);
+      if (state === 'active') runScheduleIfEnabled(userId);
     });
     return () => sub.remove();
   }, [userId]);

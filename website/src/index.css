@@ -1,0 +1,105 @@
+@import "tailwindcss";
+
+/*
+  Clearing — Veridian's design tokens, ported verbatim from lib/theme.ts
+  and docs/DESIGN_REQUIREMENTS.md. Do not introduce new hex values here;
+  extend this file instead so app and website stay token-identical.
+*/
+@theme {
+  /* Neutrals */
+  --color-canvas: #FCFCFD;
+  --color-surface: #FFFFFF;
+  --color-surface-sunken: #F4F5F7;
+  --color-border: rgba(13,17,23,0.08);
+  --color-border-strong: rgba(13,17,23,0.14);
+  --color-ink: #0D1117;
+  --color-ink-secondary: #5A6470;
+  --color-ink-tertiary: #8B95A1;
+
+  /* Accents — two-tier */
+  --color-accent: #0F6B41;
+  --color-accent-soft: rgba(15,107,65,0.08);
+  --color-accent-secondary: #3D5A80;
+  --color-accent-secondary-soft: rgba(61,90,128,0.08);
+
+  /* Semantic / budget-state */
+  --color-calm: #0F6B41;
+  --color-watch: #B47714;
+  --color-over: #B0442F;
+  --color-estimated: #8B95A1;
+
+  /* Category */
+  --color-food: #B0442F;
+  --color-transport: #2C6E9B;
+  --color-energy: #B47714;
+  --color-shopping: #6B4E8C;
+
+  /* Hero ring gradient stops (gradients.ringCalm, lib/theme.ts) — used only by the hero SVG */
+  --color-ring-calm-from: #17864F;
+  --color-ring-calm-to: #0F6B41;
+
+  /* Marketing-site container widths — used nowhere else but max-w-page / max-w-wide.
+     --container-card / --container-narrow exist because Tailwind v4 resolves its
+     built-in named max-w-xs / max-w-xl utilities through this same --spacing-*
+     namespace when no more specific theme key is defined — since --spacing-xs (6px)
+     and --spacing-xl (32px) are already our own app tokens above, using Tailwind's
+     max-w-xs/max-w-xl directly silently collapses to those tiny values instead of
+     Tailwind's real ~320px/~576px container widths. These two explicit keys give
+     components an unambiguous named class (max-w-card / max-w-narrow) instead. */
+  --container-page: 1120px;
+  --container-wide: 1360px;
+  --container-card: 20rem;
+  --container-narrow: 36rem;
+
+  /* Type scale (px, from lib/theme.ts typography.sizes) */
+  --font-size-xs: 11px;
+  --font-size-sm: 12px;
+  --font-size-md: 14px;
+  --font-size-lg: 16px;
+  --font-size-xl: 22px;
+  --font-size-2xl: 32px;
+  --font-size-display: 56px;
+  --font-size-mega: 72px;
+
+  /* Spacing scale */
+  --spacing-xxs: 4px;
+  --spacing-xs: 6px;
+  --spacing-sm: 8px;
+  --spacing-md: 16px;
+  --spacing-lg: 24px;
+  --spacing-xl: 32px;
+  --spacing-2xl: 48px;
+  --spacing-huge: 64px;
+
+  /* Radii */
+  --radius-xs: 6px;
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 20px;
+  --radius-2xl: 28px;
+
+  /* System font stack — no serif, no exotic display face (Clearing rule) */
+  --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --font-mono: ui-monospace, Menlo, Consolas, monospace;
+}
+
+:root {
+  color-scheme: light;
+  font-family: var(--font-sans);
+  background: var(--color-canvas);
+  color: var(--color-ink);
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  margin: 0;
+}
+
+/* Tabular figures everywhere numbers appear — non-negotiable per Clearing spec */
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
+}

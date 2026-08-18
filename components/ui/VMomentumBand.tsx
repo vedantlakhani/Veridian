@@ -80,7 +80,7 @@ export function VMomentumBand({ score, band, variant = 'card' }: VMomentumBandPr
 
   return (
     <VCard elevation="sm" style={cardStyles.card} accessibilityLabel={a11yLabel}>
-      <VText variant="label" style={cardStyles.label}>
+      <VText variant="label" style={cardStyles.label} numberOfLines={1}>
         Momentum
       </VText>
       <VText variant="heading" style={[cardStyles.value, { color: accent }]} numberOfLines={1}>
