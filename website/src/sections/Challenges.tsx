@@ -120,8 +120,8 @@ export default function Challenges() {
                 <tbody>
                   {UNDERSTORY_CHANGES.map((row) => (
                     <tr key={row.axis} className="border-t border-border">
-                      <td className="py-sm pr-md text-md text-ink-tertiary">{row.axis}</td>
-                      <td className="py-sm pr-md text-lg text-ink-tertiary">{row.understory}</td>
+                      <td className="py-sm pr-md text-md text-ink-secondary">{row.axis}</td>
+                      <td className="py-sm pr-md text-lg text-ink-secondary">{row.understory}</td>
                       <td className="py-sm text-lg font-bold text-ink">{row.clearing}</td>
                     </tr>
                   ))}
@@ -137,7 +137,7 @@ export default function Challenges() {
                     {row.axis}
                   </p>
                   <p className="mt-xxs text-lg">
-                    <span className="text-ink-tertiary">{row.understory}</span>
+                    <span className="text-ink-secondary">{row.understory}</span>
                     <span className="mx-sm text-ink-tertiary" aria-hidden="true">
                       →
                     </span>

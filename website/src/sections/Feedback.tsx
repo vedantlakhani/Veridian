@@ -219,7 +219,7 @@ export default function Feedback() {
                 <span aria-hidden="true" className="h-[1em] w-14 rounded-xs bg-border-strong" />
                 <span>kg CO2e</span>
               </p>
-              <p className="mt-xxs text-xs text-ink-tertiary">Estimated from spend category — receipts upgrade this.</p>
+              <p className="mt-xxs text-xs text-ink-secondary">Estimated from spend category — receipts upgrade this.</p>
             </div>
           }
           prose={

@@ -64,16 +64,20 @@ function useWaitlistState() {
 
 async function submitEmail(email: string) {
   setStoreState({ status: 'submitting', message: null })
-  const result = await submitToWaitlist(email)
-  if (result.ok) {
-    setStoreState({ status: 'success', message: null })
-    return
+  try {
+    const result = await submitToWaitlist(email)
+    if (result.ok) {
+      setStoreState({ status: 'success', message: null })
+      return
+    }
+    if (result.code === 'duplicate') {
+      setStoreState({ status: 'already', message: result.error })
+      return
+    }
+    setStoreState({ status: 'error', message: result.error })
+  } catch {
+    setStoreState({ status: 'error', message: 'Something went wrong. Please try again.' })
   }
-  if (result.error === "You're already on the list!") {
-    setStoreState({ status: 'already', message: result.error })
-    return
-  }
-  setStoreState({ status: 'error', message: result.error })
 }
 
 /* ---- decorative check glyph — line-art, no fill; the message text carries the meaning ---- */
@@ -148,6 +152,7 @@ export default function WaitlistCTA({ variant }: WaitlistCTAProps) {
         placeholder="you@example.com"
         value={email}
         onChange={(e) => setEmail(e.target.value)}
+        disabled={isSubmitting}
         aria-invalid={state.status === 'error'}
         aria-describedby={state.status === 'error' ? errorId : undefined}
         className={inputClassName}
@@ -213,7 +218,7 @@ export default function WaitlistCTA({ variant }: WaitlistCTAProps) {
           {errorText}
         </div>
 
-        <p className="mt-md text-sm text-ink-tertiary">
+        <p className="mt-md text-sm text-ink-secondary">
           One email. No newsletter, no launch countdown, no sharing your address.
         </p>
       </motion.div>

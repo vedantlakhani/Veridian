@@ -64,7 +64,7 @@ export default function Distribution() {
             <p className="mt-xxs text-xs font-mono uppercase tracking-widest text-ink-tertiary">
               TestFlight
             </p>
-            <p className="mt-xs max-w-prose text-md text-ink-tertiary">
+            <p className="mt-xs max-w-prose text-md text-ink-secondary">
               gated on an Apple Developer account decision I haven&rsquo;t made yet
             </p>
           </div>
