@@ -84,11 +84,11 @@ function FixBlock({ index, title, before, after, prose, evidence }: FixBlockProp
   const reveal = useReveal()
   return (
     <motion.div {...reveal} className="border-t border-border py-xl">
-      <div className="mb-md flex flex-wrap items-baseline gap-x-sm gap-y-xxs">
+      <div className="mb-lg flex flex-wrap items-baseline gap-x-sm gap-y-xxs">
         <span className="text-xs font-mono uppercase tracking-widest tabular-nums text-ink-tertiary">
           FIX {index}
         </span>
-        <h3 className="text-xl font-bold tracking-tight text-ink">{title}</h3>
+        <h3 className="text-xl font-extrabold tracking-tight text-ink">{title}</h3>
       </div>
 
       <div className="grid max-w-page grid-cols-1 gap-md md:grid-cols-2">
@@ -109,7 +109,7 @@ function FixBlock({ index, title, before, after, prose, evidence }: FixBlockProp
         </div>
       </div>
 
-      <p className="mt-md max-w-prose text-lg leading-relaxed text-ink-secondary">{prose}</p>
+      <p className="mt-lg max-w-prose text-lg leading-relaxed text-ink-secondary">{prose}</p>
       <p className="mt-sm font-mono text-xs text-ink-tertiary">{evidence}</p>
     </motion.div>
   )
@@ -124,13 +124,13 @@ export default function Feedback() {
     <section id="feedback" className="border-t border-border py-2xl md:py-huge">
       <div className="mx-auto max-w-page px-md md:px-lg">
         <motion.div {...headerReveal}>
-          <p className="mb-sm text-xs font-mono uppercase tracking-widest tabular-nums text-ink-tertiary">
+          <p className="mb-md text-xs font-mono uppercase tracking-widest tabular-nums text-ink-tertiary">
             08 / FEEDBACK
           </p>
-          <h2 className="text-2xl font-bold tracking-tight text-ink">Adapting to User Feedback</h2>
+          <h2 className="text-2xl font-extrabold tracking-tight text-ink">Adapting to User Feedback</h2>
         </motion.div>
 
-        <motion.p {...introReveal} className="mt-md max-w-prose text-xl leading-relaxed text-ink">
+        <motion.p {...introReveal} className="mt-lg max-w-prose text-xl leading-relaxed text-ink">
           This week&rsquo;s testing surfaced four concrete problems, and I want to show the actual
           fix for each rather than just claim I &ldquo;iterate fast.&rdquo;
         </motion.p>
@@ -276,7 +276,7 @@ export default function Feedback() {
         {/* Verification strip — proof-of-rigor, belongs at the end */}
         <motion.div
           {...closerReveal}
-          className="mt-2xl rounded-lg bg-surface-sunken p-md"
+          className="mt-2xl rounded-lg bg-surface-sunken p-lg"
         >
           <div className="grid grid-cols-1 divide-y divide-border sm:grid-cols-3 sm:divide-y-0 sm:divide-x">
             <div className="py-sm font-mono text-md text-ink-secondary sm:py-0 sm:pr-lg">

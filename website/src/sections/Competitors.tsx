@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react';
+import type { MouseEvent, ReactNode } from 'react';
 import { useEffect, useRef, useState } from 'react';
 import { motion, useInView, useReducedMotion, useSpring } from 'framer-motion';
 
@@ -9,6 +9,14 @@ import { motion, useInView, useReducedMotion, useSpring } from 'framer-motion';
  * A two-panel argument: a graveyard, and against it, the set that actually
  * converts. Real <table> markup at md+, stacked definition blocks below md
  * (no horizontal-scrolling four-column table on a phone).
+ *
+ * Micro-interaction note: the brief asks for a restrained tilt/magnetic hover
+ * on either the comparison rows or a stat callout. Tilting the actual <tr>
+ * rows was tried in review and rejected — a perspective transform on a real
+ * data row fights the table's own alignment and readability, which the brief
+ * explicitly permits skipping. The two pulled-out stat callouts below the
+ * tables are the better fit: they're standalone numeral moments, not dense
+ * tabular data, and are named directly in the brief as a valid target.
  */
 
 // ---------------------------------------------------------------------------
@@ -31,6 +39,54 @@ function Reveal({
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, margin: '-10% 0px' }}
       transition={{ duration: 0.28, ease: [0.2, 0, 0, 1], delay }}
+    >
+      {children}
+    </motion.div>
+  );
+}
+
+/**
+ * Restrained pointer-tilt for the stat callouts (technique: tilt/magnetic
+ * micro-interaction). Feature-detects a fine pointer so touch devices never
+ * see it, respects prefers-reduced-motion, and springs back to flat with the
+ * product's signature damping:30/stiffness:220 curve — settles, never
+ * overshoots. Capped at a few degrees of rotation, never more.
+ */
+const TILT_MAX_DEG = 5;
+
+function TiltCard({ children, className }: { children: ReactNode; className?: string }) {
+  const reduceMotion = useReducedMotion();
+  const [pointerFine, setPointerFine] = useState(false);
+  const rotateX = useSpring(0, { damping: 30, stiffness: 220 });
+  const rotateY = useSpring(0, { damping: 30, stiffness: 220 });
+
+  useEffect(() => {
+    if (typeof window === 'undefined' || !window.matchMedia) return;
+    setPointerFine(window.matchMedia('(pointer: fine)').matches);
+  }, []);
+
+  const enabled = pointerFine && !reduceMotion;
+
+  function handleMouseMove(e: MouseEvent<HTMLDivElement>) {
+    if (!enabled) return;
+    const rect = e.currentTarget.getBoundingClientRect();
+    const px = (e.clientX - rect.left) / rect.width - 0.5;
+    const py = (e.clientY - rect.top) / rect.height - 0.5;
+    rotateY.set(px * TILT_MAX_DEG * 2);
+    rotateX.set(-py * TILT_MAX_DEG * 2);
+  }
+
+  function handleMouseLeave() {
+    rotateX.set(0);
+    rotateY.set(0);
+  }
+
+  return (
+    <motion.div
+      className={className}
+      style={{ rotateX, rotateY, transformPerspective: 800 }}
+      onMouseMove={handleMouseMove}
+      onMouseLeave={handleMouseLeave}
     >
       {children}
     </motion.div>
@@ -353,19 +409,19 @@ export default function Competitors() {
     >
       <div className="mx-auto max-w-wide">
         <Reveal>
-          <p className="mb-sm text-xs font-mono uppercase tracking-widest text-ink-tertiary tabular-nums">
+          <p className="mb-md text-xs font-mono uppercase tracking-widest text-ink-tertiary tabular-nums">
             04 / COMPETITORS
           </p>
           <h2
             id="competitors-heading"
-            className="mb-lg text-2xl font-bold tracking-tight text-ink"
+            className="mb-lg text-2xl font-extrabold tracking-tight text-ink"
           >
             Competitors
           </h2>
         </Reveal>
 
         <Reveal className="mb-2xl max-w-prose">
-          <p className="text-lg leading-relaxed text-ink-secondary">
+          <p className="mt-xs text-lg leading-relaxed text-ink-secondary">
             <span className="text-ink">
               I didn't do a casual "here are some other carbon apps" pass.
             </span>{' '}
@@ -386,29 +442,34 @@ export default function Competitors() {
           </div>
         </Reveal>
 
-        {/* Stat callouts pulled out of the tables */}
+        {/* Stat callouts pulled out of the tables — the two elements carrying
+            the restrained pointer-tilt micro-interaction (see note above). */}
         <div className="my-2xl grid grid-cols-1 gap-xl md:grid-cols-2">
           <Reveal>
-            <p className="mb-sm text-display font-extrabold tracking-tight tabular-nums text-ink">
-              <StatNumber value={2} format={(n) => `~${Math.round(n)}%`} />
-            </p>
-            <p className="max-w-prose text-lg text-ink-secondary">
-              Strava's premium penetration across 180M registered users. The ceiling case.
-            </p>
+            <TiltCard className="rounded-lg p-md -m-md">
+              <p className="mb-sm text-display font-extrabold tracking-tight tabular-nums text-ink">
+                <StatNumber value={2} format={(n) => `~${Math.round(n)}%`} />
+              </p>
+              <p className="max-w-prose text-lg text-ink-secondary">
+                Strava's premium penetration across 180M registered users. The ceiling case.
+              </p>
+            </TiltCard>
           </Reveal>
           <Reveal delay={0.05}>
-            <p className="mb-sm text-display font-extrabold tracking-tight tabular-nums text-ink">
-              #1
-            </p>
-            <p className="max-w-prose text-lg text-ink-secondary">
-              Where "good design" ranked in Flighty's own{' '}
-              <StatNumber
-                value={1400}
-                format={(n) => Math.round(n).toLocaleString('en-US')}
-                className="font-bold tabular-nums text-ink"
-              />
-              -user survey.
-            </p>
+            <TiltCard className="rounded-lg p-md -m-md">
+              <p className="mb-sm text-display font-extrabold tracking-tight tabular-nums text-ink">
+                #1
+              </p>
+              <p className="max-w-prose text-lg text-ink-secondary">
+                Where "good design" ranked in Flighty's own{' '}
+                <StatNumber
+                  value={1400}
+                  format={(n) => Math.round(n).toLocaleString('en-US')}
+                  className="font-bold tabular-nums text-ink"
+                />
+                -user survey.
+              </p>
+            </TiltCard>
           </Reveal>
         </div>
 

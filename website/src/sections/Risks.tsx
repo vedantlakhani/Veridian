@@ -107,19 +107,19 @@ export default function Risks() {
     <section id="risks" className="border-t border-border py-2xl md:py-huge">
       <div className="mx-auto max-w-page px-md md:px-lg">
         <motion.div {...headerReveal}>
-          <p className="mb-sm text-xs font-mono uppercase tracking-widest tabular-nums text-ink-tertiary">
+          <p className="mb-md text-xs font-mono uppercase tracking-widest tabular-nums text-ink-tertiary">
             10 / RISKS
           </p>
-          <h2 className="text-2xl font-bold tracking-tight text-ink">Risks</h2>
+          <h2 className="text-2xl font-extrabold tracking-tight text-ink">Risks</h2>
         </motion.div>
 
         {/* Lead risk */}
-        <motion.div {...leadReveal} className="mt-xl max-w-prose">
+        <motion.div {...leadReveal} className="mt-2xl max-w-prose">
           <p className="text-xl font-bold uppercase tracking-widest text-watch">Open question</p>
-          <p className="mt-sm text-2xl font-bold tracking-tight text-ink">
+          <p className="mt-md text-2xl font-extrabold tracking-tight text-ink">
             The hard-outcome monetization hook is still an open question.
           </p>
-          <p className="mt-md text-lg leading-relaxed text-ink-secondary">
+          <p className="mt-lg text-lg leading-relaxed text-ink-secondary">
             <span className="text-ink">
               The current plan is a flat subscription for the intelligence layer &mdash; the
               autopilot itself, priced like Copilot Money &mdash; and never an offset transaction
@@ -142,26 +142,26 @@ export default function Risks() {
           className="mt-xl grid grid-cols-1 divide-y divide-border border-y border-border md:grid-cols-3 md:divide-y-0 md:divide-x"
         >
           <div className="py-lg md:pr-lg">
-            <p className="text-2xl font-bold tabular-nums text-ink">
+            <p className="text-display font-extrabold tracking-tight tabular-nums text-ink">
               <CountUp value={9} suffix=" years" />
             </p>
-            <p className="mt-xs text-md text-ink-secondary">
+            <p className="mt-sm max-w-prose text-md text-ink-secondary">
               Miles ran flawless passive tracking and still shut down. Soft point rewards have a
               ceiling.
             </p>
           </div>
           <div className="py-lg md:px-lg">
-            <p className="text-2xl font-bold tabular-nums text-ink">
+            <p className="text-display font-extrabold tracking-tight tabular-nums text-ink">
               <CountUp value={87} suffix="%+" />
             </p>
-            <p className="mt-xs text-md text-ink-secondary">
+            <p className="mt-sm max-w-prose text-md text-ink-secondary">
               Of many offset types are at high risk of not delivering real reductions (2024
               research). Why there will never be an offset transaction cut.
             </p>
           </div>
           <div className="py-lg md:pl-lg">
-            <p className="text-2xl font-bold text-ink">Root</p>
-            <p className="mt-xs text-md text-ink-secondary">
+            <p className="text-display font-extrabold tracking-tight text-ink">Root</p>
+            <p className="mt-sm max-w-prose text-md text-ink-secondary">
               The profitable comparison case. Passive tracking endures when it&rsquo;s tied to a
               hard outcome the user already values.
             </p>
@@ -188,8 +188,8 @@ export default function Risks() {
               <StatusChip tone={risk.status === 'Mitigated' ? 'accent' : 'neutral'}>
                 {risk.status}
               </StatusChip>
-              <div>
-                <p className="text-lg font-bold text-ink">{risk.name}</p>
+              <div className="max-w-prose">
+                <p className="text-lg font-extrabold text-ink">{risk.name}</p>
                 <p className="mt-xxs text-lg text-ink-secondary">{risk.body}</p>
                 {risk.note && <p className="mt-xxs text-md text-ink-tertiary">{risk.note}</p>}
               </div>

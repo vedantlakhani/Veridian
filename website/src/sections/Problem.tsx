@@ -1,4 +1,5 @@
-import { motion, useReducedMotion } from 'framer-motion'
+import { useRef } from 'react'
+import { motion, useReducedMotion, useScroll, useTransform } from 'framer-motion'
 import type { Variants } from 'framer-motion'
 
 /**
@@ -63,6 +64,18 @@ export default function Problem() {
   const lawReveal = useReveal()
   const closingReveal = useReveal()
 
+  // Scroll-linked parallax on the numbered rail: the index digits (a
+  // background-ish layer, low-contrast tertiary ink) drift a few px against
+  // the body text beside them as the section scrolls through view. Capped
+  // well under 40px of total travel; inert under reduced motion.
+  const reducedMotion = useReducedMotion()
+  const railRef = useRef<HTMLDivElement>(null)
+  const { scrollYProgress: railProgress } = useScroll({
+    target: railRef,
+    offset: ['start end', 'end start'],
+  })
+  const numY = useTransform(railProgress, [0, 1], reducedMotion ? [0, 0] : [-16, 16])
+
   return (
     <section
       id="problem"
@@ -71,24 +84,29 @@ export default function Problem() {
     >
       <div className="mx-auto max-w-page px-md md:px-lg">
         <motion.div {...headerReveal}>
-          <p className="mb-sm text-xs font-mono uppercase tracking-widest tabular-nums text-ink-tertiary">
+          <p className="mb-md text-xs font-mono uppercase tracking-widest tabular-nums text-ink-tertiary">
             02 / PROBLEM
           </p>
-          <h2 id="problem-heading" className="text-2xl font-bold tracking-tight text-ink">
+          <h2 id="problem-heading" className="text-2xl font-extrabold tracking-tight text-ink">
             Problem
           </h2>
         </motion.div>
 
-        <motion.p {...ledeReveal} className="mt-lg max-w-prose text-xl leading-relaxed text-ink">
+        <motion.p {...ledeReveal} className="mt-xl max-w-prose text-xl leading-relaxed text-ink">
           Every consumer carbon app has the same three failures, and I built into all three before
           I saw them clearly.
         </motion.p>
 
         {/* Part A — the numbered rail. No icons; icons would soften an indictment. */}
-        <motion.div {...railReveal} className="mt-lg">
+        <motion.div {...railReveal} ref={railRef} className="mt-lg">
           {FAILURES.map((f) => (
             <div key={f.num} className="grid grid-cols-[auto_1fr] gap-x-md border-t border-border py-lg">
-              <span className="font-mono text-md tabular-nums text-ink-tertiary">{f.num}</span>
+              <motion.span
+                style={{ y: numY }}
+                className="font-mono text-md tabular-nums text-ink-tertiary"
+              >
+                {f.num}
+              </motion.span>
               <div className="max-w-prose">
                 <p className="text-lg font-bold text-ink">{f.lead}</p>
                 <p className="mt-xs text-lg text-ink-secondary">{f.body}</p>
@@ -134,10 +152,14 @@ export default function Problem() {
           </p>
         </motion.div>
 
-        {/* Closing sentence — resist styling it; it carries itself. */}
-        <motion.p {...closingReveal} className="max-w-prose text-lg leading-relaxed text-ink-secondary">
-          A carbon app that asks you to log manually is competing with your own forgetfulness every
-          single day, and forgetfulness wins.
+        {/* Closing sentence — the one two-tone punchline in this section:
+            setup in secondary ink, the actual verdict in full-weight ink. */}
+        <motion.p {...closingReveal} className="max-w-prose text-lg leading-relaxed">
+          <span className="text-ink-secondary">
+            A carbon app that asks you to log manually is competing with your own forgetfulness
+            every single day,{' '}
+          </span>
+          <span className="font-extrabold text-ink">and forgetfulness wins.</span>
         </motion.p>
       </div>
     </section>

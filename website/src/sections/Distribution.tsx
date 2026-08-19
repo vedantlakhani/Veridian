@@ -36,32 +36,37 @@ export default function Distribution() {
     <section id="distribution" className="border-t border-border py-2xl md:py-huge">
       <div className="mx-auto max-w-page px-md md:px-lg">
         <motion.div {...headerReveal}>
-          <p className="mb-sm text-xs font-mono uppercase tracking-widest tabular-nums text-ink-tertiary">
+          <p className="mb-md text-xs font-mono uppercase tracking-widest tabular-nums text-ink-tertiary">
             07 / DISTRIBUTION
           </p>
           <h2 className="text-2xl font-bold tracking-tight text-ink">Distribution</h2>
         </motion.div>
 
-        {/* Status strip — the zero fades in at full size and full contrast. No count-up. */}
+        {/* Status strip — the zero fades in at full size and full contrast. No count-up.
+            "0" carries the section's one type-confidence moment: the honest number is the
+            actual headline here, so it's the one figure on the page sized up to text-display
+            rather than the text-2xl ceiling used everywhere else on this strip. */}
         <motion.div
           {...stripReveal}
-          className="mt-xl grid grid-cols-1 divide-y divide-border border-y border-border sm:grid-cols-3 sm:divide-y-0 sm:divide-x"
+          className="mt-2xl grid grid-cols-1 divide-y divide-border border-y border-border sm:grid-cols-3 sm:divide-y-0 sm:divide-x"
         >
           <div className="py-md sm:py-lg sm:pr-lg">
-            <p className="text-2xl font-bold tabular-nums text-ink">0</p>
-            <p className="mt-xxs text-xs font-mono uppercase tracking-widest text-ink-tertiary">
+            <p className="text-display font-extrabold leading-none tracking-tight tabular-nums text-ink">
+              0
+            </p>
+            <p className="mt-xs text-xs font-mono uppercase tracking-widest text-ink-tertiary">
               Public users
             </p>
           </div>
           <div className="py-md sm:px-lg">
             <p className="text-2xl font-bold text-ink-secondary">NONE</p>
-            <p className="mt-xxs text-xs font-mono uppercase tracking-widest text-ink-tertiary">
+            <p className="mt-xs text-xs font-mono uppercase tracking-widest text-ink-tertiary">
               App Store listing
             </p>
           </div>
           <div className="py-md sm:pl-lg">
             <p className="text-2xl font-bold tabular-nums text-watch">NEXT STEP</p>
-            <p className="mt-xxs text-xs font-mono uppercase tracking-widest text-ink-tertiary">
+            <p className="mt-xs text-xs font-mono uppercase tracking-widest text-ink-tertiary">
               TestFlight
             </p>
             <p className="mt-xs max-w-prose text-md text-ink-secondary">

@@ -104,32 +104,48 @@ const quietOptimizerRows: PersonaRow[] = [
 
 export default function TargetUser() {
   return (
-    <section
-      id="targetuser"
-      aria-labelledby="targetuser-heading"
-      className="border-t border-border px-md py-2xl md:px-lg md:py-huge"
-    >
+    <section id="targetuser" aria-labelledby="targetuser-heading">
+      {/* Organic divider — the one deliberate curve on the page, replacing the
+          plain hairline at this one high-impact pivot (Problem → Target User).
+          Single border-tone stroke, restrained amplitude; not repeated
+          elsewhere in the build. */}
+      <div aria-hidden="true" className="w-full overflow-hidden leading-[0] text-border-strong">
+        <svg viewBox="0 0 1440 64" preserveAspectRatio="none" className="block h-6 w-full md:h-10">
+          <path
+            d="M0,32 C 240,58 480,6 720,32 C 960,58 1200,6 1440,32"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.5"
+          />
+        </svg>
+      </div>
+
+      <div className="px-md py-2xl md:px-lg md:py-huge">
       <div className="mx-auto max-w-page">
         <Reveal>
-          <p className="mb-sm text-xs font-mono uppercase tracking-widest text-ink-tertiary tabular-nums">
+          <p className="mb-md text-xs font-mono uppercase tracking-widest text-ink-tertiary tabular-nums">
             03 / TARGET USER
           </p>
           <h2
             id="targetuser-heading"
-            className="mb-lg text-2xl font-bold tracking-tight text-ink"
+            className="mb-xl text-2xl font-extrabold tracking-tight text-ink"
           >
             Target User
           </h2>
         </Reveal>
 
+        {/* Two-tone emphasis: the vague, superseded persona sits muted; the
+            actual research finding — what replaced it — carries full weight. */}
         <Reveal className="mb-2xl max-w-prose">
-          <p className="text-lg leading-relaxed text-ink-secondary">
-            <span className="text-ink">
+          <p className="text-lg leading-relaxed">
+            <span className="text-ink-tertiary">
               I built the first version for a vague "environmentally conscious 25–40 year old in
               an urban market."
             </span>{' '}
-            Research this summer replaced that with three real, differentiated personas, plus a
-            persona I deliberately do not build for:
+            <span className="font-extrabold text-ink">
+              Research this summer replaced that with three real, differentiated personas
+            </span>
+            <span className="text-ink-secondary">, plus a persona I deliberately do not build for:</span>
           </p>
         </Reveal>
 
@@ -138,7 +154,7 @@ export default function TargetUser() {
           <div className="rounded-xl border border-border bg-surface p-lg md:p-xl">
             <div className="mb-md flex flex-wrap items-center gap-sm">
               <Chip tone="primary">Primary</Chip>
-              <h3 className="text-xl font-bold tracking-tight text-ink">The Quiet Optimizer</h3>
+              <h3 className="text-xl font-extrabold tracking-tight text-ink">The Quiet Optimizer</h3>
             </div>
 
             <dl className="grid grid-cols-1 gap-x-lg gap-y-sm md:grid-cols-[14ch_1fr]">
@@ -217,6 +233,7 @@ export default function TargetUser() {
             </p>
           </div>
         </Reveal>
+      </div>
       </div>
     </section>
   );

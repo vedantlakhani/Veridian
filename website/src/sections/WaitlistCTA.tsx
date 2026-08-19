@@ -1,6 +1,6 @@
-import { useId, useState, useSyncExternalStore } from 'react'
-import type { FormEvent } from 'react'
-import { motion, useReducedMotion } from 'framer-motion'
+import { useEffect, useId, useState, useSyncExternalStore } from 'react'
+import type { FormEvent, PointerEvent as ReactPointerEvent } from 'react'
+import { motion, useReducedMotion, useSpring } from 'framer-motion'
 import type { Variants } from 'framer-motion'
 import { submitToWaitlist } from '../lib/waitlist'
 
@@ -33,6 +33,60 @@ function useReveal(delay = 0) {
     viewport: { once: true, margin: '-10% 0px' },
     variants,
     transition: { duration: 0.28, ease: EASE_BASE, delay },
+  }
+}
+
+/**
+ * Restrained tilt/magnetic hover for the submit button — pointer-fine devices
+ * only (feature-detected via matchMedia, never a touch heuristic) and never
+ * under reduced motion. Rotation is capped at a few degrees and settles on
+ * the brand's signature spring (damping 30 / stiffness 220 — "settles, never
+ * bounces"), the same law that governs every other motion moment in Clearing.
+ */
+function useMagneticTilt() {
+  const reduced = useReducedMotion()
+  const [pointerFine, setPointerFine] = useState(false)
+
+  useEffect(() => {
+    if (typeof window === 'undefined' || !window.matchMedia) return
+    const query = window.matchMedia('(pointer: fine)')
+    setPointerFine(query.matches)
+    const onChange = (e: MediaQueryListEvent) => setPointerFine(e.matches)
+    query.addEventListener('change', onChange)
+    return () => query.removeEventListener('change', onChange)
+  }, [])
+
+  const active = pointerFine && !reduced
+  const settle = { damping: 30, stiffness: 220 }
+  const rotateX = useSpring(0, settle)
+  const rotateY = useSpring(0, settle)
+  const translateX = useSpring(0, settle)
+  const translateY = useSpring(0, settle)
+
+  function onPointerMove(e: ReactPointerEvent<HTMLButtonElement>) {
+    if (!active) return
+    const rect = e.currentTarget.getBoundingClientRect()
+    const px = (e.clientX - rect.left) / rect.width - 0.5
+    const py = (e.clientY - rect.top) / rect.height - 0.5
+    rotateY.set(px * 6)
+    rotateX.set(py * -6)
+    translateX.set(px * 3)
+    translateY.set(py * 3)
+  }
+
+  function onPointerLeave() {
+    rotateX.set(0)
+    rotateY.set(0)
+    translateX.set(0)
+    translateY.set(0)
+  }
+
+  return {
+    onPointerMove,
+    onPointerLeave,
+    style: active
+      ? { rotateX, rotateY, x: translateX, y: translateY, transformPerspective: 600 }
+      : undefined,
   }
 }
 
@@ -106,6 +160,9 @@ type WaitlistCTAProps = {
 export default function WaitlistCTA({ variant }: WaitlistCTAProps) {
   const reduced = useReducedMotion()
   const reveal = useReveal()
+  const revealLede = useReveal(0.07)
+  const revealForm = useReveal(0.14)
+  const tilt = useMagneticTilt()
   const state = useWaitlistState()
   const [email, setEmail] = useState('')
   const inputId = useId()
@@ -162,6 +219,9 @@ export default function WaitlistCTA({ variant }: WaitlistCTAProps) {
         disabled={isSubmitting}
         whileTap={!reduced && !isSubmitting ? { scale: 0.97 } : undefined}
         transition={{ duration: 0.18 }}
+        onPointerMove={tilt.onPointerMove}
+        onPointerLeave={tilt.onPointerLeave}
+        style={tilt.style}
         className={buttonClassName}
       >
         {isSubmitting ? 'Sending…' : 'Get notified when it ships'}
@@ -176,9 +236,9 @@ export default function WaitlistCTA({ variant }: WaitlistCTAProps) {
 
   const doneBlock = (
     <motion.p
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      transition={{ duration: 0.18 }}
+      initial={reduced ? { opacity: 0 } : { opacity: 0, y: 6 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={reduced ? { duration: 0.18 } : { type: 'spring', damping: 30, stiffness: 220 }}
       aria-live="polite"
       className="flex items-center gap-sm text-lg text-accent"
     >
@@ -208,15 +268,15 @@ export default function WaitlistCTA({ variant }: WaitlistCTAProps) {
         <h2 className="text-xl font-bold tracking-tight text-ink md:text-2xl">
           There&rsquo;s nothing to download yet.
         </h2>
-        <p className="mt-sm text-lg leading-relaxed text-ink-secondary">
+        <motion.p {...revealLede} className="mt-md text-lg leading-relaxed text-ink-secondary">
           TestFlight is the next real step. One email when it&rsquo;s actually shippable &mdash;
           nothing before that.
-        </p>
+        </motion.p>
 
-        <div className="mt-lg text-left">
+        <motion.div {...revealForm} className="mt-xl text-left">
           {isDone ? doneBlock : form}
           {errorText}
-        </div>
+        </motion.div>
 
         <p className="mt-md text-sm text-ink-secondary">
           One email. No newsletter, no launch countdown, no sharing your address.

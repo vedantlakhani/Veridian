@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { Fragment, useEffect, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 import { motion, useInView, useReducedMotion, useSpring } from 'framer-motion';
 
@@ -119,6 +119,10 @@ function IconCart() {
   );
 }
 
+function IconConfirm() {
+  return <path d="M5 12.5l4.5 4.5L19 7" />;
+}
+
 const layers = [
   {
     title: 'Movement',
@@ -140,6 +144,109 @@ const layers = [
     icon: <IconReceipt />,
   },
 ];
+
+/**
+ * The three signal layers as one horizontal sequence, feeding one Confirm
+ * node — the mechanic Beat 3 describes in prose, shown here first. One
+ * node lights up (accent fill) in turn; the loop settles on Confirm, then
+ * repeats. Runs only while in view, and only when motion isn't reduced —
+ * reduced motion renders the loop's resting frame (Confirm lit) statically.
+ */
+const flowNodes: Array<{ key: string; label: string; icon: ReactNode }> = [
+  { key: 'movement', label: 'Movement', icon: <IconMovement /> },
+  { key: 'money', label: 'Money', icon: <IconMoney /> },
+  { key: 'receipts', label: 'Receipts', icon: <IconReceipt /> },
+  { key: 'confirm', label: 'Confirm', icon: <IconConfirm /> },
+];
+
+function NodeFlow() {
+  const prefersReducedMotion = useReducedMotion();
+  const wrapRef = useRef<HTMLDivElement>(null);
+  const inView = useInView(wrapRef, { margin: '-20% 0px' });
+  const [active, setActive] = useState(prefersReducedMotion ? 3 : 0);
+
+  useEffect(() => {
+    if (prefersReducedMotion || !inView) return;
+    const id = window.setInterval(() => {
+      setActive((prev) => (prev + 1) % flowNodes.length);
+    }, 1250);
+    return () => window.clearInterval(id);
+  }, [inView, prefersReducedMotion]);
+
+  return (
+    <div ref={wrapRef} className="rounded-xl border border-border bg-surface-sunken p-lg">
+      <div className="flex flex-col items-center gap-sm sm:flex-row sm:gap-0">
+        {flowNodes.map((node, i) => {
+          const isActive = active === i;
+          const isConfirm = node.key === 'confirm';
+          const colors = {
+            backgroundColor: isActive ? 'var(--color-accent)' : 'var(--color-surface)',
+            borderColor: isActive ? 'var(--color-accent)' : 'var(--color-border)',
+            color: isActive ? 'var(--color-canvas)' : 'var(--color-ink-secondary)',
+          };
+          const transition = prefersReducedMotion
+            ? { duration: 0 }
+            : {
+                backgroundColor: { duration: 0.32, ease: EASE_BASE },
+                borderColor: { duration: 0.32, ease: EASE_BASE },
+                color: { duration: 0.32, ease: EASE_BASE },
+                scale: { type: 'spring' as const, damping: 30, stiffness: 220 },
+              };
+          return (
+            <Fragment key={node.key}>
+              <div className={isConfirm ? 'flex shrink-0 flex-col items-center gap-xs' : 'contents'}>
+                <motion.div
+                  className={
+                    isConfirm
+                      ? 'flex h-[64px] w-[64px] shrink-0 items-center justify-center rounded-full border'
+                      : 'flex shrink-0 items-center gap-sm rounded-full border px-md py-sm'
+                  }
+                  initial={false}
+                  animate={{ ...colors, scale: isActive && !prefersReducedMotion ? 1.06 : 1 }}
+                  transition={transition}
+                >
+                  <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth={1.8}
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    className="h-[18px] w-[18px] shrink-0"
+                    aria-hidden="true"
+                  >
+                    {node.icon}
+                  </svg>
+                  {!isConfirm && (
+                    <span className="whitespace-nowrap font-mono text-xs uppercase tracking-widest">
+                      {node.label}
+                    </span>
+                  )}
+                </motion.div>
+                {isConfirm && (
+                  <span className="font-mono text-xs uppercase tracking-widest text-ink-tertiary">
+                    {node.label}
+                  </span>
+                )}
+              </div>
+              {i < flowNodes.length - 1 && (
+                <span
+                  className="h-md w-px bg-border sm:mx-sm sm:h-px sm:w-auto sm:flex-1"
+                  aria-hidden="true"
+                />
+              )}
+            </Fragment>
+          );
+        })}
+      </div>
+      <span className="sr-only">
+        Diagram: three signal layers — Movement, Money, and Receipts — feed into one Confirm
+        step, shown as a horizontal sequence where each step lights up in turn before settling
+        on Confirm.
+      </span>
+    </div>
+  );
+}
 
 const annotations: Array<[string, string, string]> = [
   ['SOURCE', 'PLAID', 'Where this entry came from.'],
@@ -179,12 +286,12 @@ export default function Solution() {
   return (
     <section id="solution" className="border-t border-border">
       <div className="mx-auto max-w-page px-md py-2xl md:px-lg md:py-huge">
-        <p className="mb-sm text-xs font-mono uppercase tracking-widest text-ink-tertiary tabular-nums">
+        <p className="mb-md text-xs font-mono uppercase tracking-widest text-ink-tertiary tabular-nums">
           06 / SOLUTION
         </p>
         <h2 className="text-2xl font-bold tracking-tight text-ink">Solution</h2>
         <Reveal>
-          <p className="mt-md max-w-prose text-xl leading-relaxed text-ink">
+          <p className="mt-lg max-w-prose text-xl leading-relaxed text-ink">
             Veridian's mechanic today is three signal layers feeding one confirm loop, instead
             of one manual form.
           </p>
@@ -213,6 +320,11 @@ export default function Solution() {
           <p className="mt-lg text-center text-lg text-ink">
             Neither platform runs continuous GPS.
           </p>
+        </Reveal>
+
+        {/* Beat 1.5 — the node-flow diagram: the same three layers, shown as one mechanic. */}
+        <Reveal delay={0.2} className="mt-xl">
+          <NodeFlow />
         </Reveal>
 
         {/* Beat 2 — the entry anatomy: before (estimate) and after (receipt upgrade). */}

@@ -62,16 +62,16 @@ export default function Challenges() {
     <section id="challenges" className="border-t border-border py-2xl md:py-huge">
       <div className="mx-auto max-w-page px-md md:px-lg">
         <motion.div {...headerReveal}>
-          <p className="mb-sm text-xs font-mono uppercase tracking-widest tabular-nums text-ink-tertiary">
+          <p className="mb-md text-xs font-mono uppercase tracking-widest tabular-nums text-ink-tertiary">
             09 / CHALLENGES &amp; TRADE-OFFS
           </p>
-          <h2 className="text-2xl font-bold tracking-tight text-ink">Challenges &amp; Trade-offs</h2>
+          <h2 className="text-2xl font-extrabold tracking-tight text-ink">Challenges &amp; Trade-offs</h2>
         </motion.div>
 
         {/* Item 1 — the eight-week silence */}
         <motion.div
           {...item1Reveal}
-          className="mt-xl grid grid-cols-1 gap-x-xl gap-y-md border-t border-border py-xl lg:grid-cols-[16ch_1fr]"
+          className="mt-2xl grid grid-cols-1 gap-x-xl gap-y-md border-t border-border py-xl lg:grid-cols-[16ch_1fr]"
         >
           <TimeMarker lines={['MAY 8 → JUL 2', '8 WEEKS', 'NO COMMITS']} />
           <p className="max-w-prose text-lg leading-relaxed text-ink-secondary">

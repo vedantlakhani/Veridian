@@ -1,6 +1,7 @@
-import { useEffect, useState } from 'react'
+import { Suspense, lazy, useEffect, useState } from 'react'
 import { motion, useReducedMotion, useSpring, useTransform } from 'framer-motion'
 import type { Variants } from 'framer-motion'
+import { supportsWebGL } from '../lib/webgl'
 
 /**
  * HERO
@@ -99,6 +100,14 @@ function GlyphTile({ tint, children }: { tint: string; children: React.ReactNode
  * Part 1 — the ring. One-shot reveal on mount: a 0.6s (timingSlow)
  * ease-out arc fill, paired with the signature damping:30/stiffness:220
  * numeral settle. Both start at the same moment, neither replays.
+ *
+ * The ring backdrop itself is a genuine, restrained 3D piece — three
+ * signal-layer nodes (Movement/Money/Receipts) orbiting and converging
+ * toward the confirm ring, @react-three/fiber, dynamically imported so
+ * it never blocks first paint or ships in the main bundle (see
+ * Hero3DScene.tsx). It degrades to the original flat SVG arc whenever
+ * the viewer prefers reduced motion or the browser can't do WebGL —
+ * both feature-detected, never assumed from a try/catch on the crash.
  * ------------------------------------------------------------------- */
 
 const RING_R = 82
@@ -106,6 +115,8 @@ const RING_CIRCUMFERENCE = 2 * Math.PI * RING_R
 const RING_FRACTION = 0.62 // illustrative — under budget, room to spare
 const RING_TARGET_OFFSET = RING_CIRCUMFERENCE * (1 - RING_FRACTION)
 const WEEKLY_KG = 38
+
+const Hero3DScene = lazy(() => import('./Hero3DScene'))
 
 function RingNumeral({ reduced }: { reduced: boolean }) {
   const spring = useSpring(0, { damping: 30, stiffness: 220 })
@@ -127,48 +138,74 @@ function RingNumeral({ reduced }: { reduced: boolean }) {
   )
 }
 
+/** The original flat SVG ring — the reduced-motion / no-WebGL fallback. */
+function FlatRingArc({ reduced }: { reduced: boolean }) {
+  return (
+    <svg viewBox="0 0 200 200" className="h-full w-full" role="img">
+      <title>Illustrative weekly carbon ring, shown under budget</title>
+      <defs>
+        <linearGradient id="veridian-hero-ring" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stopColor="var(--color-ring-calm-from)" />
+          <stop offset="100%" stopColor="var(--color-ring-calm-to)" />
+        </linearGradient>
+      </defs>
+      <circle cx="100" cy="100" r={RING_R} fill="none" stroke="var(--color-border)" strokeWidth="10" />
+      {reduced ? (
+        <circle
+          cx="100"
+          cy="100"
+          r={RING_R}
+          fill="none"
+          stroke="url(#veridian-hero-ring)"
+          strokeWidth="10"
+          strokeLinecap="round"
+          strokeDasharray={RING_CIRCUMFERENCE}
+          strokeDashoffset={RING_TARGET_OFFSET}
+          transform="rotate(-90 100 100)"
+        />
+      ) : (
+        <motion.circle
+          cx="100"
+          cy="100"
+          r={RING_R}
+          fill="none"
+          stroke="url(#veridian-hero-ring)"
+          strokeWidth="10"
+          strokeLinecap="round"
+          strokeDasharray={RING_CIRCUMFERENCE}
+          initial={{ strokeDashoffset: RING_CIRCUMFERENCE }}
+          animate={{ strokeDashoffset: RING_TARGET_OFFSET }}
+          transition={{ duration: 0.6, ease: 'easeOut' }}
+          transform="rotate(-90 100 100)"
+        />
+      )}
+    </svg>
+  )
+}
+
 function CarbonRing({ reduced }: { reduced: boolean }) {
+  // Feature-detected once per mount rather than assumed: this site is
+  // client-rendered only (no SSR, per vite.config.ts), so it's safe to
+  // resolve synchronously in the initializer instead of flashing the 3D
+  // variant then swapping to the fallback after an effect. WebGL support
+  // itself can't change mid-session, but reduced-motion can (the viewer
+  // may flip the OS setting while this page is open) — so it stays a
+  // plain derived value, re-evaluated every render, rather than baked
+  // into the same one-time check.
+  const [webglOK] = useState(() => supportsWebGL())
+  const use3D = webglOK && !reduced
+
   return (
     <div className="relative mx-auto aspect-square w-full max-w-card">
-      <svg viewBox="0 0 200 200" className="h-full w-full" role="img">
-        <title>Illustrative weekly carbon ring, shown under budget</title>
-        <defs>
-          <linearGradient id="veridian-hero-ring" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stopColor="var(--color-ring-calm-from)" />
-            <stop offset="100%" stopColor="var(--color-ring-calm-to)" />
-          </linearGradient>
-        </defs>
-        <circle cx="100" cy="100" r={RING_R} fill="none" stroke="var(--color-border)" strokeWidth="10" />
-        {reduced ? (
-          <circle
-            cx="100"
-            cy="100"
-            r={RING_R}
-            fill="none"
-            stroke="url(#veridian-hero-ring)"
-            strokeWidth="10"
-            strokeLinecap="round"
-            strokeDasharray={RING_CIRCUMFERENCE}
-            strokeDashoffset={RING_TARGET_OFFSET}
-            transform="rotate(-90 100 100)"
-          />
-        ) : (
-          <motion.circle
-            cx="100"
-            cy="100"
-            r={RING_R}
-            fill="none"
-            stroke="url(#veridian-hero-ring)"
-            strokeWidth="10"
-            strokeLinecap="round"
-            strokeDasharray={RING_CIRCUMFERENCE}
-            initial={{ strokeDashoffset: RING_CIRCUMFERENCE }}
-            animate={{ strokeDashoffset: RING_TARGET_OFFSET }}
-            transition={{ duration: 0.6, ease: 'easeOut' }}
-            transform="rotate(-90 100 100)"
-          />
-        )}
-      </svg>
+      {use3D ? (
+        <div className="absolute inset-0">
+          <Suspense fallback={<FlatRingArc reduced={reduced} />}>
+            <Hero3DScene />
+          </Suspense>
+        </div>
+      ) : (
+        <FlatRingArc reduced={reduced} />
+      )}
       <div className="absolute inset-0 flex flex-col items-center justify-center gap-xxs px-md text-center">
         <span className="rounded-full bg-accent-soft px-sm py-xxs text-xs font-bold uppercase tracking-widest text-accent">
           Under budget

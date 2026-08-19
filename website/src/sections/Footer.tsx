@@ -49,7 +49,7 @@ export default function Footer() {
               Pre-launch · 0 public users · built solo since March 2026
             </p>
 
-            <p className="mt-lg max-w-prose text-md text-ink-secondary">
+            <p className="mt-xl max-w-prose text-md text-ink-secondary">
               Every claim on this page is sourced from the project&rsquo;s own documents.
             </p>
             <p className="mt-xs text-xs font-mono uppercase tracking-widest text-ink-tertiary">
@@ -70,8 +70,24 @@ export default function Footer() {
         {/* Bottom bar */}
         <div className="mt-lg flex flex-wrap items-center justify-between gap-sm border-t border-border pt-md text-sm tabular-nums text-ink-tertiary">
           <p>© 2026 Veridian</p>
-          <a href="#top" onClick={handleBackToTop} className="underline-offset-2 hover:underline">
+          <a
+            href="#top"
+            onClick={handleBackToTop}
+            className="group inline-flex items-center gap-xxs underline-offset-2 hover:underline"
+          >
             Back to top
+            <svg
+              viewBox="0 0 12 12"
+              className="h-3 w-3 shrink-0 motion-safe:transition-transform motion-safe:duration-150 motion-safe:ease-out motion-safe:group-hover:-translate-y-0.5"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              aria-hidden="true"
+            >
+              <path d="M6 10V2M2.5 5.5 6 2l3.5 3.5" />
+            </svg>
           </a>
         </div>
       </motion.div>

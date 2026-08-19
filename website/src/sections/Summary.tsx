@@ -66,7 +66,7 @@ type StatCellProps = { value: number; label: string; clarify: string; delay: num
 function StatCell({ value, label, clarify, delay }: StatCellProps) {
   return (
     <div className="py-md md:px-lg">
-      <p className="text-2xl font-bold tracking-tight tabular-nums text-ink">
+      <p className="text-2xl font-extrabold tracking-tight tabular-nums text-ink md:text-display">
         <CountUp value={value} delay={delay} />
       </p>
       <p className="mt-xxs text-xs font-mono uppercase tracking-widest text-ink-tertiary">{label}</p>
@@ -90,16 +90,16 @@ export default function Summary() {
     >
       <div className="mx-auto max-w-page px-md md:px-lg">
         <motion.div {...headerReveal}>
-          <p className="mb-sm text-xs font-mono uppercase tracking-widest tabular-nums text-ink-tertiary">
+          <p className="mb-md text-xs font-mono uppercase tracking-widest tabular-nums text-ink-tertiary">
             01 / SUMMARY
           </p>
-          <h2 id="summary-heading" className="text-2xl font-bold tracking-tight text-ink">
+          <h2 id="summary-heading" className="text-2xl font-extrabold tracking-tight text-ink">
             Summary
           </h2>
         </motion.div>
 
         {/* Beat 1 — the lede. Run-on confession, not bullets. */}
-        <motion.div {...ledeReveal} className="mt-lg max-w-prose">
+        <motion.div {...ledeReveal} className="mt-xl max-w-prose">
           <p className="text-xl leading-relaxed text-ink">
             Veridian is a carbon-tracking app I&rsquo;ve been building since mid-March 2026 — about
             five months now. It started as a fairly conventional idea: a Klima-style app where you
@@ -119,13 +119,18 @@ export default function Summary() {
           </p>
         </motion.div>
 
-        {/* Beat 2 — the pull-quote. Top+bottom hairline, no rail, no glyph. */}
+        {/* Beat 2 — the pull-quote. Top+bottom hairline, no rail, no glyph.
+            Two-tone emphasis: setup in a lighter secondary weight, the actual
+            thesis in full-weight ink — same device as the hero's headline. */}
         <motion.blockquote
           {...quoteReveal}
           className="my-2xl max-w-prose border-t border-b border-border py-lg"
         >
-          <p className="max-w-[28ch] text-2xl font-bold leading-tight tracking-tight text-ink">
-            Not a logger you feed, but an autopilot that writes your carbon story.
+          <p className="max-w-[28ch] text-2xl leading-tight tracking-tight">
+            <span className="font-medium text-ink-secondary">Not a logger you feed, </span>
+            <span className="font-extrabold text-ink">
+              but an autopilot that writes your carbon story.
+            </span>
           </p>
         </motion.blockquote>
 
