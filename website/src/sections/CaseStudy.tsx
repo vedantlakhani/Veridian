@@ -12,11 +12,12 @@ import type { Variants } from 'framer-motion'
  * repo; this section's job is to name the PM judgment behind it, not to
  * introduce new evidence.
  *
- * Placed after Risks and before the waitlist CTA rather than inserted
- * earlier in the narrative: it's a step back to say "here is what kind of
- * work this was," which only makes sense once the reader has already seen
- * the problem, the users, the solution, the trade-offs, and the open
- * questions it's now summarizing. Nothing above it is renumbered.
+ * Placed directly after the real product screenshots, as primary Tier-1
+ * content — not an appendix near the bottom. The full narrative it
+ * summarizes (problem, users, solution, trade-offs, open questions) still
+ * exists in full below, in DeepDive's closed-by-default disclosure list;
+ * this section stands on its own as one of the two things a visitor is
+ * meant to actually read. Nothing below it is renumbered.
  *
  * Honesty note (do not remove): this project is solo, pre-launch, with no
  * outside users — Level 2 on the ladder "a build you can demo," not Level 3
@@ -129,7 +130,7 @@ export default function CaseStudy() {
   const outcomesStripReveal = useReveal()
 
   return (
-    <section id="case-study" className="border-t border-border py-2xl md:py-huge">
+    <section id="case-study" className="py-2xl md:py-huge">
       <div className="mx-auto max-w-page px-md md:px-lg">
         <motion.div {...headerReveal}>
           <p className="mb-md text-xs font-mono uppercase tracking-widest tabular-nums text-ink-tertiary">

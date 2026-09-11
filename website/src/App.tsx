@@ -1,36 +1,30 @@
 import Hero from './sections/Hero'
 import ProductScreens from './sections/ProductScreens'
-import Summary from './sections/Summary'
-import Problem from './sections/Problem'
-import TargetUser from './sections/TargetUser'
-import Competitors from './sections/Competitors'
-import Insight from './sections/Insight'
-import Solution from './sections/Solution'
-import Distribution from './sections/Distribution'
-import Feedback from './sections/Feedback'
-import Challenges from './sections/Challenges'
-import Risks from './sections/Risks'
 import CaseStudy from './sections/CaseStudy'
+import DeepDive from './sections/DeepDive'
 import WaitlistCTA from './sections/WaitlistCTA'
 import Footer from './sections/Footer'
 
 /**
- * Veridian marketing page — a single, continuous scroll assembling every
- * section in narrative order (case study framing → summary → problem →
- * who it's for → competitive landscape → the insight that forced a rebuild
- * → the solution → how it reaches people → what early feedback said → open
- * challenges → risks → this project read back as a PM case study → an
- * explicit ask → sign-off).
+ * Veridian marketing page — two-tier information architecture.
+ *
+ * Tier 1 (always visible, the actual page): Hero, real product screenshots,
+ * then the Case Study read as primary content — not an appendix near the
+ * bottom — followed by the waitlist ask and the footer.
+ *
+ * Tier 2 (collapsed by default): the ten sections that carry the full,
+ * already-approved narrative (Summary through Risks, sourced from
+ * docs/WEBSITE_STRUCTURE.md) — none of their content changed, only how
+ * they're mounted. They now live inside DeepDive as a closed-by-default
+ * disclosure list between the Case Study and the waitlist ask, so a
+ * visitor gets the two things that matter (the product, the case study)
+ * without first scrolling through ten more full-height sections, while
+ * the full story is still one click away for anyone who wants it.
  *
  * No extra max-width wrapper is added here: every section below already
  * owns its own container off the shared design tokens in src/index.css —
- * `max-w-wide` (1360px) for Hero and Competitors, `max-w-page` (1120px) for
- * the rest, and `max-w-prose` (~65ch) around the actual paragraph text
- * inside each one. Layering another constraint on top would fight those
- * choices (e.g. Challenges' comparison table intentionally breaks out to
- * `max-w-page`). Hero is "full-bleed" only in the sense that, unlike every
- * other section, nothing above it narrows the page before its own
- * `max-w-wide` takes over.
+ * `max-w-wide` (1360px) for Hero, `max-w-page` (1120px) for the rest, and
+ * `max-w-prose` (~65ch) around the actual paragraph text inside each one.
  */
 function App() {
   return (
@@ -44,17 +38,8 @@ function App() {
       <main id="top">
         <Hero />
         <ProductScreens />
-        <Summary />
-        <Problem />
-        <TargetUser />
-        <Competitors />
-        <Insight />
-        <Solution />
-        <Distribution />
-        <Feedback />
-        <Challenges />
-        <Risks />
         <CaseStudy />
+        <DeepDive />
         <WaitlistCTA variant="section" />
         <Footer />
       </main>

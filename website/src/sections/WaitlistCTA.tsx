@@ -177,15 +177,23 @@ export default function WaitlistCTA({ variant }: WaitlistCTAProps) {
     await submitEmail(email)
   }
 
+  // Radius bumped from the site-wide rounded-md to rounded-lg for this form
+  // only — a deliberate, documented exception (not a second radius system):
+  // the form is the one place on the page asking for a personal action, and
+  // a slightly softer corner reads friendlier without touching color, type,
+  // or the accent hue. Every other rounded-md surface on the page is
+  // untouched. Touch targets sized to at least 44px on both variants, not
+  // just the primary section CTA, so the footer's inline mount is just as
+  // easy to tap.
   const inputClassName =
     variant === 'section'
-      ? 'min-h-[44px] flex-1 rounded-md border border-border bg-surface-sunken px-md py-md text-lg text-ink placeholder:text-ink-tertiary focus:border-border-strong focus:outline focus:outline-2 focus:outline-accent focus:outline-offset-2'
-      : 'flex-1 rounded-md border border-border bg-surface px-md py-sm text-md text-ink placeholder:text-ink-tertiary focus:border-border-strong focus:outline focus:outline-2 focus:outline-accent focus:outline-offset-2'
+      ? 'min-h-[48px] flex-1 rounded-lg border border-border bg-surface-sunken px-md py-md text-lg text-ink placeholder:text-ink-tertiary focus:border-border-strong focus:outline focus:outline-2 focus:outline-accent focus:outline-offset-2'
+      : 'min-h-[44px] flex-1 rounded-lg border border-border bg-surface px-md py-sm text-md text-ink placeholder:text-ink-tertiary focus:border-border-strong focus:outline focus:outline-2 focus:outline-accent focus:outline-offset-2'
 
   const buttonClassName =
     variant === 'section'
-      ? 'min-h-[44px] w-full shrink-0 rounded-md bg-accent px-lg py-md text-md font-bold text-surface disabled:opacity-60 sm:w-auto'
-      : 'w-full shrink-0 rounded-md bg-accent px-md py-sm text-md font-bold text-surface disabled:opacity-60 sm:w-auto'
+      ? 'min-h-[48px] w-full shrink-0 rounded-lg bg-accent px-lg py-md text-md font-bold text-surface disabled:opacity-60 sm:w-auto'
+      : 'min-h-[44px] w-full shrink-0 rounded-lg bg-accent px-md py-sm text-md font-bold text-surface disabled:opacity-60 sm:w-auto'
 
   const errorText =
     state.status === 'error' ? (
@@ -195,37 +203,41 @@ export default function WaitlistCTA({ variant }: WaitlistCTAProps) {
     ) : null
 
   const form = (
-    <form onSubmit={handleSubmit} noValidate className="flex flex-col gap-sm sm:flex-row">
-      <label htmlFor={inputId} className="sr-only">
-        Email address
-      </label>
-      <input
-        id={inputId}
-        type="email"
-        name="email"
-        autoComplete="email"
-        inputMode="email"
-        required
-        placeholder="you@example.com"
-        value={email}
-        onChange={(e) => setEmail(e.target.value)}
-        disabled={isSubmitting}
-        aria-invalid={state.status === 'error'}
-        aria-describedby={state.status === 'error' ? errorId : undefined}
-        className={inputClassName}
-      />
-      <motion.button
-        type="submit"
-        disabled={isSubmitting}
-        whileTap={!reduced && !isSubmitting ? { scale: 0.97 } : undefined}
-        transition={{ duration: 0.18 }}
-        onPointerMove={tilt.onPointerMove}
-        onPointerLeave={tilt.onPointerLeave}
-        style={tilt.style}
-        className={buttonClassName}
-      >
-        {isSubmitting ? 'Sending…' : 'Get notified when it ships'}
-      </motion.button>
+    <form onSubmit={handleSubmit} noValidate className="flex flex-col gap-sm">
+      <div className="flex flex-col gap-xs sm:flex-row sm:items-end sm:gap-sm">
+        <div className="flex-1">
+          <label htmlFor={inputId} className="mb-xxs block text-sm font-bold text-ink-secondary">
+            Email address
+          </label>
+          <input
+            id={inputId}
+            type="email"
+            name="email"
+            autoComplete="email"
+            inputMode="email"
+            required
+            placeholder="you@example.com"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            disabled={isSubmitting}
+            aria-invalid={state.status === 'error'}
+            aria-describedby={state.status === 'error' ? errorId : undefined}
+            className={`${inputClassName} w-full`}
+          />
+        </div>
+        <motion.button
+          type="submit"
+          disabled={isSubmitting}
+          whileTap={!reduced && !isSubmitting ? { scale: 0.97 } : undefined}
+          transition={{ duration: 0.18 }}
+          onPointerMove={tilt.onPointerMove}
+          onPointerLeave={tilt.onPointerLeave}
+          style={tilt.style}
+          className={buttonClassName}
+        >
+          {isSubmitting ? 'Sending…' : 'Get notified when it ships'}
+        </motion.button>
+      </div>
     </form>
   )
 

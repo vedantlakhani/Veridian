@@ -7,7 +7,11 @@
 */
 @theme {
   /* Neutrals */
-  --color-canvas: #FCFCFD;
+  /* Canvas warmed a hair off Clearing's original cool #FCFCFD — still an
+     instrument, not an eco-app, so this stays a near-white barely anyone
+     will consciously register as "warm"; it just reads a degree friendlier
+     than a clinical cool white without touching the accent hue at all. */
+  --color-canvas: #FCFBF9;
   --color-surface: #FFFFFF;
   --color-surface-sunken: #F4F5F7;
   --color-border: rgba(13,17,23,0.08);
