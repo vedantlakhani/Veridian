@@ -10,6 +10,7 @@ import Distribution from './sections/Distribution'
 import Feedback from './sections/Feedback'
 import Challenges from './sections/Challenges'
 import Risks from './sections/Risks'
+import CaseStudy from './sections/CaseStudy'
 import WaitlistCTA from './sections/WaitlistCTA'
 import Footer from './sections/Footer'
 
@@ -18,7 +19,8 @@ import Footer from './sections/Footer'
  * section in narrative order (case study framing → summary → problem →
  * who it's for → competitive landscape → the insight that forced a rebuild
  * → the solution → how it reaches people → what early feedback said → open
- * challenges → risks → an explicit ask → sign-off).
+ * challenges → risks → this project read back as a PM case study → an
+ * explicit ask → sign-off).
  *
  * No extra max-width wrapper is added here: every section below already
  * owns its own container off the shared design tokens in src/index.css —
@@ -32,22 +34,31 @@ import Footer from './sections/Footer'
  */
 function App() {
   return (
-    <main id="top">
-      <Hero />
-      <ProductScreens />
-      <Summary />
-      <Problem />
-      <TargetUser />
-      <Competitors />
-      <Insight />
-      <Solution />
-      <Distribution />
-      <Feedback />
-      <Challenges />
-      <Risks />
-      <WaitlistCTA variant="section" />
-      <Footer />
-    </main>
+    <>
+      <a
+        href="#top"
+        className="sr-only focus:not-sr-only focus:absolute focus:left-md focus:top-md focus:z-50 focus:rounded-md focus:bg-accent focus:px-md focus:py-sm focus:text-md focus:font-bold focus:text-surface focus:outline focus:outline-2 focus:outline-offset-2 focus:outline-accent"
+      >
+        Skip to content
+      </a>
+      <main id="top">
+        <Hero />
+        <ProductScreens />
+        <Summary />
+        <Problem />
+        <TargetUser />
+        <Competitors />
+        <Insight />
+        <Solution />
+        <Distribution />
+        <Feedback />
+        <Challenges />
+        <Risks />
+        <CaseStudy />
+        <WaitlistCTA variant="section" />
+        <Footer />
+      </main>
+    </>
   )
 }
 

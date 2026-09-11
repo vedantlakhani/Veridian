@@ -69,7 +69,16 @@ export default function Footer() {
 
         {/* Bottom bar */}
         <div className="mt-lg flex flex-wrap items-center justify-between gap-sm border-t border-border pt-md text-sm tabular-nums text-ink-tertiary">
-          <p>© 2026 Veridian</p>
+          <div className="flex flex-wrap items-center gap-sm">
+            <p>© 2026 Veridian</p>
+            <span aria-hidden="true">·</span>
+            <a
+              href="/privacy-policy.html"
+              className="underline-offset-2 hover:underline hover:text-ink-secondary"
+            >
+              Privacy Policy
+            </a>
+          </div>
           <a
             href="#top"
             onClick={handleBackToTop}

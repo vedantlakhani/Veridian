@@ -99,6 +99,35 @@ body {
   margin: 0;
 }
 
+/* Smooth in-page scrolling for the on-page anchor links (#feedback, #risks,
+   #insight, back-to-top) — off for anyone who has asked for reduced motion. */
+@media (prefers-reduced-motion: no-preference) {
+  html {
+    scroll-behavior: smooth;
+  }
+}
+
+/* Prevent orphaned single words on headline-scale text without touching copy. */
+h1,
+h2,
+h3 {
+  text-wrap: balance;
+}
+
+/* Longer-form paragraphs get the softer wrapping rule instead. */
+p {
+  text-wrap: pretty;
+}
+
+/* Visible keyboard-focus ring everywhere, site-wide — mouse/touch users never
+   see it (:focus-visible), keyboard users always do. Individual components
+   may still layer their own focus: treatment on top of this baseline. */
+:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+  border-radius: var(--radius-xs);
+}
+
 /* Tabular figures everywhere numbers appear — non-negotiable per Clearing spec */
 .tabular-nums {
   font-variant-numeric: tabular-nums;
