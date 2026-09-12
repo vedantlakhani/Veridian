@@ -62,10 +62,7 @@ export default function Challenges() {
     <section id="challenges" className="border-t border-border py-2xl md:py-huge">
       <div className="mx-auto max-w-page px-md md:px-lg">
         <motion.div {...headerReveal}>
-          <p className="mb-md text-xs font-mono uppercase tracking-widest tabular-nums text-ink-tertiary">
-            09 / CHALLENGES &amp; TRADE-OFFS
-          </p>
-          <h2 className="text-2xl font-extrabold tracking-tight text-ink">Challenges &amp; Trade-offs</h2>
+          <h2 className="text-2xl font-extrabold tracking-tight text-ink">What actually went wrong along the way</h2>
         </motion.div>
 
         {/* Item 1 — the eight-week silence */}
@@ -78,13 +75,12 @@ export default function Challenges() {
             <span className="text-ink">
               Between May 8, when I shipped a &ldquo;premium UI overhaul&rdquo; I was reasonably
               happy with, and July 2, when I came back and gutted the light-mode decision,
-              there&rsquo;s a gap in the commit log with nothing in it.
+              there&rsquo;s a gap in the commit log. Nothing in it.
             </span>{' '}
-            That&rsquo;s not a curated timeline. That&rsquo;s what actually happened. I
-            don&rsquo;t think a gap like that is evidence against the project; it&rsquo;s evidence
-            that I didn&rsquo;t force a decision I wasn&rsquo;t sure of just to keep a streak
-            going, and that when I came back, I was honest enough with myself to redo work rather
-            than defend it.
+            That&rsquo;s not a curated timeline, that&rsquo;s what actually happened. I
+            don&rsquo;t think a gap like that counts against the project. It means I
+            didn&rsquo;t force a decision I wasn&rsquo;t sure of just to keep a streak going, and
+            when I came back, I was honest enough to redo the work instead of defending it.
           </p>
         </motion.div>
 
@@ -97,14 +93,13 @@ export default function Challenges() {
           <div>
             <p className="max-w-prose text-lg leading-relaxed text-ink-secondary">
               <span className="text-ink">
-                In July I built out a complete dark visual direction, &ldquo;Understory&rdquo;:
-                dark surfaces, a moss-green accent, and a literary serif for hero numbers, all
-                the way through a portfolio screenshot set.
+                In July I built a complete dark visual direction, &ldquo;Understory&rdquo;: dark
+                surfaces, a moss-green accent, a literary serif for hero numbers, all the way
+                through a portfolio screenshot set.
               </span>{' '}
-              Fifteen days later, a research pass told me plainly that the aesthetic I&rsquo;d
-              just finished was calibrated for the persona least likely to ever subscribe, and
-              that the actual reference product should have been Copilot Money, not Klima, from
-              the start.
+              Fifteen days later, a research pass told me plainly that I&rsquo;d calibrated it
+              for the persona least likely to ever subscribe. The reference product should have
+              been Copilot Money, not Klima, from the start.
             </p>
 
             {/* Desktop/tablet: table. Breaks out to max-w-page. */}
@@ -157,8 +152,8 @@ export default function Challenges() {
             </blockquote>
 
             <p className="max-w-prose text-lg leading-relaxed text-ink-secondary">
-              That reversal is the same instinct, at a different scale, as the eight-week gap: a
-              harder skill than shipping fast in one direction.
+              That reversal is the same instinct as the eight-week gap, just at a different
+              scale. It&rsquo;s a harder skill than shipping fast in one direction.
             </p>
           </div>
         </motion.div>
@@ -172,26 +167,26 @@ export default function Challenges() {
           <div className="max-w-prose">
             <p className="text-lg leading-relaxed text-ink-secondary">
               <span className="text-ink">
-                The AI insight layer took eight consecutive commits in a single day (March 22)
+                The AI insight layer took eight consecutive commits in a single day, March 22,
                 chasing an{' '}
                 <code className="rounded-xs bg-surface-sunken px-xxs font-mono text-md">
                   Invalid JWT
                 </code>{' '}
-                error through a Supabase Edge Function auth path, decoding the JWT locally
-                instead of a network round-trip, fixing base64url decoding, fixing a
-                header-override bug, before it actually held.
+                error through a Supabase Edge Function auth path.
               </span>{' '}
+              I decoded the JWT locally instead of doing a network round-trip, fixed a base64url
+              decoding bug, then fixed a header-override bug, before it actually held.
               Separately, this week&rsquo;s rebuild found that the app&rsquo;s card component had
               a systemic accent-rail pattern rendering as a positioned{' '}
               <code className="rounded-xs bg-surface-sunken px-xxs font-mono text-md">View</code>{' '}
-              rather than a{' '}
+              instead of a{' '}
               <code className="rounded-xs bg-surface-sunken px-xxs font-mono text-md">border</code>{' '}
-              property, invisible to both lint and a plain grep for the property name,
-              because it wasn&rsquo;t using the property at all.
+              property. Invisible to both lint and a plain grep for the property name, because it
+              wasn&rsquo;t using the property at all.
             </p>
             <p className="py-md text-xl text-ink">
-              Neither of these is a flattering story in isolation. Together they&rsquo;re the more
-              accurate picture of what building this actually looked like versus a highlight reel.
+              Neither one is flattering on its own. Together, they&rsquo;re a more honest picture
+              of what building this actually looked like than a highlight reel would be.
             </p>
           </div>
         </motion.div>

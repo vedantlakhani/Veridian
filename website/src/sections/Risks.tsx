@@ -107,10 +107,7 @@ export default function Risks() {
     <section id="risks" className="border-t border-border py-2xl md:py-huge">
       <div className="mx-auto max-w-page px-md md:px-lg">
         <motion.div {...headerReveal}>
-          <p className="mb-md text-xs font-mono uppercase tracking-widest tabular-nums text-ink-tertiary">
-            10 / RISKS
-          </p>
-          <h2 className="text-2xl font-extrabold tracking-tight text-ink">Risks</h2>
+          <h2 className="text-2xl font-extrabold tracking-tight text-ink">What could still go wrong</h2>
         </motion.div>
 
         {/* Lead risk */}
@@ -122,16 +119,16 @@ export default function Risks() {
           <p className="mt-lg text-lg leading-relaxed text-ink-secondary">
             <span className="text-ink">
               The current plan is a flat subscription for the intelligence layer, the
-              autopilot itself, priced like Copilot Money, and never an offset transaction
-              cut, because offset credibility is actively collapsing (2024 research puts 87%+ of
-              many offset types at high risk of not delivering real reductions) and I don&rsquo;t
-              want the business model resting on that.
+              autopilot itself, priced like Copilot Money. Never an offset transaction cut:
+              offset credibility is actively collapsing (2024 research puts 87%+ of many offset
+              types at high risk of not delivering real reductions), and I don&rsquo;t want the
+              business resting on that.
             </span>{' '}
-            But subscription-for-awareness alone has a real precedent for failing: Miles ran
+            But subscription-for-awareness alone has a real precedent for failing. Miles ran
             flawless passive tracking for nine years and still shut down, because soft point
             rewards have a ceiling. Root, the profitable comparison case, shows passive tracking
-            endures only when it&rsquo;s tied to a hard outcome the user already values, such as
-            money saved, time saved, or an insurance or utility incentive. I have candidates but no
+            only endures when it&rsquo;s tied to a hard outcome the user already values: money
+            saved, time saved, an insurance or utility incentive. I have candidates but no
             decision yet, and the Systems Optimizer persona specifically churns without one.
           </p>
         </motion.div>

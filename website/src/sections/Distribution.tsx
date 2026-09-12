@@ -36,10 +36,7 @@ export default function Distribution() {
     <section id="distribution" className="border-t border-border py-2xl md:py-huge">
       <div className="mx-auto max-w-page px-md md:px-lg">
         <motion.div {...headerReveal}>
-          <p className="mb-md text-xs font-mono uppercase tracking-widest tabular-nums text-ink-tertiary">
-            07 / DISTRIBUTION
-          </p>
-          <h2 className="text-2xl font-bold tracking-tight text-ink">Distribution</h2>
+          <h2 className="text-2xl font-bold tracking-tight text-ink">Where this actually stands</h2>
         </motion.div>
 
         {/* Status strip — the zero fades in at full size and full contrast. No count-up.
@@ -98,8 +95,8 @@ export default function Distribution() {
         <motion.p {...closingReveal} className="max-w-prose text-lg leading-relaxed text-ink-secondary">
           That informal testing is what drove this week&rsquo;s UX pass, not a survey or a focus
           group. Watching someone squint at a shopping category header showing a raw six-digit
-          code, or hesitate on a number with no sense of whether it was big or small, told me more
-          in ten minutes than a questionnaire would have. That&rsquo;s the honest state of
+          code, or hesitate over a number they couldn&rsquo;t tell was big or small, taught me
+          more in ten minutes than a questionnaire would have. That&rsquo;s the honest state of
           distribution right now: small, informal, and directly connected to what got fixed.
           TestFlight is the next real step, gated on an Apple Developer account decision I
           haven&rsquo;t made yet{' '}

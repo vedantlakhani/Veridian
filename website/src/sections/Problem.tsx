@@ -84,17 +84,14 @@ export default function Problem() {
     >
       <div className="mx-auto max-w-page px-md md:px-lg">
         <motion.div {...headerReveal}>
-          <p className="mb-md text-xs font-mono uppercase tracking-widest tabular-nums text-ink-tertiary">
-            02 / PROBLEM
-          </p>
           <h2 id="problem-heading" className="text-2xl font-extrabold tracking-tight text-ink">
-            Problem
+            Three failures I built myself
           </h2>
         </motion.div>
 
         <motion.p {...ledeReveal} className="mt-xl max-w-prose text-xl leading-relaxed text-ink">
-          Every consumer carbon app has the same three failures, and I built into all three before
-          I saw them clearly.
+          Every consumer carbon app has the same three failures. I built all three into mine
+          before I saw them clearly.
         </motion.p>
 
         {/* Part A — the numbered rail. No icons; icons would soften an indictment. */}
@@ -117,8 +114,8 @@ export default function Problem() {
 
         {/* Bridge sentence into the structural failure. */}
         <motion.p {...bridgeReveal} className="mt-lg max-w-prose text-lg leading-relaxed text-ink-secondary">
-          I designed my way around all three in the first version: that was the whole PRD. What I
-          hadn&rsquo;t yet confronted was a deeper structural problem underneath.
+          I designed my way around all three in the first version. That was the whole PRD. What
+          I hadn&rsquo;t faced yet was the deeper problem underneath.
         </motion.p>
 
         {/* Part B — the structural failure. Same pull-quote spec as Summary, more surrounding air. */}
@@ -156,10 +153,10 @@ export default function Problem() {
             setup in secondary ink, the actual verdict in full-weight ink. */}
         <motion.p {...closingReveal} className="max-w-prose text-lg leading-relaxed">
           <span className="text-ink-secondary">
-            A carbon app that asks you to log manually is competing with your own forgetfulness
-            every single day,{' '}
+            A carbon app that makes you log manually is competing with your own forgetfulness
+            every day.{' '}
           </span>
-          <span className="font-extrabold text-ink">and forgetfulness wins.</span>
+          <span className="font-extrabold text-ink">Forgetfulness wins.</span>
         </motion.p>
       </div>
     </section>

@@ -133,79 +133,76 @@ export default function CaseStudy() {
     <section id="case-study" className="py-2xl md:py-huge">
       <div className="mx-auto max-w-page px-md md:px-lg">
         <motion.div {...headerReveal}>
-          <p className="mb-md text-xs font-mono uppercase tracking-widest tabular-nums text-ink-tertiary">
-            11 / CASE STUDY
-          </p>
           <h2 className="text-2xl font-extrabold tracking-tight text-ink">
-            This Project, as a Case Study
+            The same five months, as a case study
           </h2>
         </motion.div>
 
         <motion.p {...introReveal} className="mt-lg max-w-prose text-xl leading-relaxed text-ink">
-          Everything above this section is the product. This part is the same five months, told
-          as the product-management work it actually was: the decisions, the evals, and what a
-          fair reading of the outcome is.
+          Everything above this is the product. This part is the same five months, told as the
+          product-management work it actually was: the decisions, the evals, and what a fair
+          reading of the outcome looks like.
         </motion.p>
 
         <Part index="01" title="Problem">
           <p>
             Every consumer carbon app fails the same way: a one-time onboarding number, generic
             advice, and a manual log competing with the user&rsquo;s own forgetfulness every day.
-            I built into that failure mode myself before I saw it: the first version of
-            this app was a Klima-style logger with streaks and badges, and it shipped and worked.
-            The deeper problem underneath, that nobody opens an app to type &ldquo;drove 12
-            km,&rdquo; only came into focus after a research pass months later.
+            I built into that failure myself before I saw it. The first version of this app was
+            a Klima-style logger with streaks and badges, and it shipped and worked. The deeper
+            problem, that nobody opens an app to type &ldquo;drove 12 km,&rdquo; only came into
+            focus after a research pass months later.
           </p>
         </Part>
 
         <Part index="02" title="User">
           <p>
             The first version targeted a vague &ldquo;environmentally conscious 25&ndash;40 year
-            old.&rdquo; Research replaced that with three differentiated personas and one explicit
-            anti-persona, the Quiet Optimizer (primary, already pays for a quiet-autopilot
-            app like Copilot Money or Whoop), the Systems Optimizer, the Committed Reducer, and the
-            Offset Absolver, who I deliberately do not design for. That anti-persona is the harder
-            call: it means turning away the segment most likely to be loud about the product, in
-            favor of the one most likely to pay for it.
+            old.&rdquo; Research replaced that with three differentiated personas and one
+            explicit anti-persona: the Quiet Optimizer (primary, already pays for a
+            quiet-autopilot app like Copilot Money or Whoop), the Systems Optimizer, the
+            Committed Reducer, and the Offset Absolver, who I deliberately don&rsquo;t design
+            for. That anti-persona is the harder call. It means turning away the segment most
+            likely to be loud about the product, in favor of the one most likely to pay for it.
           </p>
         </Part>
 
         <Part index="03" title="Solution">
           <p>
             Three signal layers, phone-sensor movement, linked-bank spend, and forwarded
-            receipts, feed one daily confirm loop instead of a manual form. The receipt
-            layer is where the AI product work concentrates: Claude Haiku vision, Anthropic&rsquo;s
-            fast image-reading AI model, reads a forwarded or shared receipt image into structured
-            line items, which then have to resolve through the app&rsquo;s real NAICS-factor mapping
-            (NAICS: the federal government&rsquo;s standard industry-classification codes, each one
-            tied to a carbon-per-dollar-spent estimate) to produce a defensible emissions estimate,
-            not just a plausible-looking one.
+            receipts, feed one daily confirm loop instead of a manual form. The receipt layer is
+            where the AI product work concentrates. Claude Haiku vision, Anthropic&rsquo;s fast
+            image-reading AI model, reads a forwarded or shared receipt image into structured
+            line items. Those then resolve through the app&rsquo;s real NAICS-factor mapping
+            (NAICS: the federal government&rsquo;s standard industry-classification codes, each
+            tied to a carbon-per-dollar-spent estimate), so the result is a defensible emissions
+            estimate, not just a plausible-looking one.
           </p>
         </Part>
 
         <Part index="04" title="PM decisions">
           <p>
             <span className="font-bold text-ink">What I cut, and why:</span> file upload,
-            multi-bank writeback, and the food-photo &ldquo;Snap-a-Plate&rdquo; feature all stayed
-            out of this phase. Snap-a-Plate specifically exists today only as a written spec
-            (`docs/SNAP_A_PLATE_SPEC.md`), deliberately not built, because it re-uses the same
-            receipt-parsing pattern and I wanted one AI ingestion pipeline proven before starting a
-            second one.
+            multi-bank writeback, and the food-photo &ldquo;Snap-a-Plate&rdquo; feature all
+            stayed out of this phase. Snap-a-Plate exists today only as a written spec
+            (`docs/SNAP_A_PLATE_SPEC.md`), deliberately not built. It reuses the same
+            receipt-parsing pattern, and I wanted one AI ingestion pipeline proven before
+            starting a second one.
           </p>
           <p>
             <span className="font-bold text-ink">The bigger cut:</span> sensors-only has to be a
             complete, ungated experience on its own, with bank-linking as a pure upgrade layer
-            rather than a wall. That decision costs the product every spend-based insight for a
-            user who never connects a bank, a real accuracy trade, in exchange for
-            never forcing the highest-friction step of onboarding before anyone sees the app work.
+            rather than a wall. That costs the product every spend-based insight for a user who
+            never connects a bank, a real accuracy trade. In exchange, nobody has to clear the
+            highest-friction step of onboarding before they see the app work.
           </p>
           <p>
             <span className="font-bold text-ink">The reversal I&rsquo;d call the real PM
             decision:</span> a full dark visual direction (&ldquo;Understory&rdquo;), built out
-            completely, was reversed fifteen days after it shipped once research showed it was
+            completely, got reversed fifteen days after it shipped, once research showed it was
             calibrated for the persona least likely to ever subscribe. I rejected four weeks of
-            finished work rather than defend it, which is the harder version of the same judgment
-            call as the cuts above.
+            finished work rather than defend it. That&rsquo;s the harder version of the same
+            judgment call as the cuts above.
           </p>
         </Part>
 
@@ -217,8 +214,8 @@ export default function CaseStudy() {
             <code className="rounded-xs bg-surface-sunken px-xxs font-mono text-md">
               eval/receipt-parse/golden-v1.jsonl
             </code>
-            , graded on exact/structured-field match and then resolved through the app&rsquo;s real
-            production NAICS-factor logic, not a string-similarity stand-in.
+            . It&rsquo;s graded on exact/structured-field match, then resolved through the
+            app&rsquo;s real production NAICS-factor logic, not a string-similarity stand-in.
           </p>
           <motion.div
             {...evalStripReveal}
@@ -242,7 +239,7 @@ export default function CaseStudy() {
           <p className="flex flex-wrap items-center gap-sm">
             <StatusChip tone="watch">Blocked</StatusChip>
             <span>
-              on Anthropic API credits. The harness is real and frozen; there are no eval numbers
+              on Anthropic API credits. The harness is real and frozen. There are no eval numbers
               to report yet, and I&rsquo;m not going to invent placeholder ones to fill this
               section.
             </span>
@@ -253,13 +250,13 @@ export default function CaseStudy() {
           <p>
             The honest, Level-2 framing: a live, demo-able build with no outside users yet.{' '}
             What does exist is a real engineering-verification practice: 46/46 Jest (the
-            project&rsquo;s automated test suite) test groups passing and{' '}
+            project&rsquo;s automated test suite) test groups passing, and{' '}
             <code className="rounded-xs bg-surface-sunken px-xxs font-mono text-md">tsc --noEmit</code>{' '}
-            (TypeScript&rsquo;s own type-checker, run with no build output) clean, checked at every
-            commit, plus a repeated adversarial multi-agent review process
-            used on both the app&rsquo;s manual-logging fixes and this website: parallel passes
-            checking design-system compliance and content fidelity, with confirmed findings fixed
-            and false positives discarded.
+            (TypeScript&rsquo;s own type-checker, run with no build output) clean, checked at
+            every commit. On top of that, a repeated adversarial multi-agent review process runs
+            on both the app&rsquo;s manual-logging fixes and this website: parallel passes check
+            design-system compliance and content fidelity, confirmed findings get fixed, and
+            false positives get discarded.
           </p>
           <motion.div
             {...outcomesStripReveal}
@@ -291,18 +288,19 @@ export default function CaseStudy() {
             </div>
           </motion.div>
           <p>
-            Real bugs the adversarial review process actually caught, not hypothetical ones: an
+            Real bugs the adversarial review process actually caught, not hypothetical ones. An
             unhandled promise rejection in a notification-scheduling hook that surfaced as a
-            persistent UI-blocking dev toast; a Tailwind v4 token-namespace collision where this
-            project&rsquo;s own custom spacing tokens silently overrode Tailwind&rsquo;s built-in
-            container-width utilities, collapsing a hero component to a few pixels, found via
-            direct DOM inspection and fixed with explicitly namespaced tokens; and an initially
-            incomplete NAICS mapping that a dedicated verification pass caught before it shipped.
+            persistent, UI-blocking dev toast. A Tailwind v4 token-namespace collision, where
+            this project&rsquo;s own custom spacing tokens silently overrode Tailwind&rsquo;s
+            built-in container-width utilities and collapsed a hero component to a few pixels.
+            I found it through direct DOM inspection and fixed it with explicitly namespaced
+            tokens. And an initially incomplete NAICS mapping that a dedicated verification pass
+            caught before it shipped.
           </p>
           <p>
             What this is not: not in production, not serving any number of users, nothing run at
-            scale, and no team to have managed. Zero fabricated production or usage claims. That&rsquo;s
-            the point of writing this section at all.
+            scale, no team to have managed. Zero fabricated production or usage claims.
+            That&rsquo;s the point of writing this section at all.
           </p>
         </Part>
 
@@ -313,19 +311,19 @@ export default function CaseStudy() {
             it should already have.
           </p>
           <p>
-            More broadly, both design reversals documented on this page (Understory, and the
-            earlier Klima-clone-to-autopilot pivot) happened after the work was finished, not
-            before. A cheaper version of the same research, run before four weeks of visual work
-            rather than after it, would have reached the same conclusion for a fraction of the
-            sunk cost. The instinct to act on the evidence was right; the timing of when I
-            went looking for it was not.
+            More broadly, both design reversals on this page, Understory and the earlier
+            Klima-clone-to-autopilot pivot, happened after the work was finished, not before. A
+            cheaper version of the same research, run before four weeks of visual work instead
+            of after it, would have reached the same conclusion for a fraction of the sunk cost.
+            The instinct to act on the evidence was right. The timing of when I went looking for
+            it was not.
           </p>
           <p>
-            And the one I&rsquo;m not going to resolve here for the sake of a tidy ending: the
+            And the one I&rsquo;m not going to resolve here just for a tidy ending: the
             hard-outcome monetization question (see Risks, above) is still open. A more honest
-            version of this retrospective says that a subscription-only business model is the one
-            major decision in this project I have not yet stress-tested against evidence the way I
-            did the persona and the visual direction, and that it&rsquo;s next.
+            version of this retrospective says that a subscription-only business model is the
+            one major decision in this project I haven&rsquo;t stress-tested against evidence the
+            way I did the persona and the visual direction. It&rsquo;s next.
           </p>
         </Part>
       </div>

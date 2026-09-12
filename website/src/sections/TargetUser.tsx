@@ -123,14 +123,11 @@ export default function TargetUser() {
       <div className="px-md py-2xl md:px-lg md:py-huge">
       <div className="mx-auto max-w-page">
         <Reveal>
-          <p className="mb-md text-xs font-mono uppercase tracking-widest text-ink-tertiary tabular-nums">
-            03 / TARGET USER
-          </p>
           <h2
             id="targetuser-heading"
             className="mb-xl text-2xl font-extrabold tracking-tight text-ink"
           >
-            Target User
+            Who this is actually for
           </h2>
         </Reveal>
 
@@ -145,7 +142,7 @@ export default function TargetUser() {
             <span className="font-extrabold text-ink">
               Research this summer replaced that with three real, differentiated personas
             </span>
-            <span className="text-ink-secondary">, plus a persona I deliberately do not build for:</span>
+            <span className="text-ink-secondary">, plus one I deliberately don't build for:</span>
           </p>
         </Reveal>
 
@@ -222,10 +219,10 @@ export default function TargetUser() {
               The Offset Absolver
             </h3>
             <p className="max-w-prose text-md text-ink-secondary">
-              Wants to pay for a clean conscience with minimal engagement and expects the app to
+              Wants to pay for a clean conscience with minimal engagement, and expects the app to
               declare them "carbon neutral" via purchased offsets. This is explicitly who I am{' '}
-              <em className="not-italic text-ink">not</em> designing for, because it's also, not
-              coincidentally, Klima's actual target user (
+              <em className="not-italic text-ink">not</em> designing for. Not coincidentally,
+              it's also Klima's actual target user (
               <a href="#insight" className="text-accent underline-offset-2 hover:underline">
                 see Insight
               </a>

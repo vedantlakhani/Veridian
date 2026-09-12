@@ -128,7 +128,7 @@ function IconConfirm() {
 const layers = [
   {
     title: 'Movement',
-    body: "iOS's CMMotionActivityManager (the iPhone's built-in motion-tracking API, running on a dedicated low-power chip) pulls up to seven days of walk/run/cycle/drive segments the phone's coprocessor already logged, at effectively zero battery cost and with no location permission needed. Android uses its equivalent, the Activity Recognition Transition API.",
+    body: "iOS's CMMotionActivityManager, the iPhone's built-in motion-tracking API running on a dedicated low-power chip, pulls up to seven days of walk, run, cycle, and drive segments the phone already logged. It costs almost no battery and needs no location permission. Android uses its equivalent, the Activity Recognition Transition API.",
     footer:
       'CMMotionActivityManager · Activity Recognition Transition API · up to 7 days · no GPS · no location permission',
     icon: <IconMovement />,
@@ -137,7 +137,7 @@ const layers = [
   },
   {
     title: 'Money',
-    body: "A linked bank account, via Plaid (the service most finance apps use to securely connect to a bank), run through the EPA's free public USEEIO dataset (a standard set of estimates for how much carbon a dollar spent in each industry produces), so spend on groceries, fuel, and shopping shows up automatically, labeled honestly as an estimate.",
+    body: "A linked bank account, through Plaid (the service most finance apps use to connect securely to a bank), runs through the EPA's free public USEEIO dataset, a standard set of estimates for how much carbon a dollar spent in each industry produces. Spend on groceries, fuel, and shopping shows up automatically, labeled honestly as an estimate.",
     footer: 'Plaid · EPA USEEIO emission factors · labeled as estimate',
     icon: <IconMoney />,
     tintClassName: 'bg-accent-secondary/10',
@@ -145,7 +145,7 @@ const layers = [
   },
   {
     title: 'Receipts',
-    body: "A forwarding address and a share-sheet extension let a forwarded receipt upgrade a coarse spend-based estimate to line-item precision, parsed by Claude Haiku vision, Anthropic's fast image-reading AI model.",
+    body: "A forwarding address and a share-sheet extension let you forward a receipt and upgrade a coarse spend-based estimate to line-item precision. Claude Haiku vision, Anthropic's fast image-reading AI model, does the parsing.",
     footer: 'Forwarding address · share-sheet extension · Claude Haiku vision',
     icon: <IconReceipt />,
     tintClassName: 'bg-shopping/10',
@@ -294,14 +294,11 @@ export default function Solution() {
   return (
     <section id="solution" className="border-t border-border">
       <div className="mx-auto max-w-page px-md py-2xl md:px-lg md:py-huge">
-        <p className="mb-md text-xs font-mono uppercase tracking-widest text-ink-tertiary tabular-nums">
-          06 / SOLUTION
-        </p>
-        <h2 className="text-2xl font-bold tracking-tight text-ink">Solution</h2>
+        <h2 className="text-2xl font-bold tracking-tight text-ink">How it actually works now</h2>
         <Reveal>
           <p className="mt-lg max-w-prose text-xl leading-relaxed text-ink">
-            Veridian's mechanic today is three signal layers feeding one confirm loop, instead
-            of one manual form.
+            Veridian runs on three signal layers feeding one confirm loop now, instead of one
+            manual form.
           </p>
         </Reveal>
 
@@ -440,7 +437,7 @@ export default function Solution() {
           </Reveal>
           <Reveal delay={0.1}>
             <p className="mt-md text-lg text-ink-secondary">
-              Corrections train a per-user prior, so the app gets quieter every week instead of
+              Corrections train a per-user prior. The app gets quieter every week instead of
               noisier.
             </p>
           </Reveal>
@@ -451,10 +448,11 @@ export default function Solution() {
           <Reveal>
             <p className="text-lg text-ink-secondary">
               Visually, the product ships under a direction I call{' '}
-              <span className="font-bold text-ink">Clearing</span>: light, precise, low-chroma
-              deep evergreen instead of eco-green, tabular figures on every number, a custom
-              line-illustration set instead of emoji, and full-bleed photography reserved only
-              for emotional moments (the Passport, the weekly Recap), never as everyday chrome.
+              <span className="font-bold text-ink">Clearing</span>: light, precise, a
+              low-chroma deep evergreen instead of eco-green, tabular figures on every number,
+              a custom line-illustration set instead of emoji. Full-bleed photography shows up
+              only for emotional moments, like the Passport and the weekly Recap, never as
+              everyday chrome.
             </p>
           </Reveal>
           <Reveal delay={0.05} className="mt-lg grid grid-cols-4 gap-sm md:grid-cols-8">

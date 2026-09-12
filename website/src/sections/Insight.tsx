@@ -125,10 +125,6 @@ export default function Insight() {
       <div className="h-2xl" aria-hidden="true" />
       <div className="mx-auto max-w-page px-md py-2xl md:px-lg md:py-huge">
         <div className="mx-auto max-w-prose">
-          <p className="mb-md text-xs font-mono uppercase tracking-widest text-canvas/45 tabular-nums">
-            05 / INSIGHT
-          </p>
-
           {/* Beat 1 — the finding, as a display statement (also this section's h2).
               Two-tone emphasis: muted setup clause, full-weight punchline — the
               same device used on the Hero's headline, recomposed for a dark ground. */}
@@ -267,9 +263,9 @@ export default function Insight() {
           </div>
           <Reveal delay={0.1} className="mt-md">
             <p className="text-lg text-canvas">
-              Both measure a one-time markup on a purchase already happening, a different
-              decision than adding a permanent $10/month line item competing with Netflix,
-              Spotify, Whoop, and Copilot for the same wallet.
+              Both measure a one-time markup on a purchase people are already making. That's a
+              different decision than adding a permanent $10/month line item competing with
+              Netflix, Spotify, Whoop, and Copilot for the same wallet.
             </p>
           </Reveal>
         </div>

@@ -124,15 +124,12 @@ export default function Feedback() {
     <section id="feedback" className="border-t border-border py-2xl md:py-huge">
       <div className="mx-auto max-w-page px-md md:px-lg">
         <motion.div {...headerReveal}>
-          <p className="mb-md text-xs font-mono uppercase tracking-widest tabular-nums text-ink-tertiary">
-            08 / FEEDBACK
-          </p>
-          <h2 className="text-2xl font-extrabold tracking-tight text-ink">Adapting to User Feedback</h2>
+          <h2 className="text-2xl font-extrabold tracking-tight text-ink">What testing actually broke</h2>
         </motion.div>
 
         <motion.p {...introReveal} className="mt-lg max-w-prose text-xl leading-relaxed text-ink">
-          This week&rsquo;s testing surfaced four concrete problems, and I want to show the actual
-          fix for each rather than just claim I &ldquo;iterate fast.&rdquo;
+          This week&rsquo;s testing surfaced four concrete problems. I want to show the actual
+          fix for each, not just claim I &ldquo;iterate fast.&rdquo;
         </motion.p>
 
         {/* FIX 01 — raw NAICS codes as section headers */}
@@ -153,10 +150,10 @@ export default function Feedback() {
           }
           prose={
             <>
-              The Shopping category&rsquo;s emission factors are seeded from EPA sector data, which
-              comes labeled with NAICS codes, the federal government&rsquo;s standard
-              industry-classification numbers, like <code className="rounded-xs bg-surface-sunken px-xxs font-mono text-md">443142</code>.
-              Nobody testing the app knew what that meant, so they skipped the section entirely.
+              The Shopping category&rsquo;s emission factors come from EPA sector data, labeled
+              with NAICS codes, the federal government&rsquo;s standard industry-classification
+              numbers, like <code className="rounded-xs bg-surface-sunken px-xxs font-mono text-md">443142</code>.
+              Nobody testing the app knew what that meant. They just skipped the section.
             </>
           }
           evidence="lib/naicsGroups.ts · 69 NAICS codes → 12 groups"
@@ -225,10 +222,10 @@ export default function Feedback() {
           }
           prose={
             <>
-              Every other category logs a physical quantity, such as kilometers driven or kilograms of
-              beef. Shopping is spend-based by necessity (that&rsquo;s how EPA sector factors
-              work), but the UI didn&rsquo;t say so, so people tried to log &ldquo;one
-              shirt&rdquo; and got confused by a dollar-amount prompt.
+              Every other category logs a physical quantity, like kilometers driven or kilograms
+              of beef. Shopping is spend-based by necessity, that&rsquo;s how EPA sector factors
+              work, but the UI never said so. People tried to log &ldquo;one shirt&rdquo; and
+              got confused by a dollar-amount prompt.
             </>
           }
           evidence="spend-based reframe · estimate disclaimer"

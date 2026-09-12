@@ -409,14 +409,11 @@ export default function Competitors() {
     >
       <div className="mx-auto max-w-wide">
         <Reveal>
-          <p className="mb-md text-xs font-mono uppercase tracking-widest text-ink-tertiary tabular-nums">
-            04 / COMPETITORS
-          </p>
           <h2
             id="competitors-heading"
             className="mb-lg text-2xl font-extrabold tracking-tight text-ink"
           >
-            Competitors
+            What the graveyard taught me
           </h2>
         </Reveal>
 
@@ -425,7 +422,7 @@ export default function Competitors() {
             <span className="text-ink">
               I didn't do a casual "here are some other carbon apps" pass.
             </span>{' '}
-            I ran an actual graveyard audit, because the failure pattern across this category is
+            I ran an actual graveyard audit. The failure pattern across this category is
             consistent enough to be a law.
           </p>
         </Reveal>
@@ -480,8 +477,8 @@ export default function Competitors() {
               Correction
             </p>
             <p className="text-md text-ink-secondary">
-              Klima was a 2021 Apple Design Award finalist, not a winner: a correction to an
-              earlier assumption made earlier in this project's own research.
+              Klima was a 2021 Apple Design Award finalist, not a winner. That corrects an
+              earlier assumption from this project's own research.
             </p>
           </div>
         </Reveal>
