@@ -85,13 +85,13 @@ const SMALLER_RISKS = [
   {
     status: 'Mitigated' as const,
     name: 'Spend-estimate accuracy disappointment',
-    body: 'A documented churn cause in this category — mitigated by explicit uncertainty labeling and receipts visibly upgrading estimates.',
+    body: 'A documented churn cause in this category, mitigated by explicit uncertainty labeling and receipts visibly upgrading estimates.',
     note: '(that’s the ~ and the muted values you saw above)',
   },
   {
     status: 'Not started' as const,
     name: 'Plaid’s sales-gated onboarding',
-    body: 'Needs a human conversation I haven’t started yet.',
+    body: 'Plaid, the service the app uses to securely connect a bank account, gates production access behind a sales conversation I haven’t started yet.',
     note: null as string | null,
   },
 ]
@@ -121,8 +121,8 @@ export default function Risks() {
           </p>
           <p className="mt-lg text-lg leading-relaxed text-ink-secondary">
             <span className="text-ink">
-              The current plan is a flat subscription for the intelligence layer &mdash; the
-              autopilot itself, priced like Copilot Money &mdash; and never an offset transaction
+              The current plan is a flat subscription for the intelligence layer, the
+              autopilot itself, priced like Copilot Money, and never an offset transaction
               cut, because offset credibility is actively collapsing (2024 research puts 87%+ of
               many offset types at high risk of not delivering real reductions) and I don&rsquo;t
               want the business model resting on that.
@@ -130,8 +130,8 @@ export default function Risks() {
             But subscription-for-awareness alone has a real precedent for failing: Miles ran
             flawless passive tracking for nine years and still shut down, because soft point
             rewards have a ceiling. Root, the profitable comparison case, shows passive tracking
-            endures only when it&rsquo;s tied to a hard outcome the user already values &mdash;
-            money saved, time saved, an insurance or utility incentive. I have candidates but no
+            endures only when it&rsquo;s tied to a hard outcome the user already values, such as
+            money saved, time saved, or an insurance or utility incentive. I have candidates but no
             decision yet, and the Systems Optimizer persona specifically churns without one.
           </p>
         </motion.div>
@@ -175,7 +175,7 @@ export default function Risks() {
         >
           Candidates: the swap-engine savings math <StatusChip tone="accent">Exists</StatusChip>,
           insurance and utility partnerships{' '}
-          <StatusChip tone="neutral">Unexplored</StatusChip> &mdash; but no decision yet.
+          <StatusChip tone="neutral">Unexplored</StatusChip>, but no decision yet.
         </motion.p>
 
         {/* Three smaller, more mitigated risks */}

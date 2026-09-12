@@ -117,7 +117,7 @@ export default function Problem() {
 
         {/* Bridge sentence into the structural failure. */}
         <motion.p {...bridgeReveal} className="mt-lg max-w-prose text-lg leading-relaxed text-ink-secondary">
-          I designed my way around all three in the first version — that was the whole PRD. What I
+          I designed my way around all three in the first version: that was the whole PRD. What I
           hadn&rsquo;t yet confronted was a deeper structural problem underneath.
         </motion.p>
 

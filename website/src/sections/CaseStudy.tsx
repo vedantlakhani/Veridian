@@ -143,7 +143,7 @@ export default function CaseStudy() {
 
         <motion.p {...introReveal} className="mt-lg max-w-prose text-xl leading-relaxed text-ink">
           Everything above this section is the product. This part is the same five months, told
-          as the product-management work it actually was — the decisions, the evals, and what a
+          as the product-management work it actually was: the decisions, the evals, and what a
           fair reading of the outcome is.
         </motion.p>
 
@@ -151,7 +151,7 @@ export default function CaseStudy() {
           <p>
             Every consumer carbon app fails the same way: a one-time onboarding number, generic
             advice, and a manual log competing with the user&rsquo;s own forgetfulness every day.
-            I built into that failure mode myself before I saw it &mdash; the first version of
+            I built into that failure mode myself before I saw it: the first version of
             this app was a Klima-style logger with streaks and badges, and it shipped and worked.
             The deeper problem underneath, that nobody opens an app to type &ldquo;drove 12
             km,&rdquo; only came into focus after a research pass months later.
@@ -162,7 +162,7 @@ export default function CaseStudy() {
           <p>
             The first version targeted a vague &ldquo;environmentally conscious 25&ndash;40 year
             old.&rdquo; Research replaced that with three differentiated personas and one explicit
-            anti-persona &mdash; the Quiet Optimizer (primary, already pays for a quiet-autopilot
+            anti-persona, the Quiet Optimizer (primary, already pays for a quiet-autopilot
             app like Copilot Money or Whoop), the Systems Optimizer, the Committed Reducer, and the
             Offset Absolver, who I deliberately do not design for. That anti-persona is the harder
             call: it means turning away the segment most likely to be loud about the product, in
@@ -172,11 +172,13 @@ export default function CaseStudy() {
 
         <Part index="03" title="Solution">
           <p>
-            Three signal layers &mdash; phone-sensor movement, linked-bank spend, and forwarded
-            receipts &mdash; feed one daily confirm loop instead of a manual form. The receipt
-            layer is where the AI product work concentrates: Claude Haiku vision reads a forwarded
-            or shared receipt image into structured line items, which then have to resolve through
-            the app&rsquo;s real NAICS-factor mapping to produce a defensible emissions estimate,
+            Three signal layers, phone-sensor movement, linked-bank spend, and forwarded
+            receipts, feed one daily confirm loop instead of a manual form. The receipt
+            layer is where the AI product work concentrates: Claude Haiku vision, Anthropic&rsquo;s
+            fast image-reading AI model, reads a forwarded or shared receipt image into structured
+            line items, which then have to resolve through the app&rsquo;s real NAICS-factor mapping
+            (NAICS: the federal government&rsquo;s standard industry-classification codes, each one
+            tied to a carbon-per-dollar-spent estimate) to produce a defensible emissions estimate,
             not just a plausible-looking one.
           </p>
         </Part>
@@ -194,7 +196,7 @@ export default function CaseStudy() {
             <span className="font-bold text-ink">The bigger cut:</span> sensors-only has to be a
             complete, ungated experience on its own, with bank-linking as a pure upgrade layer
             rather than a wall. That decision costs the product every spend-based insight for a
-            user who never connects a bank &mdash; a real accuracy trade &mdash; in exchange for
+            user who never connects a bank, a real accuracy trade, in exchange for
             never forcing the highest-friction step of onboarding before anyone sees the app work.
           </p>
           <p>
@@ -216,7 +218,7 @@ export default function CaseStudy() {
               eval/receipt-parse/golden-v1.jsonl
             </code>
             , graded on exact/structured-field match and then resolved through the app&rsquo;s real
-            production NAICS-factor logic &mdash; not a string-similarity stand-in.
+            production NAICS-factor logic, not a string-similarity stand-in.
           </p>
           <motion.div
             {...evalStripReveal}
@@ -234,7 +236,7 @@ export default function CaseStudy() {
           <p className="!mt-lg">
             The confusion-pair slice is named for a real ambiguity, not a generic category test:
             grocery versus restaurant/prepared-food, which drives the wrong emissions factor if the
-            model misjudges it. The regression gate is defined before the first run &mdash;
+            model misjudges it. The regression gate is defined before the first run:
             confusion-pair recall must never drop below its baseline once one exists.
           </p>
           <p className="flex flex-wrap items-center gap-sm">
@@ -250,10 +252,11 @@ export default function CaseStudy() {
         <Part index="06" title="Outcomes">
           <p>
             The honest, Level-2 framing: a live, demo-able build with no outside users yet.{' '}
-            What does exist is a real engineering-verification practice &mdash; 46/46 Jest suites
-            passing and{' '}
+            What does exist is a real engineering-verification practice: 46/46 Jest (the
+            project&rsquo;s automated test suite) test groups passing and{' '}
             <code className="rounded-xs bg-surface-sunken px-xxs font-mono text-md">tsc --noEmit</code>{' '}
-            clean, checked at every commit, plus a repeated adversarial multi-agent review process
+            (TypeScript&rsquo;s own type-checker, run with no build output) clean, checked at every
+            commit, plus a repeated adversarial multi-agent review process
             used on both the app&rsquo;s manual-logging fixes and this website: parallel passes
             checking design-system compliance and content fidelity, with confirmed findings fixed
             and false positives discarded.
@@ -298,14 +301,14 @@ export default function CaseStudy() {
           </p>
           <p>
             What this is not: not in production, not serving any number of users, nothing run at
-            scale, and no team to have managed. Zero fabricated production or usage claims &mdash;
-            that&rsquo;s the point of writing this section at all.
+            scale, and no team to have managed. Zero fabricated production or usage claims. That&rsquo;s
+            the point of writing this section at all.
           </p>
         </Part>
 
         <Part index="07" title="What I'd do differently">
           <p>
-            Ship the eval harness before I ran out of API credit to run it, not after &mdash; the
+            Ship the eval harness before I ran out of API credit to run it, not after. The
             harness itself took less time to design well than it will take to wait for the numbers
             it should already have.
           </p>
@@ -314,7 +317,7 @@ export default function CaseStudy() {
             earlier Klima-clone-to-autopilot pivot) happened after the work was finished, not
             before. A cheaper version of the same research, run before four weeks of visual work
             rather than after it, would have reached the same conclusion for a fraction of the
-            sunk cost &mdash; the instinct to act on the evidence was right; the timing of when I
+            sunk cost. The instinct to act on the evidence was right; the timing of when I
             went looking for it was not.
           </p>
           <p>
@@ -322,7 +325,7 @@ export default function CaseStudy() {
             hard-outcome monetization question (see Risks, above) is still open. A more honest
             version of this retrospective says that a subscription-only business model is the one
             major decision in this project I have not yet stress-tested against evidence the way I
-            did the persona and the visual direction &mdash; and that it&rsquo;s next.
+            did the persona and the visual direction, and that it&rsquo;s next.
           </p>
         </Part>
       </div>

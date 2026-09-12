@@ -27,11 +27,11 @@ function useReveal(delay = 0) {
 }
 
 const SCREENS = [
-  { src: '/screenshots/onboarding.png', label: 'Baseline', caption: 'Where it starts — a two-minute estimate, not a form.' },
-  { src: '/screenshots/today.png', label: 'Today', caption: 'The confirm loop — auto-written, not typed.' },
+  { src: '/screenshots/onboarding.png', label: 'Baseline', caption: 'Where it starts: a two-minute estimate, not a form.' },
+  { src: '/screenshots/today.png', label: 'Today', caption: 'The confirm loop, auto-written, not typed.' },
   { src: '/screenshots/trends.png', label: 'Trends', caption: 'Your carbon, decoded.' },
-  { src: '/screenshots/you.png', label: 'You', caption: 'Momentum, not streaks — no guilt copy.' },
-  { src: '/screenshots/passport.png', label: 'Passport', caption: 'The monthly artifact — shareable, not a certificate.' },
+  { src: '/screenshots/you.png', label: 'You', caption: 'Momentum, not streaks. No guilt copy.' },
+  { src: '/screenshots/passport.png', label: 'Passport', caption: 'The monthly artifact: shareable, not a certificate.' },
 ]
 
 export default function ProductScreens() {
@@ -48,7 +48,7 @@ export default function ProductScreens() {
             Real screens, not a mockup
           </h2>
           <p className="mt-md max-w-prose text-lg leading-relaxed text-ink-secondary">
-            Captured live from the current build — logged the same way any real day would be, no
+            Captured live from the current build, logged the same way any real day would be, with no
             crops chosen to flatter it.
           </p>
         </motion.div>

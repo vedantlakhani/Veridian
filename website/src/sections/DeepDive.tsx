@@ -153,7 +153,7 @@ export default function DeepDive() {
           </h2>
           <p className="mt-md max-w-prose text-lg leading-relaxed text-ink-secondary">
             The full five-month story, if you want it. Same content as always, just closed by
-            default — open any section below to read it.
+            default: open any section below to read it.
           </p>
         </motion.div>
 

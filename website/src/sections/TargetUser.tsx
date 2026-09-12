@@ -62,7 +62,7 @@ const quietOptimizerRows: PersonaRow[] = [
     label: 'ROLE',
     value: (
       <>
-        <span className="text-ink">Senior IC or manager</span> — engineer, PM, physician, attorney
+        <span className="text-ink">Senior IC or manager</span>, such as an engineer, PM, physician, or attorney
       </>
     ),
   },
@@ -91,8 +91,8 @@ const quietOptimizerRows: PersonaRow[] = [
     label: 'CHURNS ON',
     value: (
       <>
-        <span className="text-ink">A broken-trust moment</span> — a miscategorized transaction, a
-        wrong trip mode — far faster than on price
+        <span className="text-ink">A broken-trust moment</span>, such as a miscategorized transaction or a
+        wrong trip mode, far faster than on price
       </>
     ),
   },
@@ -194,8 +194,8 @@ export default function TargetUser() {
               <h3 className="mt-sm mb-xs text-lg font-bold text-ink">The Systems Optimizer</h3>
               <p className="text-lg text-ink-secondary">
                 28–50, engineer or tech-adjacent, often has an EV or home solar, runs a personal
-                budgeting spreadsheet for fun. Motivated by optimization and by money, not virtue
-                — this is the person the still-unbuilt "hard outcome" hook (
+                budgeting spreadsheet for fun. Motivated by optimization and by money, not virtue.
+                This is the person the still-unbuilt "hard outcome" hook (
                 <a href="#risks" className="text-accent underline-offset-2 hover:underline">
                   see Risks
                 </a>
@@ -222,7 +222,7 @@ export default function TargetUser() {
               The Offset Absolver
             </h3>
             <p className="max-w-prose text-md text-ink-secondary">
-              Wants to pay for a clean conscience with minimal engagement — expects the app to
+              Wants to pay for a clean conscience with minimal engagement and expects the app to
               declare them "carbon neutral" via purchased offsets. This is explicitly who I am{' '}
               <em className="not-italic text-ink">not</em> designing for, because it's also, not
               coincidentally, Klima's actual target user (

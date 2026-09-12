@@ -80,7 +80,7 @@ export default function Challenges() {
               happy with, and July 2, when I came back and gutted the light-mode decision,
               there&rsquo;s a gap in the commit log with nothing in it.
             </span>{' '}
-            That&rsquo;s not a curated timeline &mdash; that&rsquo;s what actually happened. I
+            That&rsquo;s not a curated timeline. That&rsquo;s what actually happened. I
             don&rsquo;t think a gap like that is evidence against the project; it&rsquo;s evidence
             that I didn&rsquo;t force a decision I wasn&rsquo;t sure of just to keep a streak
             going, and that when I came back, I was honest enough with myself to redo work rather
@@ -97,8 +97,8 @@ export default function Challenges() {
           <div>
             <p className="max-w-prose text-lg leading-relaxed text-ink-secondary">
               <span className="text-ink">
-                In July I built out a complete dark visual direction &mdash; &ldquo;Understory&rdquo;:
-                dark surfaces, a moss-green accent, a literary serif for hero numbers &mdash; all
+                In July I built out a complete dark visual direction, &ldquo;Understory&rdquo;:
+                dark surfaces, a moss-green accent, and a literary serif for hero numbers, all
                 the way through a portfolio screenshot set.
               </span>{' '}
               Fifteen days later, a research pass told me plainly that the aesthetic I&rsquo;d
@@ -177,7 +177,7 @@ export default function Challenges() {
                 <code className="rounded-xs bg-surface-sunken px-xxs font-mono text-md">
                   Invalid JWT
                 </code>{' '}
-                error through a Supabase Edge Function auth path &mdash; decoding the JWT locally
+                error through a Supabase Edge Function auth path, decoding the JWT locally
                 instead of a network round-trip, fixing base64url decoding, fixing a
                 header-override bug, before it actually held.
               </span>{' '}
@@ -186,7 +186,7 @@ export default function Challenges() {
               <code className="rounded-xs bg-surface-sunken px-xxs font-mono text-md">View</code>{' '}
               rather than a{' '}
               <code className="rounded-xs bg-surface-sunken px-xxs font-mono text-md">border</code>{' '}
-              property &mdash; invisible to both lint and a plain grep for the property name,
+              property, invisible to both lint and a plain grep for the property name,
               because it wasn&rsquo;t using the property at all.
             </p>
             <p className="py-md text-xl text-ink">

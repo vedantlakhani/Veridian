@@ -215,33 +215,33 @@ const converters: ConverterRow[] = [
   {
     app: 'Flighty',
     price: '$49/yr',
-    scale: '—',
+    scale: 'N/A',
     signal: '~$500K/month revenue on a three-person team',
   },
   {
     app: 'Whoop',
     price: '$199–359/yr',
-    scale: '—',
-    signal: '—',
+    scale: 'N/A',
+    signal: 'N/A',
   },
   {
     app: 'Oura',
-    price: '—',
+    price: 'N/A',
     scale: '5.5M rings sold',
     signal: '2M paying subscribers',
   },
   {
     app: 'Strava',
-    price: '—',
+    price: 'N/A',
     scale: '180M registered users',
     signal: '~2% premium penetration',
     ceiling: true,
   },
   {
     app: 'Gentler Streak',
-    price: '—',
+    price: 'N/A',
     scale: '5,000–50,000+ subscribers',
-    signal: '$1M revenue / $400K profit in two years, tiny team, 2024 ADA winner',
+    signal: '$1M revenue / $400K profit in two years, tiny team, 2024 Apple Design Award (ADA) winner',
   },
 ];
 
@@ -480,7 +480,7 @@ export default function Competitors() {
               Correction
             </p>
             <p className="text-md text-ink-secondary">
-              Klima was a 2021 Apple Design Award finalist, not a winner — a correction to an
+              Klima was a 2021 Apple Design Award finalist, not a winner: a correction to an
               earlier assumption made earlier in this project's own research.
             </p>
           </div>

@@ -154,7 +154,8 @@ export default function Feedback() {
           prose={
             <>
               The Shopping category&rsquo;s emission factors are seeded from EPA sector data, which
-              comes labeled with codes like <code className="rounded-xs bg-surface-sunken px-xxs font-mono text-md">443142</code>.
+              comes labeled with NAICS codes, the federal government&rsquo;s standard
+              industry-classification numbers, like <code className="rounded-xs bg-surface-sunken px-xxs font-mono text-md">443142</code>.
               Nobody testing the app knew what that meant, so they skipped the section entirely.
             </>
           }
@@ -219,12 +220,12 @@ export default function Feedback() {
                 <span aria-hidden="true" className="h-[1em] w-14 rounded-xs bg-border-strong" />
                 <span>kg CO2e</span>
               </p>
-              <p className="mt-xxs text-xs text-ink-secondary">Estimated from spend category — receipts upgrade this.</p>
+              <p className="mt-xxs text-xs text-ink-secondary">Estimated from spend category; receipts upgrade this.</p>
             </div>
           }
           prose={
             <>
-              Every other category logs a physical quantity — kilometers driven, kilograms of
+              Every other category logs a physical quantity, such as kilometers driven or kilograms of
               beef. Shopping is spend-based by necessity (that&rsquo;s how EPA sector factors
               work), but the UI didn&rsquo;t say so, so people tried to log &ldquo;one
               shirt&rdquo; and got confused by a dollar-amount prompt.

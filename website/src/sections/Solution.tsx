@@ -44,10 +44,12 @@ function Reveal({
 function Glyph({
   size,
   tintClassName,
+  iconClassName = 'text-ink',
   children,
 }: {
   size: number;
   tintClassName: string;
+  iconClassName?: string;
   children: ReactNode;
 }) {
   const shapeSize = size * 0.86;
@@ -70,7 +72,7 @@ function Glyph({
         strokeWidth={1.8}
         strokeLinecap="round"
         strokeLinejoin="round"
-        className="absolute text-ink"
+        className={`absolute ${iconClassName}`}
         style={{
           width: glyphSize,
           height: glyphSize,
@@ -126,22 +128,28 @@ function IconConfirm() {
 const layers = [
   {
     title: 'Movement',
-    body: "iOS's CMMotionActivityManager pulls up to seven days of walk/run/cycle/drive segments the phone's coprocessor already logged, at effectively zero battery cost and with no location permission needed. Android uses the Activity Recognition Transition API.",
+    body: "iOS's CMMotionActivityManager (the iPhone's built-in motion-tracking API, running on a dedicated low-power chip) pulls up to seven days of walk/run/cycle/drive segments the phone's coprocessor already logged, at effectively zero battery cost and with no location permission needed. Android uses its equivalent, the Activity Recognition Transition API.",
     footer:
       'CMMotionActivityManager · Activity Recognition Transition API · up to 7 days · no GPS · no location permission',
     icon: <IconMovement />,
+    tintClassName: 'bg-transport/10',
+    iconClassName: 'text-transport',
   },
   {
     title: 'Money',
-    body: "A linked bank account (Plaid), run through the EPA's free public USEEIO emission-factor dataset, so spend on groceries, fuel, and shopping shows up automatically, labeled honestly as an estimate.",
+    body: "A linked bank account, via Plaid (the service most finance apps use to securely connect to a bank), run through the EPA's free public USEEIO dataset (a standard set of estimates for how much carbon a dollar spent in each industry produces), so spend on groceries, fuel, and shopping shows up automatically, labeled honestly as an estimate.",
     footer: 'Plaid · EPA USEEIO emission factors · labeled as estimate',
     icon: <IconMoney />,
+    tintClassName: 'bg-accent-secondary/10',
+    iconClassName: 'text-accent-secondary',
   },
   {
     title: 'Receipts',
-    body: 'A forwarding address and a share-sheet extension let a forwarded receipt upgrade a coarse spend-based estimate to line-item precision, parsed by Claude Haiku vision.',
+    body: "A forwarding address and a share-sheet extension let a forwarded receipt upgrade a coarse spend-based estimate to line-item precision, parsed by Claude Haiku vision, Anthropic's fast image-reading AI model.",
     footer: 'Forwarding address · share-sheet extension · Claude Haiku vision',
     icon: <IconReceipt />,
+    tintClassName: 'bg-shopping/10',
+    iconClassName: 'text-shopping',
   },
 ];
 
@@ -240,7 +248,7 @@ function NodeFlow() {
         })}
       </div>
       <span className="sr-only">
-        Diagram: three signal layers — Movement, Money, and Receipts — feed into one Confirm
+        Diagram: three signal layers, Movement, Money, and Receipts, feed into one Confirm
         step, shown as a horizontal sequence where each step lights up in turn before settling
         on Confirm.
       </span>
@@ -302,7 +310,7 @@ export default function Solution() {
           {layers.map((layer, i) => (
             <Reveal key={layer.title} delay={i * 0.05}>
               <div className="h-full rounded-xl border border-border bg-surface p-lg">
-                <Glyph size={48} tintClassName="bg-accent/10">
+                <Glyph size={48} tintClassName={layer.tintClassName} iconClassName={layer.iconClassName}>
                   {layer.icon}
                 </Glyph>
                 <h3 className="mt-md text-xl font-bold tracking-tight text-ink">
@@ -368,7 +376,7 @@ export default function Solution() {
                   <span className="font-mono text-xs uppercase tracking-widest text-ink-secondary">
                     {label} · <span className="tabular-nums">{value}</span>
                   </span>{' '}
-                  — {desc}
+                  : {desc}
                 </p>
               ))}
             </div>
@@ -443,7 +451,7 @@ export default function Solution() {
           <Reveal>
             <p className="text-lg text-ink-secondary">
               Visually, the product ships under a direction I call{' '}
-              <span className="font-bold text-ink">Clearing</span> — light, precise, low-chroma
+              <span className="font-bold text-ink">Clearing</span>: light, precise, low-chroma
               deep evergreen instead of eco-green, tabular figures on every number, a custom
               line-illustration set instead of emoji, and full-bleed photography reserved only
               for emotional moments (the Passport, the weekly Recap), never as everyday chrome.
@@ -464,7 +472,7 @@ export default function Solution() {
         {/* Beat 5 — Carbon Passport. */}
         <Reveal className="mx-auto mt-2xl max-w-prose">
           <p className="text-lg text-ink-secondary">
-            The growth artifact is a Carbon Passport — a monthly, automatically generated,
+            The growth artifact is a Carbon Passport: a monthly, automatically generated,
             shareable story of your footprint. It's modeled directly on Flighty's Digital
             Passport. Its founder cites the Digital Passport as one of Flighty's top-three
             organic growth drivers.

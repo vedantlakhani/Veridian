@@ -267,7 +267,7 @@ export default function Insight() {
           </div>
           <Reveal delay={0.1} className="mt-md">
             <p className="text-lg text-canvas">
-              Both measure a one-time markup on a purchase already happening — a different
+              Both measure a one-time markup on a purchase already happening, a different
               decision than adding a permanent $10/month line item competing with Netflix,
               Spotify, Whoop, and Copilot for the same wallet.
             </p>
@@ -278,7 +278,7 @@ export default function Insight() {
         <Reveal className="mx-auto mt-2xl max-w-prose">
           <p className="text-lg text-canvas/70">
             The natural experiment is right there in the graveyard. The free, values-driven
-            app — Earth Hero — has the best engagement of anything studied; the paid ones show
+            app, Earth Hero, has the best engagement of anything studied; the paid ones show
             price friction or stalled growth.
           </p>
         </Reveal>
@@ -295,7 +295,7 @@ export default function Insight() {
           </Reveal>
           <Reveal delay={0.05}>
             <p className="text-lg text-canvas/70">
-              Copilot and Flighty — the apps that already converted the Quiet Optimizer — are
+              Copilot and Flighty, the apps that already converted the Quiet Optimizer, are
               light, quiet, and precise; they sell craft, not conscience.
             </p>
           </Reveal>

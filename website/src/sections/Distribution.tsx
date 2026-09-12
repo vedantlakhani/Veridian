@@ -81,7 +81,7 @@ export default function Distribution() {
             I&rsquo;ll be direct about where this actually is: pre-launch, no public users, no App
             Store listing yet.
           </span>{' '}
-          What I do have is real — I&rsquo;ve been running the app on my own phone and putting it
+          What I do have is real. I&rsquo;ve been running the app on my own phone and putting it
           in front of a small number of real people, watching them use it rather than asking them
           what they think they&rsquo;d use.
         </motion.p>

@@ -281,7 +281,7 @@ export default function WaitlistCTA({ variant }: WaitlistCTAProps) {
           There&rsquo;s nothing to download yet.
         </h2>
         <motion.p {...revealLede} className="mt-md text-lg leading-relaxed text-ink-secondary">
-          TestFlight is the next real step. One email when it&rsquo;s actually shippable &mdash;
+          TestFlight is the next real step. One email when it&rsquo;s actually shippable,
           nothing before that.
         </motion.p>
 

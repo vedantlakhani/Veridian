@@ -101,18 +101,18 @@ export default function Summary() {
         {/* Beat 1 — the lede. Run-on confession, not bullets. */}
         <motion.div {...ledeReveal} className="mt-xl max-w-prose">
           <p className="text-xl leading-relaxed text-ink">
-            Veridian is a carbon-tracking app I&rsquo;ve been building since mid-March 2026 — about
+            Veridian is a carbon-tracking app I&rsquo;ve been building since mid-March 2026, about
             five months now. It started as a fairly conventional idea: a Klima-style app where you
             log your commute and your diet, watch a ring fill up, and earn streaks and badges for
-            consistency. That app got built. All of it — onboarding calculator, dashboard, manual
-            logging, achievements, challenges, leaderboards, AI-generated weekly insights — shipped
+            consistency. That app got built. All of it, onboarding calculator, dashboard, manual
+            logging, achievements, challenges, leaderboards, and AI-generated weekly insights, shipped
             and worked.
           </p>
           <p className="mt-md text-lg leading-relaxed text-ink-secondary">
             Then I did the thing most people building a portfolio project skip: I kept researching
             after the thing was &ldquo;done,&rdquo; and the research kept telling me the original
             idea had a hole in it. Two rounds of that research, four months apart, each forced a
-            real reversal — not a tweak, a reversal — in what I was building. The product today is
+            real reversal, not a tweak but a genuine reversal, in what I was building. The product today is
             a different thesis than the one I started with: not a logger you feed, but an autopilot
             that writes your carbon story from signals your phone and bank already have, with you
             as an editor who taps to confirm rather than a clerk who types entries.
@@ -149,7 +149,7 @@ export default function Summary() {
           {...closingReveal}
           className="mt-lg max-w-prose text-lg leading-relaxed text-ink-secondary"
         >
-          This page is the honest version of that five months — what I believed at first, what the
+          This page is the honest version of that five months: what I believed at first, what the
           evidence changed my mind about, and what&rsquo;s still genuinely unresolved.
         </motion.p>
       </div>
