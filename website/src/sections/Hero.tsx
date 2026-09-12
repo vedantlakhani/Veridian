@@ -154,18 +154,14 @@ export default function Hero() {
       <div className="mx-auto max-w-wide px-md md:px-lg">
         <div className="grid grid-cols-1 items-center gap-2xl lg:grid-cols-[6fr_5fr]">
           <motion.div {...typeReveal}>
-            <p className="text-xs font-mono uppercase tracking-widest text-ink-tertiary">
-              Veridian · case study · pre-launch
-            </p>
             <h1
               id="hero-heading"
-              className="mt-md text-mega font-extrabold leading-[0.98] tracking-tight text-ink"
+              className="text-[clamp(2.75rem,2rem+4vw,6rem)] font-extrabold leading-[1.02] tracking-tight text-ink"
             >
-              Not a logger you feed.
-              <br />
-              An autopilot that <span className="text-accent">writes your carbon story.</span>
+              Not a logger you feed.{' '}
+              <span className="text-accent">An autopilot that writes your carbon story.</span>
             </h1>
-            <p className="mt-lg max-w-prose text-xl leading-relaxed text-ink-secondary">
+            <p className="mt-xl max-w-prose text-xl leading-relaxed text-ink-secondary">
               Veridian is a carbon tracking app I have been building since mid-March 2026. Five
               months, two research-forced reversals four months apart, and this page is the honest
               version of what changed.
@@ -175,7 +171,7 @@ export default function Hero() {
             </p>
             <a
               href="#summary"
-              className="mt-lg inline-flex items-center gap-xs rounded-lg bg-accent px-lg py-md text-md font-bold text-surface transition-transform hover:-translate-y-0.5 motion-reduce:hover:translate-y-0"
+              className="mt-xl inline-flex items-center gap-xs rounded-lg bg-accent px-lg py-md text-md font-bold text-surface transition-transform hover:-translate-y-0.5 motion-reduce:hover:translate-y-0"
             >
               Start with the summary
               <span aria-hidden="true">→</span>

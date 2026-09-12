@@ -90,32 +90,25 @@ export default function Summary() {
     >
       <div className="mx-auto max-w-page px-md md:px-lg">
         <motion.div {...headerReveal}>
-          <p className="mb-md text-xs font-mono uppercase tracking-widest tabular-nums text-ink-tertiary">
-            01 / SUMMARY
-          </p>
           <h2 id="summary-heading" className="text-2xl font-extrabold tracking-tight text-ink">
-            Summary
+            Five months, told straight
           </h2>
         </motion.div>
 
         {/* Beat 1 — the lede. Run-on confession, not bullets. */}
         <motion.div {...ledeReveal} className="mt-xl max-w-prose">
           <p className="text-xl leading-relaxed text-ink">
-            Veridian is a carbon-tracking app I&rsquo;ve been building since mid-March 2026, about
-            five months now. It started as a fairly conventional idea: a Klima-style app where you
-            log your commute and your diet, watch a ring fill up, and earn streaks and badges for
-            consistency. That app got built. All of it, onboarding calculator, dashboard, manual
-            logging, achievements, challenges, leaderboards, and AI-generated weekly insights, shipped
-            and worked.
+            I started building Veridian in mid-March 2026. The first idea was simple: log your
+            commute, log what you eat, watch a ring fill up, earn a badge for showing up. That app
+            got built, all of it, and it worked.
           </p>
           <p className="mt-md text-lg leading-relaxed text-ink-secondary">
-            Then I did the thing most people building a portfolio project skip: I kept researching
-            after the thing was &ldquo;done,&rdquo; and the research kept telling me the original
-            idea had a hole in it. Two rounds of that research, four months apart, each forced a
-            real reversal, not a tweak but a genuine reversal, in what I was building. The product today is
-            a different thesis than the one I started with: not a logger you feed, but an autopilot
-            that writes your carbon story from signals your phone and bank already have, with you
-            as an editor who taps to confirm rather than a clerk who types entries.
+            Then I did the thing most people skip once something is &ldquo;done&rdquo;: I kept
+            asking whether it was actually good. Twice, four months apart, the answer came back no,
+            and both times it meant tearing up real work, not tweaking it. What I have now is a
+            different app than the one I set out to build: instead of a logger you have to feed, it
+            is more like an autopilot that notices your day and writes your carbon story for you.
+            You just tap to confirm it got things right.
           </p>
         </motion.div>
 
