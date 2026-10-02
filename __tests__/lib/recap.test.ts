@@ -263,6 +263,21 @@ describe('selectWeekWin', () => {
   it('is empty when there is neither a trip nor a logged day', () => {
     expect(selectWeekWin([], [])).toEqual({ kind: 'empty' });
   });
+
+  it('does not crown a "lightest day" when only one day is logged', () => {
+    expect(selectWeekWin([], [{ date: '2026-10-02', totalKg: 5 }])).toEqual({ kind: 'empty' });
+  });
+
+  it('does not call a day light when even the lightest is over the daily budget', () => {
+    const win = selectWeekWin(
+      [],
+      [
+        { date: '2026-10-01', totalKg: 30 },
+        { date: '2026-10-02', totalKg: 27 },
+      ],
+    );
+    expect(win).toEqual({ kind: 'empty' });
+  });
 });
 
 describe('winCopy', () => {

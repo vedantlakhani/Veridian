@@ -421,15 +421,22 @@ const cardStyles = StyleSheet.create({
 // ─── FooterCounter ────────────────────────────────────────────────────────────
 
 interface FooterCounterProps {
-  totalKg: number;
+  /** null until the user has answered something: calcFootprint({}) is only defaults. */
+  totalKg: number | null;
 }
 
 function FooterCounter({ totalKg }: FooterCounterProps) {
   return (
     <View style={footerStyles.container}>
       <Text style={footerStyles.label}>Your estimated footprint</Text>
-      <VCountUp value={totalKg} decimals={0} style={footerStyles.counter} />
-      <Text style={footerStyles.unit}>kg CO₂e / year</Text>
+      {totalKg === null ? (
+        <Text style={footerStyles.counter}>–</Text>
+      ) : (
+        <VCountUp value={totalKg} decimals={0} style={footerStyles.counter} />
+      )}
+      <Text style={footerStyles.unit}>
+        {totalKg === null ? 'Answer a question to start' : 'kg CO₂e / year'}
+      </Text>
     </View>
   );
 }
@@ -826,7 +833,7 @@ export default function CalculatorScreen() {
       </Animated.View>
 
       {/* Animated CO₂ footer counter */}
-      <FooterCounter totalKg={calcFootprint(answers)} />
+      <FooterCounter totalKg={Object.keys(answers).length > 0 ? calcFootprint(answers) : null} />
     </SafeAreaView>
   );
 }

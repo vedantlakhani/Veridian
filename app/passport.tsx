@@ -931,6 +931,9 @@ const styles = StyleSheet.create({
   passportStatNumber: {
     fontFamily: typography.fontFamilyDisplay,
     fontSize: 32,
+    // Explicit line height: without it the system font's tall glyphs (a "0") are
+    // clipped by the row and read as a "U" on the shareable card.
+    lineHeight: 38,
     fontWeight: typography.weights.semibold,
     color: '#FFFFFF',
   },

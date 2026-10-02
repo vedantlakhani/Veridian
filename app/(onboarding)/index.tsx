@@ -69,8 +69,8 @@ const SLIDES = [
   },
   {
     id: '3',
-    title: 'Challenge friends',
-    subtitle: 'Create reduction challenges, climb the leaderboard, and earn achievement badges.',
+    title: 'Confirm in one tap',
+    subtitle: 'Veridian notices your trips and spending, then asks you to confirm. Most days, that is all you do.',
   },
 ];
 
@@ -85,9 +85,10 @@ const MOCK_INSIGHT: AiInsight = {
   expires_at: new Date().toISOString(),
 };
 
-const MOCK_LEADERBOARD = [
-  { name: 'Alex K.', kg: 12.4, rank: 1 },
-  { name: 'Maria S.', kg: 15.1, rank: 2 },
+// Illustrative only: what the daily confirm queue looks like (detected, not typed).
+const MOCK_DETECTED = [
+  { id: 'drive', label: 'Drive · 12 km', detail: 'Detected this morning', kg: '2.0 kg' },
+  { id: 'walk', label: 'Walk · 1.4 km', detail: 'Detected at lunch', kg: '0 kg' },
 ];
 
 // ─── Dot indicator ────────────────────────────────────────────────────────────
@@ -178,11 +179,13 @@ function SlideThree({ onGetStarted }: { onGetStarted: () => void }) {
       <SlideHero image={HERO_IMAGES[2]} />
       <View style={styles.slideContent}>
         <View style={styles.leaderboard}>
-          {MOCK_LEADERBOARD.map((row) => (
-            <View key={row.rank} style={styles.leaderboardRow}>
-              <Text style={styles.leaderboardRank}>{row.rank}</Text>
-              <Text style={styles.leaderboardName}>{row.name}</Text>
-              <Text style={styles.leaderboardKg}>{row.kg} kg</Text>
+          {MOCK_DETECTED.map((row) => (
+            <View key={row.id} style={styles.leaderboardRow}>
+              <View style={styles.detectedText}>
+                <Text style={styles.detectedLabel}>{row.label}</Text>
+                <Text style={styles.leaderboardKg}>{row.detail}</Text>
+              </View>
+              <Text style={styles.detectedKg}>{row.kg}</Text>
             </View>
           ))}
         </View>
@@ -372,6 +375,21 @@ const styles = StyleSheet.create({
     fontFamily: typography.fontFamilyDefault,
     fontSize: typography.sizes.sm,
     color: colors.textSecondary,
+  },
+  detectedText: {
+    flex: 1,
+  },
+  detectedLabel: {
+    fontFamily: typography.fontFamilyDefault,
+    fontSize: typography.sizes.md,
+    fontWeight: typography.weights.semibold,
+    color: colors.textPrimary,
+  },
+  detectedKg: {
+    fontFamily: typography.fontFamilyDefault,
+    fontSize: typography.sizes.md,
+    fontWeight: typography.weights.semibold,
+    color: colors.textPrimary,
   },
   notifButton: {
     marginBottom: spacing.sm,

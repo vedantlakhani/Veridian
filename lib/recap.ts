@@ -18,6 +18,7 @@
  */
 
 import type { EmissionCategory, TripMode } from '@/types/emission';
+import { DAILY_CARBON_BUDGET_KG } from '@/types/emission';
 import { getISOWeekStart, getLocalDateString } from '@/lib/emissions';
 import { formatKg } from '@/lib/format';
 
@@ -383,9 +384,13 @@ export function selectWeekWin(
       bestTrip: { mode: best.mode, distanceKm: best.distanceKm, savedKg: best.savedKg },
     };
   }
-  if (dayTotals.length > 0) {
+  // "Lightest day" only means something with a comparison (2+ logged days) and
+  // only reads as a win when that day actually came in within the daily budget.
+  if (dayTotals.length >= 2) {
     const lightest = dayTotals.reduce((a, b) => (b.totalKg < a.totalKg ? b : a));
-    return { kind: 'light-day', date: lightest.date, totalKg: lightest.totalKg };
+    if (lightest.totalKg <= DAILY_CARBON_BUDGET_KG) {
+      return { kind: 'light-day', date: lightest.date, totalKg: lightest.totalKg };
+    }
   }
   return { kind: 'empty' };
 }

@@ -12,6 +12,12 @@ export interface TopMove {
   weeklyPercent: number | null;
 }
 
+// ─── Evidence floor ───────────────────────────────────────────────────────────
+// Below this much history, a "weekly" saving would just be one log extrapolated.
+
+const MIN_ENTRIES_FOR_MOVES = 4;
+const MIN_HISTORY_DAYS_FOR_MOVES = 7;
+
 // ─── Internal Types ───────────────────────────────────────────────────────────
 
 interface SubcatProfile {
@@ -251,6 +257,15 @@ export function computeTopMoves(
 ): TopMove[] {
   const windowed = entries.filter((e) => daysAgo(e.logged_at) < 28);
   if (windowed.length === 0) return [];
+
+  // Evidence floor: one meal is not a habit. buildProfile scales to a weekly rate,
+  // so with too little history a single log would read as "every week". Require a
+  // few entries spread over at least a week before recommending anything.
+  let oldestAgeDays = 0;
+  for (const e of windowed) oldestAgeDays = Math.max(oldestAgeDays, daysAgo(e.logged_at));
+  if (windowed.length < MIN_ENTRIES_FOR_MOVES || oldestAgeDays < MIN_HISTORY_DAYS_FOR_MOVES) {
+    return [];
+  }
 
   const profile = buildProfile(windowed);
 
