@@ -178,7 +178,6 @@ function BudgetRingHero({
             strokeWidth={15}
             gradient={stateStyle.ring}
             animationDuration={900}
-            glow
           >
             <View style={ringStyles.center}>
               <HeroFootprintNumber value={todayKg} />

@@ -49,9 +49,11 @@ function CategoryHero({ category }: { category: string }) {
     >
       <Image source={image} style={heroStyles.image} resizeMode="cover" />
       <View style={heroStyles.wash} />
+      {/* Light fade at the top (status-bar legibility) and into the canvas at the
+          bottom, so no text ever has to sit on the photo itself. */}
       <LinearGradient
-        colors={['rgba(13,17,23,0.35)', 'transparent', 'rgba(13,17,23,0.15)', colors.background]}
-        locations={[0, 0.22, 0.55, 1]}
+        colors={['rgba(252,252,253,0.85)', 'rgba(252,252,253,0)', 'rgba(252,252,253,0)', colors.background]}
+        locations={[0, 0.3, 0.55, 1]}
         style={heroStyles.scrim}
       />
     </Animated.View>
@@ -64,7 +66,7 @@ const heroStyles = StyleSheet.create({
     top: 0,
     left: 0,
     right: 0,
-    height: '38%',
+    height: '20%',
   },
   image: {
     width: '100%',
@@ -864,7 +866,9 @@ const styles = StyleSheet.create({
     fontFamily: typography.fontFamilyDefault,
     fontSize: typography.sizes.sm,
     fontWeight: typography.weights.semibold,
-    color: colors.primaryLight,
+    // White on the dark chip: readable on every category photo (the old
+    // dark-green label disappeared into the dark chip).
+    color: '#FFFFFF',
     textTransform: 'uppercase',
     letterSpacing: 0.5,
   },
@@ -873,7 +877,9 @@ const styles = StyleSheet.create({
   },
   questionScroll: {
     flexGrow: 1,
-    paddingTop: spacing.md,
+    // Start the question below the photo banner so the title sits on the plain
+    // canvas, not on the image.
+    paddingTop: spacing.md + 44,
     paddingBottom: spacing.lg,
   },
 });

@@ -8,7 +8,7 @@ import {
 } from 'react-native';
 import { Link } from 'expo-router';
 import { useState } from 'react';
-import { useAuthStore } from '@/stores/authStore';
+import { useAuthStore, isGoogleSignInAvailable, isAppleSignInAvailable } from '@/stores/authStore';
 import { colors, typography } from '@/lib/theme';
 import { VInput, VButton, VToast, VIcon } from '@/components/ui';
 
@@ -95,21 +95,27 @@ export default function LoginScreen() {
             <Text style={styles.forgotText}>Forgot password?</Text>
           </Link>
 
-          <View style={styles.dividerRow}>
-            <View style={styles.dividerLine} />
-            <Text style={styles.dividerText}>or continue with</Text>
-            <View style={styles.dividerLine} />
-          </View>
+          {/* Social sign-in only appears when the provider is actually configured
+              in this build (see stores/authStore.ts), never as a dead button. */}
+          {(isGoogleSignInAvailable || isAppleSignInAvailable) && (
+            <View style={styles.dividerRow}>
+              <View style={styles.dividerLine} />
+              <Text style={styles.dividerText}>or continue with</Text>
+              <View style={styles.dividerLine} />
+            </View>
+          )}
 
-          <VButton
-            label="Continue with Google"
-            variant="secondary"
-            fullWidth
-            disabled={loading}
-            onPress={handleGoogle}
-          />
+          {isGoogleSignInAvailable && (
+            <VButton
+              label="Continue with Google"
+              variant="secondary"
+              fullWidth
+              disabled={loading}
+              onPress={handleGoogle}
+            />
+          )}
 
-          {Platform.OS === 'ios' && (
+          {isAppleSignInAvailable && (
             <VButton
               label="Continue with Apple"
               variant="apple"

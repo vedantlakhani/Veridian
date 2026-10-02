@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import type { Session, User } from '@supabase/supabase-js';
 import { Platform } from 'react-native';
+import Constants from 'expo-constants';
 import { supabase } from '@/lib/supabase';
 
 // Google Sign-In: native module — only works in EAS Build / local dev build, NOT Expo Go
@@ -23,6 +24,18 @@ try {
   // Module not available in Expo Go — Google Sign-In will be disabled at runtime
   GoogleSignin = null;
 }
+
+/**
+ * Whether each social sign-in can actually work in this build. The login screen
+ * only renders a button when its provider is configured, so users never meet a
+ * dead button or a developer message.
+ *  - Google needs a real EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID and the native module.
+ *  - Apple needs the Sign in with Apple capability (app.json ios.usesAppleSignIn)
+ *    compiled into the build, which in turn needs a paid Apple Developer team.
+ */
+export const isGoogleSignInAvailable = GoogleSignin !== null;
+export const isAppleSignInAvailable =
+  Platform.OS === 'ios' && Constants.expoConfig?.ios?.usesAppleSignIn === true;
 
 interface AuthState {
   session: Session | null;

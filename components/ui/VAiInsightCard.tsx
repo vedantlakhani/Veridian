@@ -9,7 +9,6 @@ import Animated, {
 } from 'react-native-reanimated';
 import { VSkeleton } from './VSkeleton';
 import { VIcon } from './VIcon';
-import { VPressable } from './VPressable';
 import { colors, spacing, typography, radii, motion } from '@/lib/theme';
 import type { AiInsight } from '@/hooks/useAiInsight';
 
@@ -22,10 +21,11 @@ interface VAiInsightCardProps {
   insight: AiInsight | null | undefined;
   isLoading: boolean;
   error: Error | null;
+  /** Kept for call-site compatibility; a failed call now hides the card. */
   onRetry?: () => void;
 }
 
-export function VAiInsightCard({ insight, isLoading, error, onRetry }: VAiInsightCardProps) {
+export function VAiInsightCard({ insight, isLoading, error }: VAiInsightCardProps) {
   const dotOpacity = useSharedValue(1);
   const contentOpacity = useSharedValue(0);
 
@@ -43,6 +43,11 @@ export function VAiInsightCard({ insight, isLoading, error, onRetry }: VAiInsigh
       contentOpacity.value = withTiming(1, { duration: motion.timingBase });
     }
   }, [isLoading, insight, contentOpacity]);
+
+  // Keep the failure visible to developers even though the card hides itself.
+  useEffect(() => {
+    if (error) console.warn('[AiInsight] generation failed:', error.message);
+  }, [error]);
 
   const dotStyle = useAnimatedStyle(() => ({
     opacity: dotOpacity.value,
@@ -71,20 +76,10 @@ export function VAiInsightCard({ insight, isLoading, error, onRetry }: VAiInsigh
     );
   }
 
-  // Error: quiet retry row — never a blank hole, never a crash
-  if (error) {
-    return (
-      <View style={styles.errorRow}>
-        <VIcon name="sparkle" size={12} color={colors.textTertiary} />
-        <Text style={styles.errorText}>Insight unavailable right now</Text>
-        {onRetry ? (
-          <VPressable onPress={onRetry} haptic="light" hitSlop={8}>
-            <Text style={styles.retryText}>Retry</Text>
-          </VPressable>
-        ) : null}
-      </View>
-    );
-  }
+  // Error: the AI tip is an enhancement, so a failed call hides the card rather
+  // than leaving a dead "unavailable" row on the home screen. The real cause is
+  // logged (see the effect above) so it stays diagnosable.
+  if (error) return null;
 
   if (!insight) return null;
 
