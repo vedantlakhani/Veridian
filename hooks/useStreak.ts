@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
+import { computeStreak } from '@/lib/streak';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // useStreak — shared consecutive-logged-days streak. Deletes the duplicated
@@ -26,24 +27,10 @@ export function useStreak(userId: string | undefined): {
     enabled: !!userId,
   });
 
-  const streak = useMemo(() => {
-    if (!streakData || streakData.length === 0) return 0;
-    const todayDate = new Date();
-    todayDate.setHours(0, 0, 0, 0);
-    let s = 0;
-    const check = new Date(todayDate);
-    for (const row of streakData) {
-      const d = new Date(row.date);
-      d.setHours(0, 0, 0, 0);
-      if (d.getTime() === check.getTime()) {
-        s++;
-        check.setDate(check.getDate() - 1);
-      } else {
-        break;
-      }
-    }
-    return s;
-  }, [streakData]);
+  const streak = useMemo(
+    () => computeStreak((streakData ?? []).map((row) => row.date)),
+    [streakData],
+  );
 
   return { streak, isLoading };
 }

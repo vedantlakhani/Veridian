@@ -22,7 +22,8 @@
  * never create a second receipts row, a second set of receipt_items, or a
  * second set of emission_entries. This is provable from the code: the only
  * INSERT into `receipts` is reached from the branch that runs exactly when
- * the SELECT by content_hash (a UNIQUE column) found nothing, and every
+ * the SELECT by (user_id, content_hash) (UNIQUE per user, migration
+ * 20261004000029) found nothing, and every
  * receipt_items -> emission_entries link goes through the
  * claim_receipt_item_entry RPC, which additionally guards against a
  * *concurrent* duplicate call racing past the content_hash check (see that
@@ -164,6 +165,7 @@ Deno.serve(async (req) => {
     const { data: existingReceipt, error: existingErr } = await admin
       .from('receipts')
       .select('*')
+      .eq('user_id', user.id)
       .eq('content_hash', contentHash)
       .maybeSingle();
     if (existingErr) throw existingErr;
